@@ -21,7 +21,7 @@
 
 <Header />
 
-<article class="max-w-7xl mx-auto p-6 text-primary-500 dark:text-primary-600">
+<article class="max-w-7xl mx-auto p-6 text-primary-500 dark:text-primary-500">
     <!-- Hero -->
     <section class="grid gap-8 md:grid-cols-2 items-center py-5">
         <div>
@@ -73,7 +73,7 @@
 
     <!-- CTA strip -->
     <section
-        class="mt-12 bg-gradient-to-r from-primary-600 to-green-600 text-white rounded-lg p-8"
+        class="mt-12 bg-gradient-to-r from-primary-600 to-green-300 text-white rounded-lg p-8"
     >
         <div class="max-w-3xl">
             <h3 class="text-2xl font-bold">Ready to try DZ Sales?</h3>
@@ -87,4 +87,4 @@
         </div>
     </section>
 </article>
-<Footer></Footer>
+<Footer />
