@@ -1,13 +1,12 @@
 import type { Actions } from './$types';
 import { PUBLIC_BASE_URL } from '$env/static/public';
-import { fail } from '@sveltejs/kit';
+import { fail, redirect } from '@sveltejs/kit';
 import { supabase } from '$lib/supabase';
 
 async function signUpNewUser(email: string, password: string) {
     // Dynamically set the redirect URL to the dashboard
     const baseUrl = PUBLIC_BASE_URL || 'http://localhost:5173';
     const emailRedirectTo = `${baseUrl}/dashboard`;
-
     const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -15,41 +14,62 @@ async function signUpNewUser(email: string, password: string) {
             emailRedirectTo,
         },
     });
+
+    if (error) {
+        console.error('Sign up error:', error);
+        throw new Error(error.message);
+    }
+
+    // return the created user's id (may be undefined if using confirmation flows)
+    return data?.user?.id ?? null;
 }
 
 async function signInWithEmail(email: string, password: string) {
     const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
-    })
+    });
+
+    if (error) {
+        console.error('Sign in error:', error);
+        throw new Error(error.message);
+    }
+
+    return data;
 }
 
-async function fillProfile(fullname: string, company: string, industry: string) {
-    const user = await supabase.auth.getUser();
-    if (!user) return;
 
-    const { data, error } = await supabase
-        .from('companies')
-        .insert([{ name: company, industry }]);
-            
-    if (error) {
-        console.error('Error updating profile:', error);
-        throw `Registration Error : ${error.message}`;
+async function completeProfile(fullname: string, company: string, industry: string, userId: string | null) {
+    if (!userId) {
+        throw new Error('No user id available to link profile');
     }
 
-    const companyId = data ? data[0].id : null;
+    // Insert company and return its generated company_id
+    const { data: companyData, error: companyError } = await supabase
+        .from('companies')
+        .insert([{ name: company, industry }])
+        .select('company_id')
+        .single();
 
-    const { error: profileError } = await supabase
+    if (companyError) {
+        console.error('Error creating company:', companyError);
+        throw new Error(companyError.message);
+    }
+
+    const companyId = companyData?.company_id ?? null;
+
+    const { data: profileData, error: profileError } = await supabase
         .from('profiles')
-        .update({ fullname, company_id: companyId })
-        .eq('user_id', user.data.user?.user_id);
+        .insert({ fullname, company_id: companyId, user_id: userId })
+        .select('profile_id')
+        .single();
 
     if (profileError) {
-        console.error('Error updating profile:', profileError);
-        throw `Profile Update Error : ${profileError.message}`;
+        console.error('Error creating profile:', profileError);
+        throw new Error(profileError.message);
     }
-    return;
 
+    return { profileId: profileData?.profile_id ?? null, companyId };
 }
 
 export const actions = {
@@ -66,6 +86,8 @@ export const actions = {
             return fail(400, { error: `Login Error : ${error}` });
         }
 
+        redirect(303, '/dashboard');
+
 
     },
     register: async ({ cookies, request }) => {
@@ -76,13 +98,32 @@ export const actions = {
         const company = formData.get('company');
         const industry = formData.get('industry');
 
+        // Basic validation
+        if (!email || !password || !fullname) {
+            return fail(400, { error: 'fullname, email and password are required' });
+        }
+
         try {
-            await signUpNewUser(email as string, password as string);
-            await fillProfile(fullname as string, company as string, industry as string);
+            const userId = await signUpNewUser(email as string, password as string);
+
+            // If userId is not returned (e.g. invite/confirm flows), try to get the user from server
+            let resolvedUserId = userId;
+            if (!resolvedUserId) {
+                const { data: sessionData, error: sessionError } = await supabase.auth.getUser();
+                if (sessionError) console.warn('Could not get user after signup:', sessionError);
+                resolvedUserId = sessionData?.data?.user?.id ?? null;
+            }
+
+            await completeProfile(fullname as string, company as string, industry as string, resolvedUserId);
+
         } catch (error) {
             console.error('Error registering:', error);
-            return fail(400, { error: `Registration Error : ${error}` });
+            return fail(400, { error: `Registration Error : ${error instanceof Error ? error.message : error}` });
         }
+
+        console.log('Redirecting to dashboard after registration');
+        
+        redirect(200, '/dashboard');
 
     }
 } satisfies Actions;
