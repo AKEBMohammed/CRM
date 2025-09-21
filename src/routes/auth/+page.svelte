@@ -1,20 +1,19 @@
-<script>
-    import Footer from "$lib/components/Footer.svelte";
-    import Header from "$lib/components/Header.svelte";
+<script lang="ts">
     import {
         Alert,
         Button,
+        Modal,
         Input,
         Label,
         TabItem,
         Tabs,
+        Toggle,
     } from "flowbite-svelte";
+    let showForgetPassword = $state(false);
 </script>
 
-<Header />
-
 <article class="h-full flex flex-col items-center justify-center p-2">
-    <Tabs tabStyle="full" divider>
+    <Tabs tabStyle="full" divider classes={{ content: "lg:w-150 w-full" }}>
         <TabItem open>
             {#snippet titleSlot()}
                 <span class="text-bold"> Login </span>
@@ -24,7 +23,20 @@
                 <Input type="email" id="email" name="email" required />
                 <Label for="password">Password</Label>
                 <Input type="password" id="password" name="password" required />
-                <Button type="submit">Login</Button>
+
+                <div class="w-full flex items-center gap-2">
+                    <Label for="remember" class="flex items-center gap-2">
+                        Remember me
+                    </Label>
+                    <Toggle class="ml-auto" id="remember" name="remember" />
+                </div>
+                <a
+                    onclick={() => (showForgetPassword = true)}
+                    href="#"
+                    class="ml-auto text-blue-400 hover:underline"
+                    >forget password?</a
+                >
+                <Button class="mx-8" type="submit">Login</Button>
             </form>
         </TabItem>
         <TabItem>
@@ -35,9 +47,9 @@
             <form
                 action="?/register"
                 method="post"
-                class="grid grid-cols-2 gap-4"
+                class="grid lg:grid-cols-2 grid-cols-1 gap-4"
             >
-                <Alert color="blue" class="col-span-2">
+                <Alert color="blue" class="lg:col-span-2">
                     <span class="font-medium">Info alert!</span>
                     <p>This form is for business owners/admins only.</p>
                 </Alert>
@@ -58,25 +70,24 @@
                         required
                     />
                 </fieldset>
-                <fieldset class="flex flex-col gap-4">
+                <fieldset class="flex flex-col gap-5">
                     <legend
                         class=" text-lg font-bold text-gray-900 dark:text-white"
                         >Business Information</legend
                     >
                     <Label for="company">Company Name</Label>
-                    <Input
-                        type="text"
-                        id="company"
-                        name="company"
-                        required
-                    />
+                    <Input type="text" id="company" name="company" required />
                     <Label for="industry">Industry</Label>
                     <Input type="text" id="industry" name="industry" required />
                 </fieldset>
 
-                <Button class="col-span-2" type="submit">Signup</Button>
+                <Button class="mx-8 lg:col-span-2" type="submit">Signup</Button>
             </form>
         </TabItem>
     </Tabs>
+    <Modal title="Forget Password" form bind:open={showForgetPassword}>
+        <Label for="">email</Label>
+        <Input type="email" id="email" name="email" required />
+        <Button class="ml-auto">Send verfication link</Button>
+    </Modal>
 </article>
-<Footer />
