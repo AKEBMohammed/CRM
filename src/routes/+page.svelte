@@ -1,7 +1,7 @@
 <script lang="ts">
     import Footer from "$lib/components/Footer.svelte";
     import Header from "$lib/components/Header.svelte";
-    import { Button, Card } from "flowbite-svelte";
+    import { Button, Card, Dialog } from "flowbite-svelte";
     import previewImg from "$lib/assets/Ecommerce web page-rafiki.png";
     const features = [
         {
@@ -18,8 +18,6 @@
         },
     ];
 </script>
-
-<Header />
 
 <article class="max-w-7xl mx-auto p-6 text-primary-500 dark:text-primary-500">
     <!-- Hero -->
@@ -87,4 +85,3 @@
         </div>
     </section>
 </article>
-<Footer />

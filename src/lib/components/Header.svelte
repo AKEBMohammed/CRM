@@ -12,7 +12,9 @@
         >
     </NavBrand>
     <div class="flex gap-2 md:order-2">
-        <Button color="primary" size="sm">Get Started</Button>
+        {#if 0 }
+            <Button color="primary" size="sm">Get Started</Button>
+        {/if}
         <DarkMode />
     </div>
 </Navbar>
