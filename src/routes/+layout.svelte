@@ -14,10 +14,12 @@
 	<link rel="icon" href={favicon} />
 </svelte:head>
 
-<Header />
+<main class="w-screen h-full flex flex-col bg-gray-50 dark:bg-gray-900">
+	<Header />
 
-{@render children?.()}
+	{@render children?.()}
 
-{#if currentRoute === "/"}
-	<Footer />
-{/if}
+	{#if currentRoute === "/"}
+		<Footer />
+	{/if}
+</main>

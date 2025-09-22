@@ -16,7 +16,7 @@
     </NavBrand>
     <div class="flex gap-2 md:order-2">
         {#if currentRoute === "/"}
-            <Button href="/auth/login" color="dark">Get started!</Button>
+            <Button href="/auth" color="primary">Get started!</Button>
         {:else if currentRoute.startsWith("/dashboard")}
             <Button color="dark"><MessagesSolid /></Button>
             <Button color="dark"><BellSolid /></Button>
