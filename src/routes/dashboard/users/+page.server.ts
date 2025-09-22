@@ -21,7 +21,7 @@ export const load: PageServerLoad = async ({ params }) => {
     if (!data) {
         throw error(500, 'Failed to fetch profiles');
     }
-    
-    return { profiles: data.profilesCollection.edges.map(edge => edge.node) };
+
+    return { profiles: data.profilesCollection.edges.map((edge: { node: { profile_id: string; fullname: string; role: string } }) => edge.node) };
 
 };
