@@ -5,10 +5,16 @@
         AddressBookSolid,
         CogSolid,
         ReactSolid,
+        HomeSolid,
     } from "flowbite-svelte-icons";
     import { page } from "$app/stores";
 
     let list = [
+        {
+            name: "Dashboard",
+            icon: HomeSolid,
+            href: "/dashboard"
+        },
         {
             name: "Users",
             icon: UserSolid,
@@ -30,7 +36,11 @@
             href: "/dashboard/settings"
         },
     ];
-    let currentRoute = $page.url.pathname;
+    let currentRoute = $state($page.url.pathname);
+
+    $effect(() => {
+        currentRoute = $page.url.pathname;
+    });
 </script>
 
 <div
