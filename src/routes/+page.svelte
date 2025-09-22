@@ -1,6 +1,4 @@
 <script lang="ts">
-    import Footer from "$lib/components/Footer.svelte";
-    import Header from "$lib/components/Header.svelte";
     import { Button, Card, Dialog } from "flowbite-svelte";
     import previewImg from "$lib/assets/Ecommerce web page-rafiki.png";
     const features = [
@@ -49,7 +47,7 @@
 
     <!-- Features -->
     <section class="py-8">
-        <h2 class="text-2xl font-bold text-gray-800">Core features</h2>
+        <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Core features</h2>
         <p class="mt-2 text-gray-500 dark:text-gray-400">
             Everything a small sales team needs to organize relationships and
             close more deals.
@@ -74,7 +72,7 @@
         class="mt-12 bg-gradient-to-r from-primary-600 to-green-300 text-white rounded-lg p-8"
     >
         <div class="max-w-3xl">
-            <h3 class="text-2xl font-bold">Ready to try DZ Sales?</h3>
+            <h3 class="text-2xl font-bold ">Ready to try DZ Sales?</h3>
             <p class="mt-2">
                 Get started with a free trial and import your contacts in
                 minutes.
