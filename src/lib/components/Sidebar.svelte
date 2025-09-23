@@ -44,16 +44,16 @@
 </script>
 
 <div
-    class="w-15 h-full border-r border-gray-200 dark:border-gray-700 p-2 flex flex-col items-center gap-4"
+    class="w-15 h-full border-r border-gray-200 dark:border-gray-700 p-2 flex flex-col items-center gap-4 last:mt-auto"
 >
-    {#each list as { name, icon, href }}
+    {#each list as { name, icon:Icon, href }}
         <Button
             color={currentRoute === href ? "primary" : "dark"}
             href={href}
             class="flex items-center justify-center w-12 h-12 rounded-lg transition"
             aria-label={name}
         >
-            <svelte:component this={icon} class="w-6 h-6 text-gray-900 dark:text-white" />
+            <Icon class="w-6 h-6 text-gray-900 dark:text-white" />
         </Button>
         <Tooltip placement="right">{name}</Tooltip>
     {/each}
