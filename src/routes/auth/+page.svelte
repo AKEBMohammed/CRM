@@ -31,7 +31,7 @@
                     <Toggle class="ml-auto" id="remember" name="remember" />
                 </div>
                 <a
-                    onclick={() => (showForgetPassword = true)}
+                    onclick={() => (showForgetPasswordModal = true)}
                     href="#"
                     class="ml-auto text-blue-400 hover:underline"
                     >forget password?</a
