@@ -85,22 +85,18 @@
             </form>
         </TabItem>
     </Tabs>
-    <Modal
-        title="Forget Password"
-        bind:open={showForgetPassword}
-        size="sm"
-    >
+    <Modal title="Forget Password" bind:open={showForgetPassword} size="sm">
         <form action="?/forget" method="post" class="flex flex-col gap-2">
-            <Label for="">email</Label>
+            <Label for="email">email</Label>
             <Input type="email" id="email" name="email" required />
             <Alert color="blue" class="mt-2">
                 <span class="font-medium">Info alert!</span>
                 <p>
-                    Password reset link was sent to your email address if it
+                    Password reset link will be sent to your email address if it
                     exists in our system.
                 </p>
             </Alert>
-            <Button class="self-center px-4">Send password reset link</Button>
+            <Button type="submit" class="self-center px-4">Send password reset link</Button>
         </form>
     </Modal>
 </article>
