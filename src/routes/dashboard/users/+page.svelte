@@ -1,20 +1,27 @@
 <script lang="ts">
     import { Table } from "@flowbite-svelte-plugins/datatable";
     import type { PageProps } from "./$types";
-    import { Button, Dialog, Heading, Input, Label, Modal, P } from "flowbite-svelte";
+    import {
+        Button,
+        Heading,
+        Input,
+        Label,
+        Modal,
+        P,
+    } from "flowbite-svelte";
     import {
         FileExportOutline,
+        FileImportOutline,
         PlusOutline,
     } from "flowbite-svelte-icons";
 
     let { data } = $props();
     let showAddUserModal = $state(false);
-
-    console.log(data.profiles);
+    let showExportDataModal = $state(false);
 </script>
 
 <article class="w-full h-full p-6">
-    <div class="grid grid-cols-[1fr_auto_auto] gap-x-2 mb-4">
+    <div class="grid grid-cols-[1fr_auto_auto_auto] gap-x-2 mb-4">
         <Heading
             tag="h1"
             class="text-3xl font-bold mb-2 text-gray-900 dark:text-white"
@@ -23,6 +30,10 @@
         <P class="mb-4 text-gray-500 dark:text-gray-400 col-start-1 row-start-2"
             >Manage your users here.</P
         >
+        <Button class="w-fit">
+            <FileImportOutline class="w-5 h-5 mr-2" />
+            Import
+        </Button>
         <Button class="w-fit">
             <FileExportOutline class="w-5 h-5 mr-2" />
             Export
@@ -37,20 +48,26 @@
 
     <Modal title="Add User" bind:open={showAddUserModal} size="md">
         <P class="mb-4">Fill in the details to add a new user.</P>
-        <form action="" method="post" class="flex flex-col justify-center gap-2">
-            <Label >
-                Full name
-            </Label>
+        <form
+            action=""
+            method="post"
+            class="flex flex-col justify-center gap-2"
+        >
+            <Label>Full name</Label>
             <Input />
-            <Label class="mt-4">
-                Email
-            </Label>
+            <Label class="mt-4">Email</Label>
             <Input type="email" />
-            <Label class="mt-4">
-                Password
-                </Label>
+            <Label class="mt-4">Password</Label>
             <Input type="password" />
             <Button class="w-2/3 self-center">Add user</Button>
         </form>
+    </Modal>
+    <Modal title="Export Data" bind:open={showExportDataModal} size="md">
+        <P class="mb-4">Choose the format to export your data.</P>
+        <div class="flex flex-row justify-center gap-4">
+            <Button class="w-2/3 self-center">Export as CSV</Button>
+            <Button class="w-2/3 self-center">Export as JSON</Button>
+            <Button class="w-2/3 self-center">Export as XML</Button>
+        </div>
     </Modal>
 </article>

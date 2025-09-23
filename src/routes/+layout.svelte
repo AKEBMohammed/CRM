@@ -14,7 +14,7 @@
 	<link rel="icon" href={favicon} />
 </svelte:head>
 
-<main class="w-screen h-full flex flex-col bg-gray-50 dark:bg-gray-900">
+<main class="w-screen min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900">
 	<Header />
 
 	{@render children?.()}
