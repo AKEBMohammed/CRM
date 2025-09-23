@@ -1,3 +1,11 @@
+<script lang="ts">
+    import type { PageProps } from './$types';
+
+	let { data }: PageProps = $props();
+
+	console.log(data.user); // { id: '...', email: '...' }
+</script>
+
 <article class="min-h-full w-full p-2 bg-gray-100 dark:bg-gray-900">
     <div
         class="w-full p-4 bg-gradient-to-r from-primary-600 to-green-300 text-white shadow rounded-lg"
