@@ -1,6 +1,5 @@
 <script lang="ts">
     import { Table } from "@flowbite-svelte-plugins/datatable";
-    import type { PageProps } from "./$types";
     import {
         Button,
         Heading,
@@ -8,6 +7,7 @@
         Label,
         Modal,
         P,
+        Fileupload,
     } from "flowbite-svelte";
     import {
         FileExportOutline,
@@ -18,6 +18,7 @@
     let { data } = $props();
     let showAddUserModal = $state(false);
     let showExportDataModal = $state(false);
+    let showImportDataModal = $state(false);
 </script>
 
 <article class="w-full h-full p-6">
@@ -30,11 +31,11 @@
         <P class="mb-4 text-gray-500 dark:text-gray-400 col-start-1 row-start-2"
             >Manage your users here.</P
         >
-        <Button class="w-fit">
+        <Button class="w-fit" onclick={() => (showImportDataModal = true)}>
             <FileImportOutline class="w-5 h-5 mr-2" />
             Import
         </Button>
-        <Button class="w-fit">
+        <Button class="w-fit" onclick={() => (showExportDataModal = true)}>
             <FileExportOutline class="w-5 h-5 mr-2" />
             Export
         </Button>
@@ -68,6 +69,13 @@
             <Button class="w-2/3 self-center">Export as CSV</Button>
             <Button class="w-2/3 self-center">Export as JSON</Button>
             <Button class="w-2/3 self-center">Export as XML</Button>
+        </div>
+    </Modal>
+    <Modal title="Import Data" bind:open={showImportDataModal} size="md">
+        <P class="mb-4">Choose a file to import.</P>
+        <div class="flex flex-col justify-center gap-4">
+            <Fileupload />
+            <Button class="w-2/3 self-center mt-4">Import Data</Button>
         </div>
     </Modal>
 </article>
