@@ -8,8 +8,12 @@
         Modal,
         P,
         Fileupload,
+        Select,
+        Alert,
+        Dropzone,
     } from "flowbite-svelte";
     import {
+    CloudArrowUpOutline,
         FileExportOutline,
         FileImportOutline,
         PlusOutline,
@@ -55,11 +59,23 @@
             class="flex flex-col justify-center gap-2"
         >
             <Label>Full name</Label>
-            <Input />
+            <Input type="text" />
             <Label class="mt-4">Email</Label>
             <Input type="email" />
             <Label class="mt-4">Password</Label>
             <Input type="password" />
+            <Label class="mt-4">Role</Label>
+            <Select items={[
+                {name:'admin',value:'admin'},
+                {name:'user',value:'user'}
+            ]} value="user"/>
+
+            <Alert color="blue" class="mt-4 border-2">
+                <P class="font-medium">
+                    Do not forget to send the credentials to the new user!
+                </P>
+            </Alert>
+                
             <Button class="w-2/3 self-center">Add user</Button>
         </form>
     </Modal>
@@ -74,7 +90,12 @@
     <Modal title="Import Data" bind:open={showImportDataModal} size="md">
         <P class="mb-4">Choose a file to import.</P>
         <div class="flex flex-col justify-center gap-4">
-            <Fileupload />
+            <Dropzone>
+                <CloudArrowUpOutline class="w-10 h-10 mb-2 text-gray-500 dark:text-gray-400" />
+                <P class="text-gray-500 dark:text-gray-400">
+                    Drag and drop your file here or click to browse.
+                </P>
+            </Dropzone>
             <Button class="w-2/3 self-center mt-4">Import Data</Button>
         </div>
     </Modal>
