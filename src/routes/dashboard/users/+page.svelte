@@ -7,7 +7,6 @@
         Label,
         Modal,
         P,
-        Fileupload,
         Select,
         Alert,
         Dropzone,
@@ -49,12 +48,12 @@
         </Button>
     </div>
 
-    <Table items={data.profiles} />
+    <Table items={data.users} />
 
     <Modal title="Add User" bind:open={showAddUserModal} size="md">
         <P class="mb-4">Fill in the details to add a new user.</P>
         <form
-            action=""
+            action="?/add"
             method="post"
             class="flex flex-col justify-center gap-2"
         >
@@ -75,28 +74,33 @@
                     Do not forget to send the credentials to the new user!
                 </P>
             </Alert>
-                
-            <Button class="w-2/3 self-center">Add user</Button>
+
+            <Button type="submit" class="w-2/3 self-center">Add user</Button>
         </form>
     </Modal>
     <Modal title="Export Data" bind:open={showExportDataModal} size="md">
         <P class="mb-4">Choose the format to export your data.</P>
-        <div class="flex flex-row justify-center gap-4">
-            <Button class="w-2/3 self-center">Export as CSV</Button>
-            <Button class="w-2/3 self-center">Export as JSON</Button>
-            <Button class="w-2/3 self-center">Export as XML</Button>
-        </div>
+        <form action="?/export" method="POST" class="flex flex-row justify-center gap-4">
+            <Label> Choose export file format : </Label>
+            <Select items={[
+                {name:'CSV',value:'csv'},
+                {name:'JSON',value:'json'},
+                {name:'XML',value:'xml'}
+            ]} value="csv"/>
+
+            <Button type="submit" class="w-2/3 self-center">Export </Button>
+        </form>
     </Modal>
     <Modal title="Import Data" bind:open={showImportDataModal} size="md">
         <P class="mb-4">Choose a file to import.</P>
-        <div class="flex flex-col justify-center gap-4">
+        <form action="?/import" method="POST" class="flex flex-col justify-center gap-4">
             <Dropzone>
                 <CloudArrowUpOutline class="w-10 h-10 mb-2 text-gray-500 dark:text-gray-400" />
                 <P class="text-gray-500 dark:text-gray-400">
                     Drag and drop your file here or click to browse.
                 </P>
             </Dropzone>
-            <Button class="w-2/3 self-center mt-4">Import Data</Button>
-        </div>
+            <Button type="submit" class="w-2/3 self-center mt-4">Import Data</Button>
+        </form>
     </Modal>
 </article>
