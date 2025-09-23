@@ -125,5 +125,35 @@ export const actions = {
         
         redirect(200, '/dashboard');
 
+    },
+    forget: async ({ cookies, request }) => {
+        const formData = await request.formData();
+        const email = formData.get('email');
+
+        if (!email) {
+            return fail(400, { error: 'Email is required' });
+        }
+
+        try {
+            const baseUrl = PUBLIC_BASE_URL || 'http://localhost:5173';
+            const redirectTo = `${baseUrl}/auth/reset`;
+            const { data, error } = await supabase.auth.resetPasswordForEmail(email as string, {
+                redirectTo
+            });
+
+            if (error) {
+                console.error('Error sending password reset email:', error);
+                return fail(400, { error: `Error: ${error.message}` });
+            }
+
+            console.log('Password reset email sent:', data);
+        } catch (error) {
+            console.error('Error in forget action:', error);
+            return fail(500, { error: 'Internal Server Error' });
+        }
+
+        return { success: true };
     }
+
+
 } satisfies Actions;
