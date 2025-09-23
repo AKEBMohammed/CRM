@@ -9,7 +9,7 @@
         Tabs,
         Toggle,
     } from "flowbite-svelte";
-    let showForgetPassword = $state(false);
+    let showForgetPasswordModal = $state(false);
 </script>
 
 <article class="h-full flex flex-col items-center justify-center p-2">
@@ -85,7 +85,7 @@
             </form>
         </TabItem>
     </Tabs>
-    <Modal title="Forget Password" bind:open={showForgetPassword} size="sm">
+    <Modal title="Forget Password" bind:open={showForgetPasswordModal} size="sm">
         <form action="?/forget" method="post" class="flex flex-col gap-2">
             <Label for="email">email</Label>
             <Input type="email" id="email" name="email" required />
