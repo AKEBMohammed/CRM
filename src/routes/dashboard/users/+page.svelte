@@ -1,4 +1,6 @@
 <script lang="ts">
+    import { enhance } from "$app/forms";
+    import { page } from "$app/stores";
     import { Table } from "@flowbite-svelte-plugins/datatable";
     import {
         Button,
@@ -9,20 +11,60 @@
         P,
         Select,
         Alert,
+        Banner,
+        Dropzone,
     } from "flowbite-svelte";
     import {
+    CloudArrowUpOutline,
+        DownloadOutline,
         FileExportOutline,
         FileImportOutline,
         PlusOutline,
     } from "flowbite-svelte-icons";
 
-    let { data } = $props();
+    let { data, form } = $props();
     let showAddUserModal = $state(false);
     let showExportDataModal = $state(false);
     let showImportDataModal = $state(false);
+
+    // Close modals on successful operations
+    $effect(() => {
+        if (form?.success) {
+            showAddUserModal = false;
+            showImportDataModal = false;
+            showExportDataModal = false;
+        }
+    });
+
 </script>
 
 <article class="w-full h-full p-6">
+    {#if form?.error}
+        <Banner color="red" class="mb-4">
+            <P class="font-medium text-red-800">{form.error}</P>
+        </Banner>
+    {/if}
+
+    {#if form?.success}
+        <Banner color="green" class="mb-4">
+            <P class="font-medium text-green-800">{form.success}</P>
+            {#if form?.downloadUrl}
+                <div class="mt-2">
+                    <Button 
+                        href={form.downloadUrl} 
+                        target="_blank"
+                        download={form.filename || 'export.csv'}
+                        color="green"
+                        size="sm"
+                        class="inline-flex items-center"
+                    >
+                        <DownloadOutline class="w-6 h-6 " />
+                        Download File
+                    </Button>
+                </div>
+            {/if}
+        </Banner>
+    {/if}
     <div class="grid grid-cols-[1fr_auto_auto_auto] gap-x-2 mb-4">
         <Heading
             tag="h1"
@@ -51,6 +93,7 @@
     <Modal title="Add User" bind:open={showAddUserModal} size="md">
         <P class="mb-4">Fill in the details to add a new user.</P>
         <form
+            use:enhance
             action="?/add"
             method="post"
             class="flex flex-col justify-center gap-2"
@@ -62,10 +105,14 @@
             <Label class="mt-4">Password</Label>
             <Input name="password" type="password" required />
             <Label class="mt-4">Role</Label>
-            <Select name="role" items={[
-                {name:'admin',value:'admin'},
-                {name:'user',value:'user'}
-            ]} value="user"/>
+            <Select
+                name="role"
+                items={[
+                    { name: "admin", value: "admin" },
+                    { name: "user", value: "user" },
+                ]}
+                value="user"
+            />
 
             <Alert color="blue" class="mt-4 border-2">
                 <P class="font-medium text-blue-800">
@@ -79,33 +126,52 @@
 
     <Modal title="Export Data" bind:open={showExportDataModal} size="md">
         <P class="mb-4">Choose the format to export your data.</P>
-        <form onsubmit={()=>console.log(555)} action="?/export" method="POST" class="flex flex-col justify-center gap-4">
-            <Label> Choose export file format : </Label>
-            <Select name="format" items={[
-                {name:'CSV',value:'csv'},
-                {name:'JSON',value:'json'},
-                {name:'XML',value:'xml'}
-            ]} value="csv"/>
+        <form
+            use:enhance
+            action="?/export"
+            method="POST"
+            class="flex flex-col justify-center gap-4"
+        >
+            <Label>Choose export file format :</Label>
+            <Select
+                name="format"
+                items={[
+                    { name: "CSV", value: "csv" },
+                    { name: "JSON", value: "json" },
+                    { name: "XML", value: "xml" },
+                ]}
+                value="csv"
+            />
 
-            <Button type="submit" class="w-2/3 self-center">Export </Button>
+            <Button type="submit" class="w-2/3 self-center">Export</Button>
         </form>
     </Modal>
-    
+
     <Modal title="Import Data" bind:open={showImportDataModal} size="md">
         <P class="mb-4">Choose a file to import.</P>
-        <form action="?/import" method="POST" enctype="multipart/form-data" class="flex flex-col justify-center gap-4">
+        <form
+            use:enhance
+            action="?/import"
+            method="POST"
+            enctype="multipart/form-data"
+            class="flex flex-col justify-center gap-4"
+        >
             <Label for="file-upload">Upload File</Label>
-            <Input 
+            <Dropzone
                 id="file-upload"
-                name="file" 
-                type="file" 
-                accept=".json,.csv" 
-                required 
-            />
+                name="file"
+                type="file"
+                accept=".json,.csv"
+                required
+            >
+        <CloudArrowUpOutline class="w-10 h-10 mb-3 text-gray-400" />
+        </Dropzone>
             <P class="text-md text-gray-500 dark:text-gray-400">
                 Supported formats: JSON, CSV
             </P>
-            <Button type="submit" class="w-2/3 self-center mt-4">Import Data</Button>
+            <Button type="submit" class="w-2/3 self-center mt-4"
+                >Import Data</Button
+            >
         </form>
     </Modal>
 </article>

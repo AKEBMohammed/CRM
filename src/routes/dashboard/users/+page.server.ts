@@ -2,11 +2,12 @@ import { error, fail } from '@sveltejs/kit';
 import { gql } from '$lib/graphql';
 import type { Actions, PageServerLoad } from './$types';
 import { supabase } from '$lib/supabase';
+import { PUBLIC_BASE_URL } from '$env/static/public';
 
 export const load: PageServerLoad = async ({ params, cookies }) => {
     let data = cookies.get('user');
     if (!data) {
-        throw error(401, 'Unauthorized');
+        return fail(401, { error: 'Unauthorized access. Please log in again.' });
     }
     const user = JSON.parse(data);
 
@@ -31,7 +32,7 @@ export const load: PageServerLoad = async ({ params, cookies }) => {
 
     const res = await gql(query);
     if (!res) {
-        throw error(500, 'Failed to fetch profiles');
+        return fail(500, { error: 'Failed to fetch user profiles from database.' });
     }
 
     let users = res
@@ -49,8 +50,9 @@ export const load: PageServerLoad = async ({ params, cookies }) => {
 };
 
 export const actions = {
-
     add: async ({ request, cookies }) => {
+        console.log('Adding a user');
+
         const formData = await request.formData();
         const fullname = formData.get('fullname');
         const role = formData.get('role');
@@ -59,50 +61,66 @@ export const actions = {
         const data = cookies.get('user');
 
         if (!data) {
-            throw error(401, 'Unauthorized');
+            return fail(401, { error: 'Unauthorized access. Please log in again.' });
         }
         const user = JSON.parse(data);
 
         if (!fullname || !role || !email || !password) {
-            throw error(400, 'Missing fields');
+            return fail(400, { error: 'All fields are required. Please fill in all the information.' });
         }
-        let mutationUser = await supabase.auth.admin.createUser({
+
+        const baseUrl = PUBLIC_BASE_URL || 'http://localhost:5173';
+        const emailRedirectTo = `${baseUrl}/dashboard`;
+        const { data: newUser, error } = await supabase.auth.signUp({
             email: email.toString(),
             password: password.toString(),
+            options: {
+                emailRedirectTo,
+            },
         });
 
-        if (mutationUser.error) {
-            throw error(500, 'Failed to create user: ' + mutationUser.error.message);
+        if (error) {
+            return fail(500, { error: 'Failed to create user account: ' + error.message });
         }
 
-        let usersId = mutationUser.data.user?.id;
-        if (!usersId) {
-            throw error(500, 'Failed to get user ID');
+        let userId = newUser.user?.id;
+        if (!userId) {
+            return fail(500, { error: 'Failed to retrieve user ID from created account.' });
         }
 
-        let mutationProfile = `
-        mutation {
-            createProfile(
-                input: {
-                    fullname: "${fullname}",
-                    role: "${role}",
-                    company_id: "${user.company}",
-                    user_id: "${usersId}"
+        const mutationProfile = `
+            mutation ($fullname: String!, $role: user_role!, $company_id: BigInt, $user_id: UUID!) {
+                insertIntoprofilesCollection(
+                objects: [{
+                    fullname: $fullname,
+                    role: $role,
+                    company_id: $company_id,
+                    user_id: $user_id
+                }]
+                ) {
+                records {
+                    fullname
+                    role
+                    company_id
+                    user_id
                 }
-            ) {
-                profile {
-                    profile_id
                 }
             }
-        }
-        `;
+`;
 
-        const resProfile = await gql(mutationProfile);
+        const resProfile = await gql(mutationProfile, {
+            fullname: fullname,
+            role: role,
+            company_id: user.company,
+            user_id: userId
+        });
+
+        //const resProfile = await gql(mutationProfile);
         if (!resProfile) {
-            throw error(500, 'Failed to create profile');
+            return fail(500, { error: 'Failed to create user profile in database.' });
         }
 
-        return { success: true };
+        return { success: 'User added successfully!' };
     },
 
     import: async ({ request, cookies }) => {
@@ -111,12 +129,12 @@ export const actions = {
         const data = cookies.get('user');
 
         if (!data) {
-            throw error(401, 'Unauthorized');
+            return fail(401, { error: 'Unauthorized access. Please log in again.' });
         }
         const user = JSON.parse(data);
 
         if (!file || !(file instanceof File)) {
-            throw error(400, 'No file uploaded');
+            return fail(400, { error: 'No file uploaded. Please select a file to import.' });
         }
 
         const text = await file.text();
@@ -153,14 +171,14 @@ export const actions = {
                     }
                 }
             } else {
-                throw error(400, 'Unsupported file format. Please use JSON or CSV.');
+                return fail(400, { error: 'Unsupported file format. Please use JSON or CSV files only.' });
             }
         } catch (e) {
-            throw error(400, 'Invalid file format or corrupted data');
+            return fail(400, { error: 'Invalid file format or corrupted data. Please check your file and try again.' });
         }
 
         if (!Array.isArray(users)) {
-            throw error(400, 'File should contain an array of users');
+            return fail(400, { error: 'File should contain an array of users. Please check the file format.' });
         }
 
         for (let u of users) {
@@ -171,17 +189,17 @@ export const actions = {
             // Create user in Supabase Auth if user_id is not provided
             let userId = u.user_id;
             if (!userId) {
-                const mutationUser = await supabase.auth.admin.createUser({
+                const newUser = await supabase.auth.admin.createUser({
                     email: u.email,
                     password: Math.random().toString(36).slice(-8), // Generate random password
                 });
 
-                if (mutationUser.error) {
-                    console.error('Failed to create user:', mutationUser.error.message);
+                if (newUser.error) {
+                    console.error('Failed to create user:', newUser.error.message);
                     continue; // Skip this user and continue with others
                 }
 
-                userId = mutationUser.data.user?.id;
+                userId = newUser.data.user?.id;
                 if (!userId) {
                     continue; // Skip if we can't get user ID
                 }
@@ -210,17 +228,17 @@ export const actions = {
             }
         }
 
-        return { success: true };
+        return { success: `Successfully imported ${users.length} users!` };
     },
 
     export: async ({ request, cookies }) => {
         console.log('Export action triggered');
-        
+
         const formData = await request.formData();
         const format = formData.get('format');
         const data = cookies.get('user');
         if (!data) {
-            return fail(401, 'Unauthorized');
+            return fail(401, { error: 'Unauthorized access. Please log in again.' });
         }
         const user = JSON.parse(data);
 
@@ -245,7 +263,7 @@ export const actions = {
 
         const res = await gql(query);
         if (!res) {
-            return fail(500, 'Failed to fetch profiles');
+            return fail(500, { error: 'Failed to fetch user profiles for export.' });
         }
 
         let users = res
@@ -258,7 +276,21 @@ export const actions = {
                 };
             });
 
-        console.log('exported users:', users);
+        if (users.length === 0) {
+            return fail(400, { error: 'No users available to export.' });
+        }
+
+        if (!format || (format !== 'csv' && format !== 'json' && format !== 'xml')) {
+            return fail(400, { error: 'Invalid export format selected. Please choose CSV, JSON, or XML.' });
+        }
+
+        // Generate filename with timestamp and company ID for security policies
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-').replace('-', '');
+        const filename = `users-export-${user.user_id}-${user.company}-${timestamp}.${format}`;
+        const bucketName = 'exports'; // You'll need to create this bucket in Supabase
+
+        let fileContent: string;
+        let mimeType: string;
 
         if (format === 'csv') {
             const csvHeaders = ['Profile ID', 'Full Name', 'Role', 'Email'];
@@ -269,47 +301,61 @@ export const actions = {
                 user.email
             ]);
 
-            const csvContent = [
+            fileContent = [
                 csvHeaders.join(','),
                 ...csvRows.map((row: any[]) => row.join(','))
             ].join('\n');
+            mimeType = 'text/csv';
 
-            return new Response(csvContent, {
-                headers: {
-                    'Content-Type': 'text/csv',
-                    'Content-Disposition': 'attachment; filename="users.csv"'
-                }
-            });
         } else if (format === 'json') {
-            const jsonContent = JSON.stringify(users, null, 2);
-            return new Response(jsonContent, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Content-Disposition': 'attachment; filename="users.json"'
-                }
-            });
-        } else if (format === 'xml') {
-            const xmlContent = `
-                <users>
-                    ${users.map((user: any) => `
-                        <user>
-                            <profile_id>${user.profile_id}</profile_id>
-                            <fullname>${user.fullname}</fullname>
-                            <role>${user.role}</role>
-                            <email>${user.email}</email>
-                        </user>
-                    `).join('')}
-                </users>
-            `.trim();
+            fileContent = JSON.stringify(users, null, 2);
+            mimeType = 'application/json';
 
-            return new Response(xmlContent, {
-                headers: {
-                    'Content-Type': 'application/xml',
-                    'Content-Disposition': 'attachment; filename="users.xml"'
-                }
-            });
+        } else if (format === 'xml') {
+            fileContent = `<?xml version="1.0" encoding="UTF-8"?>
+<users>
+    ${users.map((user: any) => `
+    <user>
+        <profile_id>${user.profile_id}</profile_id>
+        <fullname>${user.fullname}</fullname>
+        <role>${user.role}</role>
+        <email>${user.email}</email>
+    </user>`).join('')}
+</users>`.trim();
+            mimeType = 'application/xml';
+
         } else {
-            return fail(400, 'Invalid format');
+            return fail(400, { error: 'Invalid export format selected. Please choose CSV, JSON, or XML.' });
         }
+
+        // Upload file to Supabase Storage
+        const { data: uploadData, error: uploadError } = await supabase.storage
+            .from(bucketName)
+            .upload(filename, fileContent, {
+                contentType: mimeType,
+                cacheControl: '3600',
+                upsert: false
+            });
+
+        if (uploadError) {
+            console.error('Upload error:', uploadError);
+            return fail(500, { error: 'Failed to save export file. Please try again.' });
+        }
+
+        // Generate a signed URL for download (expires in 1 hour)
+        const { data: urlData, error: urlError } = await supabase.storage
+            .from(bucketName)
+            .createSignedUrl(filename, 3600);
+
+        if (urlError) {
+            console.error('URL generation error:', urlError);
+            return fail(500, { error: 'Failed to generate download link. Please try again.' });
+        }
+
+        return { 
+            success: `Export completed successfully! Your file contains ${users.length} users.`, 
+            downloadUrl: urlData.signedUrl,
+            filename: filename
+        };
     }
 } satisfies Actions;
