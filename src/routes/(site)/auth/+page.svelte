@@ -9,11 +9,32 @@
         TabItem,
         Tabs,
         Toggle,
+        Banner,
+        P,
     } from "flowbite-svelte";
+    import { DownloadOutline } from "flowbite-svelte-icons";
+    let { form } = $props();
     let showForgetPasswordModal = $state(false);
+
+    $effect(() => {
+        if (form?.success) {
+            showForgetPasswordModal = false;
+        }
+    });
 </script>
 
-<article class="h-full flex flex-col items-center justify-center p-2">
+<article class="h-full flex flex-col items-center justify-center p-2 mt-15">
+    {#if form?.error}
+        <Banner color="red" class="mb-4">
+            <P class="font-medium text-red-800">{form.error}</P>
+        </Banner>
+    {/if}
+
+    {#if form?.success}
+        <Banner color="green" class="mb-4">
+            <P class="font-medium text-green-800">{form.success}</P>
+        </Banner>
+    {/if}
     <Tabs tabStyle="full" divider classes={{ content: "lg:w-150 w-full" }}>
         <TabItem open>
             {#snippet titleSlot()}
