@@ -9,10 +9,8 @@
         P,
         Select,
         Alert,
-        Dropzone,
     } from "flowbite-svelte";
     import {
-    CloudArrowUpOutline,
         FileExportOutline,
         FileImportOutline,
         PlusOutline,
@@ -58,19 +56,19 @@
             class="flex flex-col justify-center gap-2"
         >
             <Label>Full name</Label>
-            <Input type="text" />
+            <Input name="fullname" type="text" required />
             <Label class="mt-4">Email</Label>
-            <Input type="email" />
+            <Input name="email" type="email" required />
             <Label class="mt-4">Password</Label>
-            <Input type="password" />
+            <Input name="password" type="password" required />
             <Label class="mt-4">Role</Label>
-            <Select items={[
+            <Select name="role" items={[
                 {name:'admin',value:'admin'},
                 {name:'user',value:'user'}
             ]} value="user"/>
 
             <Alert color="blue" class="mt-4 border-2">
-                <P class="font-medium">
+                <P class="font-medium text-blue-800">
                     Do not forget to send the credentials to the new user!
                 </P>
             </Alert>
@@ -78,11 +76,12 @@
             <Button type="submit" class="w-2/3 self-center">Add user</Button>
         </form>
     </Modal>
+
     <Modal title="Export Data" bind:open={showExportDataModal} size="md">
         <P class="mb-4">Choose the format to export your data.</P>
-        <form action="?/export" method="POST" class="flex flex-row justify-center gap-4">
+        <form onsubmit={()=>console.log(555)} action="?/export" method="POST" class="flex flex-col justify-center gap-4">
             <Label> Choose export file format : </Label>
-            <Select items={[
+            <Select name="format" items={[
                 {name:'CSV',value:'csv'},
                 {name:'JSON',value:'json'},
                 {name:'XML',value:'xml'}
@@ -91,15 +90,21 @@
             <Button type="submit" class="w-2/3 self-center">Export </Button>
         </form>
     </Modal>
+    
     <Modal title="Import Data" bind:open={showImportDataModal} size="md">
         <P class="mb-4">Choose a file to import.</P>
-        <form action="?/import" method="POST" class="flex flex-col justify-center gap-4">
-            <Dropzone>
-                <CloudArrowUpOutline class="w-10 h-10 mb-2 text-gray-500 dark:text-gray-400" />
-                <P class="text-gray-500 dark:text-gray-400">
-                    Drag and drop your file here or click to browse.
-                </P>
-            </Dropzone>
+        <form action="?/import" method="POST" enctype="multipart/form-data" class="flex flex-col justify-center gap-4">
+            <Label for="file-upload">Upload File</Label>
+            <Input 
+                id="file-upload"
+                name="file" 
+                type="file" 
+                accept=".json,.csv" 
+                required 
+            />
+            <P class="text-md text-gray-500 dark:text-gray-400">
+                Supported formats: JSON, CSV
+            </P>
             <Button type="submit" class="w-2/3 self-center mt-4">Import Data</Button>
         </form>
     </Modal>
