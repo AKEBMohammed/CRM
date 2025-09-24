@@ -1,11 +1,12 @@
 <script lang="ts">
+    import { enhance } from "$app/forms";
     import { Label, Input, Button, Card, Heading } from "flowbite-svelte";
 </script>
 
 <article>
-    <Card class="max-w-md mx-auto my-10 p-6">
+    <Card class="max-w-md mx-auto my-20 p-6">
         <Heading tag="h4">Reset Password</Heading>
-        <form action="?/reset" method="post" class="flex flex-col gap-2">
+        <form action="?/reset" method="post" use:enhance class="flex flex-col gap-2">
             <Label for="password">New password</Label>
             <Input type="password" id="password" name="password" required />
             <Label for="confirm_password">Confirm new password</Label>
