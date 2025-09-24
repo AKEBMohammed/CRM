@@ -77,13 +77,26 @@ export const actions = {
         const formData = await request.formData();
         const email = formData.get('email');
         const password = formData.get('password');
+        const remember = formData.get('remember');
+
+        if (!email || !password) {
+            return fail(400, { error: 'Email and password are required' });
+        }
 
         console.log('Login attempt for email:', email);
         
 
         try {
             let data = await signInWithEmail(email as string, password as string);
-            cookies.set('user', JSON.stringify(data.user), { path: '/' })
+
+            if (!data) {
+                return fail(500, { error: 'Login error: No data returned from signInWithEmail.' })
+            }
+            
+            // Set cookie expiration based on "remember me" checkbox
+            const cookieOptions = remember ? { path: '/', maxAge: 60 * 60 * 24 * 30 } : { path: '/' }; // 30 days vs session
+            cookies.set('user', JSON.stringify(data.user), cookieOptions);
+            
         } catch (error) {
             console.error('Error signing in:', error);
             return fail(400, { error: `Login Error : ${error}` });
