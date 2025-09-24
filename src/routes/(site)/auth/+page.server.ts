@@ -120,8 +120,6 @@ export const actions = {
             return fail(400, { error: `Registration Error : ${error instanceof Error ? error.message : error}` });
         }
 
-        console.log('Redirecting to dashboard after registration');
-
         redirect(303, '/dashboard');
 
     },
@@ -151,7 +149,7 @@ export const actions = {
             return fail(500, { error: 'Internal Server Error' });
         }
 
-        return { success: true };
+        return { success: 'Password reset email sent. Please check your inbox.' };
     }
 
 

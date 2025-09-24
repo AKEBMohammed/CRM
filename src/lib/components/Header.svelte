@@ -16,6 +16,7 @@
     import {
         BellSolid,
         CogOutline,
+        ExclamationCircleOutline,
         MessagesSolid,
     } from "flowbite-svelte-icons";
     import { supabase } from "$lib/supabase";
@@ -60,8 +61,12 @@
                         await supabase.auth.signOut();
                         location.href = '/';
                     }}>
-                        <div> </div>
+                        <ExclamationCircleOutline class="w-5 h-5 me-2" />
                         Sign out
+                    </DropdownItem>
+                    <DropdownItem class="flex items-center">
+                        <ExclamationCircleOutline class="w-5 h-5 me-2" />
+                        Report an issue
                     </DropdownItem>
                 </DropdownGroup>
             </Dropdown>

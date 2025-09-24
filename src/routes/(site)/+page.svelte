@@ -17,7 +17,7 @@
     ];
 </script>
 
-<article class="max-w-7xl mx-auto p-6 text-primary-500 dark:text-primary-500">
+<article class="w-screen mt-15 p-8 text-primary-500 dark:text-primary-500">
     <!-- Hero -->
     <section class="grid gap-8 md:grid-cols-2 items-center py-5">
         <div>
