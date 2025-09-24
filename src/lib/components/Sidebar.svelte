@@ -44,7 +44,7 @@
 </script>
 
 <div
-    class="w-15 h-full border-r border-gray-200 dark:border-gray-700 p-2 flex flex-col items-center gap-4 bg-white shadow dark:bg-gray-800"
+    class="w-15 h-full border-r border-gray-200 dark:border-gray-700 p-2 flex flex-col items-center gap-4 bg-white shadow dark:bg-gray-800 row-start-2"
 >
     {#each list as { name, icon:Icon, href }}
         <Button
