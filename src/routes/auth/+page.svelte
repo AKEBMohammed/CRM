@@ -10,7 +10,7 @@
         Tabs,
         Toggle,
     } from "flowbite-svelte";
-    let showForgetPassword = $state(false);
+    let showForgetPasswordModal = $state(false);
 </script>
 
 <article class="h-full flex flex-col items-center justify-center p-2">
@@ -32,7 +32,7 @@
                     <Toggle class="ml-auto" id="remember" name="remember" />
                 </div>
                 <a
-                    onclick={() => (showForgetPassword = true)}
+                    onclick={() => (showForgetPasswordModal = true)}
                     href="#"
                     class="ml-auto text-blue-400 hover:underline"
                     >forget password?</a
@@ -87,9 +87,18 @@
             </form>
         </TabItem>
     </Tabs>
-    <Modal title="Forget Password" form bind:open={showForgetPassword}>
-        <Label for="">email</Label>
-        <Input type="email" id="email" name="email" required />
-        <Button class="ml-auto">Send verfication link</Button>
+    <Modal title="Forget Password" bind:open={showForgetPasswordModal} size="sm">
+        <form action="?/forget" method="post" class="flex flex-col gap-2">
+            <Label for="email">email</Label>
+            <Input type="email" id="email" name="email" required />
+            <Alert color="blue" class="mt-2">
+                <span class="font-medium">Info alert!</span>
+                <p>
+                    Password reset link will be sent to your email address if it
+                    exists in our system.
+                </p>
+            </Alert>
+            <Button type="submit" class="self-center px-4">Send password reset link</Button>
+        </form>
     </Modal>
 </article>
