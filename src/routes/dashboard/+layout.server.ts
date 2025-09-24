@@ -30,10 +30,7 @@ export const load: LayoutServerLoad = async ({ cookies}) => {
             }
         }
     `
-    let data = await gql(query);
-
-    console.log(data.profilesCollection.edges[0]?.node);
-    
+    let data = await gql(query);    
 
     let result = {
         user_id: user.data.user?.id,
