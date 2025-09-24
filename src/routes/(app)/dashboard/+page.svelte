@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Heading,P } from "flowbite-svelte";
+    import { Card, Heading,P } from "flowbite-svelte";
     import type { PageProps } from "./$types";
 
     let { data }: PageProps = $props();
@@ -19,7 +19,10 @@
             <li>And much more.</li>
         </ul>
     </div>
-    <button class="mt-4 p-2 bg-white text-primary-600 rounded shadow"
-        >Take Action</button
-    >
+    <div class="w-full mt-4 grid">
+        <Card class="mb-4 p-4">
+            <Heading tag="h4" class="mb-2">Users</Heading>
+            
+        </Card>
+    </div>
 </article>

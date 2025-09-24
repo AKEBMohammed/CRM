@@ -19,23 +19,12 @@
         MessagesSolid,
     } from "flowbite-svelte-icons";
     import { supabase } from "$lib/supabase";
-    import { onMount } from "svelte";
-    import { goto } from "$app/navigation";
     let currentRoute = $page.url.pathname;
 
-    let user: any = null;
-    onMount(async () => {
-        const { data } = await supabase.auth.getUser();
-        if( !user ){
-            goto('/auth');
-        }
-        user = data?.user;
-        
-        
-    });
+    let { user } = $props()
 </script>
 
-<Navbar class="dark:bg-gray-800 shadow-sm">
+<Navbar class="dark:bg-gray-800 shadow-sm col-start-1 col-span-2 absolute">
     <NavBrand href="#">
         <img src={favicon} class="me-3 h-6 sm:h-9" alt="DZ Sales Logo" />
         <span

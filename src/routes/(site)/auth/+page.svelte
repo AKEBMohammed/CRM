@@ -19,7 +19,12 @@
             {#snippet titleSlot()}
                 <span class="text-bold"> Login </span>
             {/snippet}
-            <form action="?/login" method="post" class="flex flex-col gap-4" use:enhance>
+            <form
+                action="?/login"
+                method="post"
+                class="flex flex-col gap-4"
+                use:enhance
+            >
                 <Label for="email">Email</Label>
                 <Input type="email" id="email" name="email" required />
                 <Label for="password">Password</Label>
@@ -35,7 +40,7 @@
                     onclick={() => (showForgetPasswordModal = true)}
                     href="#"
                     class="ml-auto text-blue-400 hover:underline"
-                    >forget password?</a
+                    >Forget password?</a
                 >
                 <Button class="mx-8" type="submit">Login</Button>
             </form>
@@ -87,8 +92,17 @@
             </form>
         </TabItem>
     </Tabs>
-    <Modal title="Forget Password" bind:open={showForgetPasswordModal} size="sm">
-        <form action="?/forget" method="post" class="flex flex-col gap-2">
+    <Modal
+        title="Forget Password"
+        bind:open={showForgetPasswordModal}
+        size="sm"
+    >
+        <form
+            action="?/forget"
+            method="post"
+            use:enhance
+            class="flex flex-col gap-2"
+        >
             <Label for="email">email</Label>
             <Input type="email" id="email" name="email" required />
             <Alert color="blue" class="mt-2">
@@ -98,7 +112,9 @@
                     exists in our system.
                 </p>
             </Alert>
-            <Button type="submit" class="self-center px-4">Send password reset link</Button>
+            <Button type="submit" class="self-center px-4"
+                >Send password reset link</Button
+            >
         </form>
     </Modal>
 </article>

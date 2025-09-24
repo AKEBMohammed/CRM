@@ -78,6 +78,8 @@ export const actions = {
         const email = formData.get('email');
         const password = formData.get('password');
 
+        console.log('Login attempt for email:', email);
+        
 
         try {
             let data = await signInWithEmail(email as string, password as string);
@@ -87,7 +89,7 @@ export const actions = {
             return fail(400, { error: `Login Error : ${error}` });
         }
 
-        redirect(200, '/dashboard');
+        redirect(303, '/dashboard');
 
 
     },
@@ -120,7 +122,7 @@ export const actions = {
 
         console.log('Redirecting to dashboard after registration');
 
-        redirect(200, '/dashboard');
+        redirect(303, '/dashboard');
 
     },
     forget: async ({ cookies, request }) => {
