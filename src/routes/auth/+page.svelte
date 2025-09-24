@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { enhance } from "$app/forms";
     import {
         Alert,
         Button,
@@ -18,7 +19,7 @@
             {#snippet titleSlot()}
                 <span class="text-bold"> Login </span>
             {/snippet}
-            <form action="?/login" method="post" class="flex flex-col gap-4">
+            <form action="?/login" method="post" class="flex flex-col gap-4" use:enhance>
                 <Label for="email">Email</Label>
                 <Input type="email" id="email" name="email" required />
                 <Label for="password">Password</Label>
@@ -47,6 +48,7 @@
             <form
                 action="?/register"
                 method="post"
+                use:enhance
                 class="grid lg:grid-cols-2 grid-cols-1 gap-4"
             >
                 <Alert color="blue" class="lg:col-span-2">
