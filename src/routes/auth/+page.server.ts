@@ -1,6 +1,6 @@
 import type { Actions } from './$types';
 import { PUBLIC_BASE_URL } from '$env/static/public';
-import { fail, redirect } from '@sveltejs/kit';
+import { error, fail, redirect } from '@sveltejs/kit';
 import { supabase } from '$lib/supabase';
 
 async function signUpNewUser(email: string, password: string) {
@@ -21,7 +21,7 @@ async function signUpNewUser(email: string, password: string) {
     }
 
     // return the created user's id (may be undefined if using confirmation flows)
-    return data?.user?.id ?? null;
+    return data;
 }
 
 async function signInWithEmail(email: string, password: string) {
@@ -77,16 +77,17 @@ export const actions = {
         const formData = await request.formData();
         const email = formData.get('email');
         const password = formData.get('password');
-        
+
 
         try {
-            await signInWithEmail(email as string, password as string);
+            let data = await signInWithEmail(email as string, password as string);
+            cookies.set('user', JSON.stringify(data.user), { path: '/' })
         } catch (error) {
             console.error('Error signing in:', error);
             return fail(400, { error: `Login Error : ${error}` });
         }
 
-        redirect(303, '/dashboard');
+        redirect(200, '/dashboard');
 
 
     },
@@ -104,17 +105,13 @@ export const actions = {
         }
 
         try {
-            const userId = await signUpNewUser(email as string, password as string);
+            const data = await signUpNewUser(email as string, password as string);
 
-            // If userId is not returned (e.g. invite/confirm flows), try to get the user from server
-            let resolvedUserId = userId;
-            if (!resolvedUserId) {
-                const { data: sessionData, error: sessionError } = await supabase.auth.getUser();
-                if (sessionError) console.warn('Could not get user after signup:', sessionError);
-                resolvedUserId = sessionData?.data?.user?.id ?? null;
+            if (!data) {
+                return fail(500, { error: 'Sign up error: We can not create a new user.' })
             }
 
-            await completeProfile(fullname as string, company as string, industry as string, resolvedUserId);
+            await completeProfile(fullname as string, company as string, industry as string, data?.user?.id || null);
 
         } catch (error) {
             console.error('Error registering:', error);
@@ -122,7 +119,7 @@ export const actions = {
         }
 
         console.log('Redirecting to dashboard after registration');
-        
+
         redirect(200, '/dashboard');
 
     }

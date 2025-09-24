@@ -29,7 +29,7 @@
                 lightweight app built for speed and clarity.
             </p>
             <div class="mt-6 flex gap-3">
-                <Button color="primary">Let's start</Button>
+                <Button color="primary" href='/auth'>Let's start</Button>
             </div>
         </div>
         <div>
