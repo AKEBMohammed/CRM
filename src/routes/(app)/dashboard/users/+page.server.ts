@@ -163,6 +163,7 @@ export const actions = {
                         fullname: user_obj.fullname || user_obj.full_name || user_obj.name,
                         role: user_obj.role || 'user',
                         email: user_obj.email,
+                        password: user_obj.password || null,
                         user_id: user_obj.user_id || null
                     };
 
@@ -181,54 +182,89 @@ export const actions = {
             return fail(400, { error: 'File should contain an array of users. Please check the file format.' });
         }
 
+        let successCount = 0;
+        let failedUsers: string[] = [];
+
         for (let u of users) {
             if (!u.fullname || !u.email) {
-                continue; // Skip invalid entries
+                console.warn('Skipping user with missing fullname or email:', u);
+                failedUsers.push(u.fullname || u.email || 'Unknown user');
+                continue;
             }
 
             // Create user in Supabase Auth if user_id is not provided
             let userId = u.user_id;
-            if (!userId) {
-                const newUser = await supabase.auth.admin.createUser({
+            if (!userId) {                
+                const { data: newUser, error } = await supabase.auth.signUp({
                     email: u.email,
-                    password: Math.random().toString(36).slice(-8), // Generate random password
+                    password: u.password,
+                    options: {
+                        emailRedirectTo: `${PUBLIC_BASE_URL || 'http://localhost:5173'}/dashboard`
+                    },
                 });
 
-                if (newUser.error) {
-                    console.error('Failed to create user:', newUser.error.message);
+                if (error) {
+                    console.error('Failed to create user:', error.message);
+                    failedUsers.push(u.fullname || u.email);
                     continue; // Skip this user and continue with others
                 }
 
-                userId = newUser.data.user?.id;
+                userId = newUser.user?.id;
                 if (!userId) {
+                    failedUsers.push(u.fullname || u.email);
                     continue; // Skip if we can't get user ID
                 }
-            }
-
-            let mutation = `
-            mutation {
-                createProfile(
-                    input: {
-                        fullname: "${u.fullname}",
-                        role: "${u.role || 'user'}",
-                        company_id: "${user.company}",
-                        user_id: "${userId}"
-                    }
-                ) {
-                    profile {
-                        profile_id
-                    }
+                if (!userId) {
+                    return fail(500, { error: 'Failed to retrieve user ID from created account.' });
                 }
             }
+
+            const mutationProfile = `
+                mutation ($fullname: String!, $role: user_role!, $company_id: BigInt!, $user_id: UUID!) {
+                    insertIntoprofilesCollection(
+                    objects: [{
+                        fullname: $fullname,
+                        role: $role,
+                        company_id: $company_id,
+                        user_id: $user_id
+                    }]
+                    ) {
+                    records {
+                        profile_id
+                        fullname
+                        role
+                        company_id
+                        user_id
+                    }
+                    }
+                }
             `;
 
-            const res = await gql(mutation);
+            const res = await gql(mutationProfile, {
+                fullname: u.fullname,
+                role: u.role || 'user',
+                company_id: user.company,
+                user_id: userId
+            });
+            
             if (!res) {
                 console.error('Failed to create profile for user:', u.fullname);
+                failedUsers.push(u.fullname || u.email);
+            } else {
+                successCount++;
             }
         }
 
-        return { success: `Successfully imported ${users.length} users!` };
+        if (successCount === 0) {
+            return fail(500, { error: `Failed to import any users. ${failedUsers.length > 0 ? 'Failed users: ' + failedUsers.join(', ') : ''}` });
+        }
+
+        let message = `Successfully imported ${successCount} users!`;
+        if (failedUsers.length > 0) {
+            message += ` (${failedUsers.length} failed: ${failedUsers.join(', ')})`;
+        }
+
+        return { success: message };
     },
 
     export: async ({ request, cookies }) => {
