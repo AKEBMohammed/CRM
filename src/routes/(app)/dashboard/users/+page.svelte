@@ -15,7 +15,7 @@
         Dropzone,
     } from "flowbite-svelte";
     import {
-    CloudArrowUpOutline,
+        CloudArrowUpOutline,
         DownloadOutline,
         FileExportOutline,
         FileImportOutline,
@@ -35,7 +35,6 @@
             showExportDataModal = false;
         }
     });
-
 </script>
 
 <article class="w-full h-full p-6">
@@ -50,10 +49,10 @@
             <P class="font-medium text-green-800">{form.success}</P>
             {#if form?.downloadUrl}
                 <div class="mt-2">
-                    <Button 
-                        href={form.downloadUrl} 
+                    <Button
+                        href={form.downloadUrl}
                         target="_blank"
-                        download={form.filename || 'export.csv'}
+                        download={form.filename || "export.csv"}
                         color="green"
                         size="sm"
                         class="inline-flex items-center"
@@ -88,7 +87,16 @@
         </Button>
     </div>
 
-    <Table items={data.users} />
+    <Table
+        items={data.users}
+        dataTableOptions={{
+            paging: false,
+            scrollY: "55vh",
+            rowNavigation: true,
+            tabIndex: 1,
+            responsive: true,
+        }}
+    />
 
     <Modal title="Add User" bind:open={showAddUserModal} size="md">
         <P class="mb-4">Fill in the details to add a new user.</P>
@@ -164,8 +172,8 @@
                 accept=".json,.csv"
                 required
             >
-        <CloudArrowUpOutline class="w-10 h-10 mb-3 text-gray-400" />
-        </Dropzone>
+                <CloudArrowUpOutline class="w-10 h-10 mb-3 text-gray-400" />
+            </Dropzone>
             <P class="text-md text-gray-500 dark:text-gray-400">
                 Supported formats: JSON, CSV
             </P>
