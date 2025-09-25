@@ -39,7 +39,7 @@ async function signInWithEmail(email: string, password: string) {
 }
 
 
-async function completeProfile(fullname: string, company: string, industry: string, userId: string | null) {
+async function completeProfile(fullname: string, email: string, phone: string, company: string, industry: string, userId: string | null) {
     if (!userId) {
         throw new Error('No user id available to link profile');
     }
@@ -53,14 +53,14 @@ async function completeProfile(fullname: string, company: string, industry: stri
 
     if (companyError) {
         console.error('Error creating company:', companyError);
-        throw new Error(companyError.message);
+        return fail(500, 'Error creating company:' + companyError.message);
     }
 
     const companyId = companyData?.company_id ?? null;
 
     const { data: profileData, error: profileError } = await supabase
         .from('profiles')
-        .insert({ fullname, company_id: companyId, user_id: userId })
+        .insert({ fullname, company_id: companyId, email, phone, user_id: userId })
         .select('profile_id')
         .single();
 
@@ -81,10 +81,7 @@ export const actions = {
 
         if (!email || !password) {
             return fail(400, { error: 'Email and password are required' });
-        }
-
-        console.log('Login attempt for email:', email);
-        
+        }        
 
         try {
             let data = await signInWithEmail(email as string, password as string);
@@ -110,6 +107,7 @@ export const actions = {
         const formData = await request.formData();
         const fullname = formData.get('fullname');
         const email = formData.get('email');
+        const phone = formData.get('phone');
         const password = formData.get('password');
         const company = formData.get('company');
         const industry = formData.get('industry');
@@ -126,14 +124,14 @@ export const actions = {
                 return fail(500, { error: 'Sign up error: We can not create a new user.' })
             }
 
-            await completeProfile(fullname as string, company as string, industry as string, data?.user?.id || null);
+            await completeProfile(fullname as string, email as string, phone as string, company as string, industry as string, data?.user?.id || null);
 
         } catch (error) {
             console.error('Error registering:', error);
             return fail(400, { error: `Registration Error : ${error instanceof Error ? error.message : error}` });
         }
 
-        redirect(303, '/dashboard');
+        return { success: 'Registration successful! Please check your email to confirm your account.' };
 
     },
     forget: async ({ cookies, request }) => {
