@@ -26,7 +26,7 @@
 </script>
 
 <Navbar class="dark:bg-gray-800 shadow-sm col-start-1 col-span-2 absolute">
-    <NavBrand href="#">
+    <NavBrand href="/">
         <img src={favicon} class="me-3 h-6 sm:h-9" alt="DZ Sales Logo" />
         <span
             class="self-center whitespace-nowrap text-xl font-bold text-primary-500 dark:text-white"
@@ -37,6 +37,7 @@
         {#if currentRoute === "/"}
             <Button href="/auth" color="primary">Get started!</Button>
         {:else if user}
+            <Button href="" color="dark"></Button>
             <Button color="dark"><MessagesSolid /></Button>
             <Button color="dark"><BellSolid /></Button>
             <Avatar
