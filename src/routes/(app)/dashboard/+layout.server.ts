@@ -6,17 +6,12 @@ import type { LayoutServerLoad } from './$types';
 export const load: LayoutServerLoad = async ({ cookies}) => {
     const user = await supabase.auth.getUser();
     if (!user.data.user) {
-<<<<<<< HEAD
-        redirect(307, '/auth');
-    }
-=======
         redirect(300, '/auth');
     }   
 
     let profile = JSON.parse(cookies.get('user') || 'null');
     console.log(profile);
     
->>>>>>> main
 
     let query = `
         query {
