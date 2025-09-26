@@ -20,6 +20,7 @@ export const load: LayoutServerLoad = async ({ cookies}) => {
             ) {
                 edges {
                     node {
+                        profile_id
                         fullname
                         role
                         companies {
@@ -32,7 +33,7 @@ export const load: LayoutServerLoad = async ({ cookies}) => {
     `
     let data = await gql(query);    
 
-    let result = {
+    let profile = {
         user_id: user.data.user?.id,
         email: user.data.user?.email,
         fullname: data.profilesCollection.edges[0]?.node.fullname,
@@ -40,9 +41,59 @@ export const load: LayoutServerLoad = async ({ cookies}) => {
         company: data.profilesCollection.edges[0]?.node.companies?.company_id
     }
 
-    cookies.set('user', JSON.stringify(result), { path: '/' });
+    cookies.set('user', JSON.stringify(profile), { path: '/' });
 
+    query = `
+        query {
+            profiles_roomsCollection(
+                filter: {
+                    profile_id: {
+                        eq: "${data.profilesCollection.edges[0]?.node.profile_id}"
+                    }
+                }
+            ) {
+                edges {
+                    node {
+                        rooms {
+                            room_id
+                            name
+                            messagesCollection(
+                                orderBy: [{ send_at: DescNullsLast }]
+                                first: 1
+                            ){
+                                edges {
+                                    node {
+                                        message_id
+                                        content
+                                        send_at
+                                        profiles {
+                                            fullname
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    
+    `
+    data = await gql(query);
+    let rooms = data
+        .profiles_roomsCollection
+        .edges
+        .map((edge: any) => edge.node.rooms)
+        .map((room: any) => ({
+            id: room.room_id,
+            name: room.name,
+            last_message: room.messagesCollection.edges[0]?.node.content || null
+        }));
+
+    console.log(rooms);
+    
     return {
-        user: result
+        user: profile,
+        rooms
     };
 };

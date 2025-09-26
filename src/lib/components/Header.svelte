@@ -9,12 +9,14 @@
         DropdownHeader,
         DropdownGroup,
         DropdownItem,
+        Heading,
     } from "flowbite-svelte";
     import favicon from "$lib/assets/favicon.png";
     import avatar from "$lib/assets/user.png";
     import { page } from "$app/stores";
     import {
         BellSolid,
+        BrainSolid,
         CogOutline,
         ExclamationCircleOutline,
         MessagesSolid,
@@ -23,7 +25,7 @@
     import { supabase } from "$lib/supabase";
     let currentRoute = $page.url.pathname;
 
-    let { user } = $props();
+    let { user, rooms } = $props();
 </script>
 
 <Navbar class="dark:bg-gray-800 shadow-sm col-start-1 col-span-2 absolute">
@@ -38,8 +40,31 @@
         {#if currentRoute === "/"}
             <Button href="/auth" color="primary">Get started!</Button>
         {:else if user}
-            <Button href="" color="dark"></Button>
-            <Button color="dark"><MessagesSolid /></Button>
+            <Button color="dark">
+                <BrainSolid />
+            </Button>
+            <Button color="dark" id="chats-drop"><MessagesSolid /></Button>
+            <Dropdown  triggeredBy="#chats-drop">
+                <DropdownHeader>
+                    <Heading tag="h5" class="text-sm">Messages</Heading>
+                </DropdownHeader>
+                <DropdownGroup>
+                    {#if rooms.length === 0}
+                        <span class="text-sm text-gray-500 px-4 py-2 block">
+                            No messages
+                        </span>
+                    {:else}
+                        {#each rooms as room}
+                            <DropdownItem class="flex flex-col" href={`/dashboard/rooms/${room.id}`}>
+                                <span class="font-medium">{room.name}</span>
+                                <span class="text-sm text-gray-500 truncate"
+                                    >{room.last_message || "No messages yet"}</span
+                                >
+                            </DropdownItem>
+                        {/each}
+                    {/if}
+                </DropdownGroup>
+            </Dropdown>
             <Button color="dark"><BellSolid /></Button>
             <Avatar
                 size="md"
