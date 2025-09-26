@@ -88,6 +88,8 @@
                     >
                     <Label for="fullname">Full Name</Label>
                     <Input type="text" id="fullname" name="fullname" required />
+                    <Label for="phone">Phone</Label>
+                    <Input type="text" id="phone" name="phone" required />
                     <Label for="email">Email</Label>
                     <Input type="email" id="email" name="email" required />
                     <Label for="password">Password</Label>
