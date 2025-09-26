@@ -42,8 +42,6 @@ export const load: LayoutServerLoad = async ({ cookies}) => {
         company: data.profilesCollection.edges[0]?.node.companies?.company_id
     }
 
-    cookies.set('user', JSON.stringify(profile), { path: '/' });
-
     query = `
         query {
             profiles_roomsCollection(

@@ -35,7 +35,18 @@ async function signInWithEmail(email: string, password: string) {
         throw new Error(error.message);
     }
 
-    return data;
+    let { data:profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', data.user?.id)
+        .single();
+
+    if (profileError) {
+        console.error('Error fetching profile:', profileError);
+        throw new Error(profileError.message);
+    }
+
+    return profile
 }
 
 
@@ -92,7 +103,7 @@ export const actions = {
             
             // Set cookie expiration based on "remember me" checkbox
             const cookieOptions = remember ? { path: '/', maxAge: 60 * 60 * 24 * 30 } : { path: '/' }; // 30 days vs session
-            cookies.set('user', JSON.stringify(data.user), cookieOptions);
+            cookies.set('user', JSON.stringify(data), cookieOptions);
             
         } catch (error) {
             console.error('Error signing in:', error);
