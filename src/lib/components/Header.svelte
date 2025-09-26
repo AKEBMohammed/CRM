@@ -18,11 +18,12 @@
         CogOutline,
         ExclamationCircleOutline,
         MessagesSolid,
+        UserCircleSolid,
     } from "flowbite-svelte-icons";
     import { supabase } from "$lib/supabase";
     let currentRoute = $page.url.pathname;
 
-    let { user } = $props()
+    let { user } = $props();
 </script>
 
 <Navbar class="dark:bg-gray-800 shadow-sm col-start-1 col-span-2 absolute">
@@ -41,14 +42,26 @@
             <Button color="dark"><MessagesSolid /></Button>
             <Button color="dark"><BellSolid /></Button>
             <Avatar
-                src={user?.user_metadata?.avatar_url || avatar}
                 size="md"
                 alt="User settings"
                 id="user-drop"
-            />
+            >
+            {#if user?.user_metadata?.avatar_url}
+                <img
+                    class="rounded-full"
+                    src={user.user_metadata.avatar_url}
+                    alt="User Avatar"
+                />
+            {:else}
+                <UserCircleSolid class="shrink-0 h-8 w-8" />
+            {/if}
+            </Avatar>
             <Dropdown triggeredBy="#user-drop">
                 <DropdownHeader>
-                    <span class="block text-sm">{user?.user_metadata?.full_name || "Unknown User" }</span>
+                    <span class="block text-sm"
+                        >{user?.user_metadata?.full_name ||
+                            "Unknown User"}</span
+                    >
                     <span class="block truncate text-sm font-medium"
                         >{user?.email}</span
                     >
@@ -58,10 +71,13 @@
                         <CogOutline class="w-5 h-5 me-2" />
                         Settings
                     </DropdownItem>
-                    <DropdownItem class="flex items-center" onclick={async () => {
-                        await supabase.auth.signOut();
-                        location.href = '/';
-                    }}>
+                    <DropdownItem
+                        class="flex items-center"
+                        onclick={async () => {
+                            await supabase.auth.signOut();
+                            location.href = "/";
+                        }}
+                    >
                         <ExclamationCircleOutline class="w-5 h-5 me-2" />
                         Sign out
                     </DropdownItem>
