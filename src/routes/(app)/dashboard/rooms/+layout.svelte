@@ -14,7 +14,7 @@
         <Search placeholder="Search rooms..." size="md" class="mb-2" />
         {#each data.rooms as room}
             <Card href={`/dashboard/rooms/${room.room_id}`}
-                class="p-4 mb-2 bg-gray-100 dark:bg-gray-700 rounded-lg cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-600"
+                class="w-full p-4 mb-2 bg-gray-100 dark:bg-gray-700 rounded-lg cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-600"
             >
                 <Heading tag="h3" class="text-md font-bold text-gray-900 dark:text-white">
                     {room.name}
