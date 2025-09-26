@@ -22,12 +22,8 @@ export const load: PageServerLoad = async ({ params, cookies }) => {
                     phone
                     email
                     role
-<<<<<<< HEAD
-                    
-=======
                     email
                     phone
->>>>>>> main
                 }
             }
         }
@@ -63,7 +59,6 @@ export const actions = {
         const email = formData.get('email');
         const phone = formData.get('phone');
         const password = formData.get('password');
-        const phone = formData.get('phone');
 
         const user = JSON.parse(cookies.get('user') || 'null');
 
@@ -95,11 +90,7 @@ export const actions = {
         }
 
         const mutationProfile = `
-<<<<<<< HEAD
-            mutation ($fullname: String!, $email: String!, $phone: String!, $role: user_role!, $company_id: BigInt, $user_id: UUID!) {
-=======
             mutation ($fullname: String!, $email: String!, $phone: String!, $role: user_role!, $company_id: BigInt, $user_id: UUID!, $added_by: BigInt!) {
->>>>>>> main
                 insertIntoprofilesCollection(
                 objects: [{
                     fullname: $fullname,
@@ -126,13 +117,8 @@ export const actions = {
 
         const resProfile = await gql(mutationProfile, {
             fullname: fullname,
-<<<<<<< HEAD
-            email: email,
-            phone: phone || '',
-=======
             email: email.toString(),
             phone: phone.toString(),
->>>>>>> main
             role: role,
             company_id: user.company_id,
             user_id: userId,
@@ -222,11 +208,7 @@ export const actions = {
                     email: u.email,
                     password: u.password,
                     options: {
-<<<<<<< HEAD
-                        emailRedirectTo: `${PUBLIC_BASE_URL || 'http://localhost:5173'}/dashboard`
-=======
                         emailRedirectTo: `${PUBLIC_BASE_URL || 'http://localhost:5173'}/auth`
->>>>>>> main
                     },
                 });
 
@@ -247,11 +229,7 @@ export const actions = {
             }
 
             const mutationProfile = `
-<<<<<<< HEAD
-                mutation ($fullname: String!, $email: String!, $phone: String!, $role: user_role!, $company_id: BigInt!, $user_id: UUID!) {
-=======
                 mutation ($fullname: String!, $email: String!, $phone: String!, $role: user_role!, $company_id: BigInt!, $user_id: UUID!, $added_by: BigInt! ) {
->>>>>>> main
                     insertIntoprofilesCollection(
                     objects: [{
                         fullname: $fullname,
@@ -260,10 +238,7 @@ export const actions = {
                         role: $role,
                         company_id: $company_id,
                         user_id: $user_id
-<<<<<<< HEAD
-=======
                         added_by: $added_by
->>>>>>> main
                     }]
                     ) {
                     records {
@@ -274,10 +249,7 @@ export const actions = {
                         role
                         company_id
                         user_id
-<<<<<<< HEAD
-=======
                         added_by
->>>>>>> main
                     }
                     }
                 }
@@ -288,14 +260,9 @@ export const actions = {
                 email: u.email || '',
                 phone: u.phone || '',
                 role: u.role || 'user',
-<<<<<<< HEAD
-                company_id: user.company,
-                user_id: userId
-=======
                 company_id: user.company_id,
                 user_id: userId,
                 added_by: user.profile_id,
->>>>>>> main
             });
 
             if (!res) {
@@ -338,16 +305,10 @@ export const actions = {
                     node {
                         profile_id
                         fullname
-<<<<<<< HEAD
-                        email
-                        phone
-                        role
-=======
                         phone
                         email
                         role
                         
->>>>>>> main
                     }
                 }
             }
