@@ -100,6 +100,8 @@
         >
             <Label>Full name</Label>
             <Input name="fullname" type="text" required />
+            <Label class="mt-4">Phone</Label>
+            <Input name="phone" type="text" required />
             <Label class="mt-4">Email</Label>
             <Input name="email" type="email" required />
             <Label class="mt-4">Password</Label>
