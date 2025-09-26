@@ -20,7 +20,7 @@ async function signUpNewUser(email: string, password: string) {
         throw new Error(error.message);
     }
 
-    // return the created user's id (may be undefined if using confirmation flows)
+    // return the created user's data
     return data;
 }
 
@@ -44,10 +44,22 @@ async function completeProfile(fullname: string, email: string, phone: string, c
         throw new Error('No user id available to link profile');
     }
 
+
+    const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .insert({ fullname, email, phone, user_id: userId })
+        .select('profile_id')
+        .single();
+
+    if (profileError) {
+        console.error('Error creating profile:', profileError);
+        return fail(500, 'Error creating profile:' + profileError.message);
+    }
+
     // Insert company and return its generated company_id
     const { data: companyData, error: companyError } = await supabase
         .from('companies')
-        .insert([{ name: company, industry }])
+        .insert([{ name: company, industry, created_by: profileData?.profile_id}]) // Link company to user_id
         .select('company_id')
         .single();
 
@@ -56,20 +68,18 @@ async function completeProfile(fullname: string, email: string, phone: string, c
         return fail(500, 'Error creating company:' + companyError.message);
     }
 
-    const companyId = companyData?.company_id ?? null;
 
-    const { data: profileData, error: profileError } = await supabase
+    const { data: updatedProfile, error: updatedProfileError } = await supabase
         .from('profiles')
-        .insert({ fullname, company_id: companyId, email, phone, user_id: userId })
-        .select('profile_id')
-        .single();
+        .update({ companyId:  companyData?.company_id })
+        .eq('profile_id', profileData?.profile_id);
 
-    if (profileError) {
-        console.error('Error creating profile:', profileError);
-        throw new Error(profileError.message);
+    if (updatedProfileError) {
+        console.error('Error updating profile company:', updatedProfileError);
+        return fail(500, 'Error updating profile company:' + updatedProfileError.message);
     }
 
-    return { profileId: profileData?.profile_id ?? null, companyId };
+    return { profile_id: profileData?.profile_id ?? null, company_id: companyData?.company_id ?? null };
 }
 
 export const actions = {
