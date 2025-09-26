@@ -18,12 +18,11 @@ export const load: PageServerLoad = async ({ params, cookies }) => {
         ) {
             edges {
                 node {
-                    profile_id
                     fullname
+                    phone
+                    email
                     role
-                    users {
-                        email
-                    }
+                    
                 }
             }
         }
@@ -57,6 +56,7 @@ export const actions = {
         const fullname = formData.get('fullname');
         const role = formData.get('role');
         const email = formData.get('email');
+        const phone = formData.get('phone');
         const password = formData.get('password');
         const data = cookies.get('user');
 
@@ -89,10 +89,12 @@ export const actions = {
         }
 
         const mutationProfile = `
-            mutation ($fullname: String!, $role: user_role!, $company_id: BigInt, $user_id: UUID!) {
+            mutation ($fullname: String!, $email: String!, $phone: String!, $role: user_role!, $company_id: BigInt, $user_id: UUID!) {
                 insertIntoprofilesCollection(
                 objects: [{
                     fullname: $fullname,
+                    email: $email,
+                    phone: $phone,
                     role: $role,
                     company_id: $company_id,
                     user_id: $user_id
@@ -100,6 +102,8 @@ export const actions = {
                 ) {
                 records {
                     fullname
+                    email
+                    phone
                     role
                     company_id
                     user_id
@@ -110,6 +114,8 @@ export const actions = {
 
         const resProfile = await gql(mutationProfile, {
             fullname: fullname,
+            email: email,
+            phone: phone || '',
             role: role,
             company_id: user.company,
             user_id: userId
@@ -163,6 +169,7 @@ export const actions = {
                         fullname: user_obj.fullname || user_obj.full_name || user_obj.name,
                         role: user_obj.role || 'user',
                         email: user_obj.email,
+                        phone: user_obj.phone || '',
                         password: user_obj.password || null,
                         user_id: user_obj.user_id || null
                     };
@@ -194,7 +201,7 @@ export const actions = {
 
             // Create user in Supabase Auth if user_id is not provided
             let userId = u.user_id;
-            if (!userId) {                
+            if (!userId) {
                 const { data: newUser, error } = await supabase.auth.signUp({
                     email: u.email,
                     password: u.password,
@@ -220,10 +227,12 @@ export const actions = {
             }
 
             const mutationProfile = `
-                mutation ($fullname: String!, $role: user_role!, $company_id: BigInt!, $user_id: UUID!) {
+                mutation ($fullname: String!, $email: String!, $phone: String!, $role: user_role!, $company_id: BigInt!, $user_id: UUID!) {
                     insertIntoprofilesCollection(
                     objects: [{
                         fullname: $fullname,
+                        email: $email,
+                        phone: $phone,
                         role: $role,
                         company_id: $company_id,
                         user_id: $user_id
@@ -232,6 +241,8 @@ export const actions = {
                     records {
                         profile_id
                         fullname
+                        email
+                        phone
                         role
                         company_id
                         user_id
@@ -242,11 +253,13 @@ export const actions = {
 
             const res = await gql(mutationProfile, {
                 fullname: u.fullname,
+                email: u.email || '',
+                phone: u.phone || '',
                 role: u.role || 'user',
                 company_id: user.company,
                 user_id: userId
             });
-            
+
             if (!res) {
                 console.error('Failed to create profile for user:', u.fullname);
                 failedUsers.push(u.fullname || u.email);
@@ -287,10 +300,9 @@ export const actions = {
                     node {
                         profile_id
                         fullname
+                        email
+                        phone
                         role
-                        users {
-                            email
-                        }
                     }
                 }
             }
@@ -329,12 +341,13 @@ export const actions = {
         let mimeType: string;
 
         if (format === 'csv') {
-            const csvHeaders = ['Profile ID', 'Full Name', 'Role', 'Email'];
+            const csvHeaders = ['Profile ID', 'Full Name', 'Role', 'Email', 'Phone'];
             const csvRows = users.map((user: any) => [
                 user.profile_id,
                 user.fullname,
                 user.role,
-                user.email
+                user.email,
+                user.phone
             ]);
 
             fileContent = [
@@ -356,6 +369,7 @@ export const actions = {
         <fullname>${user.fullname}</fullname>
         <role>${user.role}</role>
         <email>${user.email}</email>
+        <phone>${user.phone}</phone>
     </user>`).join('')}
 </users>`.trim();
             mimeType = 'application/xml';
@@ -388,8 +402,8 @@ export const actions = {
             return fail(500, { error: 'Failed to generate download link. Please try again.' });
         }
 
-        return { 
-            success: `Export completed successfully! Your file contains ${users.length} users.`, 
+        return {
+            success: `Export completed successfully! Your file contains ${users.length} users.`,
             downloadUrl: urlData.signedUrl,
             filename: filename
         };

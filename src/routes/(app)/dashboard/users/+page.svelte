@@ -1,6 +1,5 @@
 <script lang="ts">
     import { enhance } from "$app/forms";
-    import { page } from "$app/stores";
     import { Table } from "@flowbite-svelte-plugins/datatable";
     import {
         Button,
@@ -13,6 +12,7 @@
         Alert,
         Banner,
         Dropzone,
+        Listgroup,
     } from "flowbite-svelte";
     import {
         CloudArrowUpOutline,
@@ -89,13 +89,7 @@
 
     <Table
         items={data.users}
-        dataTableOptions={{
-            paging: false,
-            scrollY: "55vh",
-            rowNavigation: true,
-            tabIndex: 1,
-            responsive: true,
-        }}
+        
     />
 
     <Modal title="Add User" bind:open={showAddUserModal} size="md">
