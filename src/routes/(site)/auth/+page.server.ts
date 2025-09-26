@@ -6,7 +6,7 @@ import { supabase } from '$lib/supabase';
 async function signUpNewUser(email: string, password: string) {
     // Dynamically set the redirect URL to the dashboard
     const baseUrl = PUBLIC_BASE_URL || 'http://localhost:5173';
-    const emailRedirectTo = `${baseUrl}/dashboard`;
+    const emailRedirectTo = `${baseUrl}/auth`;
     const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -20,7 +20,7 @@ async function signUpNewUser(email: string, password: string) {
         throw new Error(error.message);
     }
 
-    // return the created user's id (may be undefined if using confirmation flows)
+    // return the created user's data
     return data;
 }
 
@@ -35,7 +35,28 @@ async function signInWithEmail(email: string, password: string) {
         throw new Error(error.message);
     }
 
-    return data;
+    let { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', data.user?.id)
+        .single();
+
+    if (profileError) {
+        console.error('Error fetching profile:', profileError);
+        throw new Error(profileError.message);
+    }
+
+    console.log(profile);
+
+    return {
+        user_id: profile.user_id,
+        profile_id:profile.profile_id,
+        fullname: profile.fullname,
+        email: profile.email,
+        phone: profile.phone,
+        company_id: profile.company_id,
+        role: profile.role
+    }
 }
 
 
@@ -44,10 +65,22 @@ async function completeProfile(fullname: string, email: string, phone: string, c
         throw new Error('No user id available to link profile');
     }
 
+
+    const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .insert({ fullname, email, phone, user_id: userId })
+        .select('profile_id')
+        .single();
+
+    if (profileError) {
+        console.error('Error creating profile:', profileError);
+        return fail(500, 'Error creating profile:' + profileError.message);
+    }
+
     // Insert company and return its generated company_id
     const { data: companyData, error: companyError } = await supabase
         .from('companies')
-        .insert([{ name: company, industry }])
+        .insert([{ name: company, industry, created_by: profileData?.profile_id }]) // Link company to user_id
         .select('company_id')
         .single();
 
@@ -56,20 +89,17 @@ async function completeProfile(fullname: string, email: string, phone: string, c
         return fail(500, 'Error creating company:' + companyError.message);
     }
 
-    const companyId = companyData?.company_id ?? null;
-
-    const { data: profileData, error: profileError } = await supabase
+    const { data: updatedProfile, error: updatedProfileError } = await supabase
         .from('profiles')
-        .insert({ fullname, company_id: companyId, email, phone, user_id: userId })
-        .select('profile_id')
-        .single();
+        .update({ company_id: companyData?.company_id })
+        .eq('profile_id', profileData?.profile_id);
 
-    if (profileError) {
-        console.error('Error creating profile:', profileError);
-        throw new Error(profileError.message);
+    if (updatedProfileError) {
+        console.error('Error updating profile company:', updatedProfileError);
+        return fail(500, 'Error updating profile company:' + updatedProfileError.message);
     }
 
-    return { profileId: profileData?.profile_id ?? null, companyId };
+    return { profile_id: profileData?.profile_id ?? null, company_id: companyData?.company_id ?? null };
 }
 
 export const actions = {
@@ -81,7 +111,7 @@ export const actions = {
 
         if (!email || !password) {
             return fail(400, { error: 'Email and password are required' });
-        }        
+        }
 
         try {
             let data = await signInWithEmail(email as string, password as string);
@@ -89,11 +119,11 @@ export const actions = {
             if (!data) {
                 return fail(500, { error: 'Login error: No data returned from signInWithEmail.' })
             }
-            
+
             // Set cookie expiration based on "remember me" checkbox
             const cookieOptions = remember ? { path: '/', maxAge: 60 * 60 * 24 * 30 } : { path: '/' }; // 30 days vs session
-            cookies.set('user', JSON.stringify(data.user), cookieOptions);
-            
+            cookies.set('user', JSON.stringify(data), cookieOptions);
+
         } catch (error) {
             console.error('Error signing in:', error);
             return fail(400, { error: `Login Error : ${error}` });

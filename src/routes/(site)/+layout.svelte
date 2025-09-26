@@ -15,7 +15,7 @@
 </svelte:head>
 
 <main class="w-screen min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900">
-	<Header user={null} />
+	<Header user={null} rooms={[]} />
 
 	{@render children?.()}
 

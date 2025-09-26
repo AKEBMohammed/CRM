@@ -14,7 +14,7 @@ export const load: PageServerLoad = async ({ params, cookies }) => {
     let query = `
     query {
         profilesCollection(
-            filter: {  company_id: { eq: "${user.company}" } }
+            filter: {  company_id: { eq: "${user.company_id}" } }
         ) {
             edges {
                 node {
@@ -22,7 +22,12 @@ export const load: PageServerLoad = async ({ params, cookies }) => {
                     phone
                     email
                     role
+<<<<<<< HEAD
                     
+=======
+                    email
+                    phone
+>>>>>>> main
                 }
             }
         }
@@ -58,19 +63,20 @@ export const actions = {
         const email = formData.get('email');
         const phone = formData.get('phone');
         const password = formData.get('password');
-        const data = cookies.get('user');
+        const phone = formData.get('phone');
 
-        if (!data) {
+        const user = JSON.parse(cookies.get('user') || 'null');
+
+        if (!user || user.role !== 'admin') {
             return fail(401, { error: 'Unauthorized access. Please log in again.' });
         }
-        const user = JSON.parse(data);
 
-        if (!fullname || !role || !email || !password) {
+        if (!fullname || !role || !email || !password || !phone) {
             return fail(400, { error: 'All fields are required. Please fill in all the information.' });
         }
 
         const baseUrl = PUBLIC_BASE_URL || 'http://localhost:5173';
-        const emailRedirectTo = `${baseUrl}/dashboard`;
+        const emailRedirectTo = `${baseUrl}/auth`;
         const { data: newUser, error } = await supabase.auth.signUp({
             email: email.toString(),
             password: password.toString(),
@@ -89,7 +95,11 @@ export const actions = {
         }
 
         const mutationProfile = `
+<<<<<<< HEAD
             mutation ($fullname: String!, $email: String!, $phone: String!, $role: user_role!, $company_id: BigInt, $user_id: UUID!) {
+=======
+            mutation ($fullname: String!, $email: String!, $phone: String!, $role: user_role!, $company_id: BigInt, $user_id: UUID!, $added_by: BigInt!) {
+>>>>>>> main
                 insertIntoprofilesCollection(
                 objects: [{
                     fullname: $fullname,
@@ -97,7 +107,8 @@ export const actions = {
                     phone: $phone,
                     role: $role,
                     company_id: $company_id,
-                    user_id: $user_id
+                    user_id: $user_id,
+                    added_by: $added_by
                 }]
                 ) {
                 records {
@@ -107,21 +118,27 @@ export const actions = {
                     role
                     company_id
                     user_id
-                }
+                    added_by
                 }
             }
+        }
 `;
 
         const resProfile = await gql(mutationProfile, {
             fullname: fullname,
+<<<<<<< HEAD
             email: email,
             phone: phone || '',
+=======
+            email: email.toString(),
+            phone: phone.toString(),
+>>>>>>> main
             role: role,
-            company_id: user.company,
-            user_id: userId
+            company_id: user.company_id,
+            user_id: userId,
+            added_by: user.profile_id
         });
 
-        //const resProfile = await gql(mutationProfile);
         if (!resProfile) {
             return fail(500, { error: 'Failed to create user profile in database.' });
         }
@@ -132,12 +149,11 @@ export const actions = {
     import: async ({ request, cookies }) => {
         const formData = await request.formData();
         const file = formData.get('file');
-        const data = cookies.get('user');
+        const user = JSON.parse(cookies.get('user') || 'null');
 
-        if (!data) {
+        if (!user) {
             return fail(401, { error: 'Unauthorized access. Please log in again.' });
         }
-        const user = JSON.parse(data);
 
         if (!file || !(file instanceof File)) {
             return fail(400, { error: 'No file uploaded. Please select a file to import.' });
@@ -206,7 +222,11 @@ export const actions = {
                     email: u.email,
                     password: u.password,
                     options: {
+<<<<<<< HEAD
                         emailRedirectTo: `${PUBLIC_BASE_URL || 'http://localhost:5173'}/dashboard`
+=======
+                        emailRedirectTo: `${PUBLIC_BASE_URL || 'http://localhost:5173'}/auth`
+>>>>>>> main
                     },
                 });
 
@@ -227,7 +247,11 @@ export const actions = {
             }
 
             const mutationProfile = `
+<<<<<<< HEAD
                 mutation ($fullname: String!, $email: String!, $phone: String!, $role: user_role!, $company_id: BigInt!, $user_id: UUID!) {
+=======
+                mutation ($fullname: String!, $email: String!, $phone: String!, $role: user_role!, $company_id: BigInt!, $user_id: UUID!, $added_by: BigInt! ) {
+>>>>>>> main
                     insertIntoprofilesCollection(
                     objects: [{
                         fullname: $fullname,
@@ -236,6 +260,10 @@ export const actions = {
                         role: $role,
                         company_id: $company_id,
                         user_id: $user_id
+<<<<<<< HEAD
+=======
+                        added_by: $added_by
+>>>>>>> main
                     }]
                     ) {
                     records {
@@ -246,6 +274,10 @@ export const actions = {
                         role
                         company_id
                         user_id
+<<<<<<< HEAD
+=======
+                        added_by
+>>>>>>> main
                     }
                     }
                 }
@@ -256,8 +288,14 @@ export const actions = {
                 email: u.email || '',
                 phone: u.phone || '',
                 role: u.role || 'user',
+<<<<<<< HEAD
                 company_id: user.company,
                 user_id: userId
+=======
+                company_id: user.company_id,
+                user_id: userId,
+                added_by: user.profile_id,
+>>>>>>> main
             });
 
             if (!res) {
@@ -294,15 +332,22 @@ export const actions = {
         let query = `
         query {
             profilesCollection(
-                filter: {  company_id: { eq: "${user.company}" } }
+                filter: {  company_id: { eq: "${user.company_id}" } }
             ) {
                 edges {
                     node {
                         profile_id
                         fullname
+<<<<<<< HEAD
                         email
                         phone
                         role
+=======
+                        phone
+                        email
+                        role
+                        
+>>>>>>> main
                     }
                 }
             }

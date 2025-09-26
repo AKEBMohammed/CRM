@@ -1,29 +1,22 @@
+
 import { gql } from '$lib/graphql';
 import { supabase } from '$lib/supabase';
 import { redirect } from '@sveltejs/kit';
 import type { LayoutServerLoad } from './$types';
 
 export const load: LayoutServerLoad = async ({ cookies}) => {
-    const user = await supabase.auth.getUser();
-    if (!user.data.user) {
-<<<<<<< HEAD
-        redirect(307, '/auth');
-    }
-=======
+    const user = JSON.parse(cookies.get('user') || 'null');
+    if (!user) {
         redirect(300, '/auth');
-    }   
-
-    let profile = JSON.parse(cookies.get('user') || 'null');
-    console.log(profile);
+    }
     
->>>>>>> main
 
     let query = `
         query {
             profiles_roomsCollection(
                 filter: {
                     profile_id: {
-                        eq: "${profile.profile_id}"
+                        eq: "${user?.profile_id}"
                     }
                 }
             ) {
@@ -39,6 +32,9 @@ export const load: LayoutServerLoad = async ({ cookies}) => {
                                 edges {
                                     node {
                                         content
+                                        profiles {
+                                            fullname
+                                        }
                                     }
                                 }
                             }
@@ -50,7 +46,6 @@ export const load: LayoutServerLoad = async ({ cookies}) => {
     
     `
     let data = await gql(query);
-
     let rooms = data
         .profiles_roomsCollection
         .edges
@@ -58,11 +53,14 @@ export const load: LayoutServerLoad = async ({ cookies}) => {
         .map((room: any) => ({
             room_id: room.room_id,
             name: room.name,
-            last_message: room.messagesCollection.edges[0]?.node.content || null
+            last_message: {
+                content: room.messagesCollection.edges[0]?.node.content || null,
+                fullname: room.messagesCollection.edges[0]?.node.profiles.fullname || null
+            }
         }));
+
     
     return {
-        user: profile,
         rooms
     };
 };

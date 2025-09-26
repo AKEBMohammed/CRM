@@ -50,7 +50,7 @@
         <Button
             color={currentRoute === href ? "primary" : "dark"}
             href={href}
-            class="flex items-center justify-center w-12 h-12 rounded-lg transition"
+            class="flex items-center justify-center w-12 h-12 rounded-lg transition last:mt-auto"
             aria-label={name}
         >
             <Icon class="w-6 h-6 text-gray-900 dark:text-white" />
