@@ -9,12 +9,13 @@
         P,
     } from "flowbite-svelte";
     import { FileSolid, PaperPlaneSolid } from "flowbite-svelte-icons";
-    import { onMount } from "svelte";
+    import { onMount, onDestroy } from "svelte";
 
     let { data } = $props();
     let messageContent = $state("");
     let messages: any[] = $state(data.messages || []);
     let messagesContainer: HTMLElement | undefined;
+    let channel: any;
 
     // Auto-scroll to bottom when new messages arrive
     function scrollToBottom() {
@@ -25,98 +26,96 @@
 
     onMount(() => {
         scrollToBottom();
+        // Set up the channel after component mounts
+        setupChannel();
     });
 
-    let channel = supabase
-        .channel(`room:${data.room.room_id}:messages`, { config: { private: true } })
-        .on(
-            "postgres_changes",
-            {
-                event: "*",
-                schema: "public",
-                table: "messages",
-                filter: `room_id=eq.${data.room.room_id}`,
-            },
-            (payload) => {
-                console.log("Change received!", payload);
+    onDestroy(() => {
+        if (channel) {
+            console.log("Unsubscribing from channel");
+            supabase.removeChannel(channel);
+        }
+    });
 
-                if (payload.eventType === "INSERT" && payload.new) {
-                    // Check if this message is not already in our messages (avoid duplicates)
-                    const existingMessage = messages.find(
-                        (m) =>
-                            m.message_id === payload.new.message_id ||
-                            (m.content === payload.new.content &&
-                                m.sender_id === payload.new.sender_id),
-                    );
-
-                    if (!existingMessage) {
-                        const newMessage = {
-                            ...payload.new,
-                            sender_id:
-                                payload.new.sender_id || payload.new.profile_id,
-                        };
-                        messages = [...messages, newMessage];
-                        setTimeout(scrollToBottom, 100);
-                    } else {
-                        // Replace temporary message with real one
-                        if (existingMessage.message_id?.startsWith("temp-")) {
-                            messages = messages.map((m) =>
-                                m.message_id === existingMessage.message_id
-                                    ? {
-                                          ...payload.new,
-                                          sender_id:
-                                              payload.new.sender_id ||
-                                              payload.new.profile_id,
-                                      }
-                                    : m,
-                            );
-                        }
+    function setupChannel() {
+        console.log("Setting up channel for room:", data.room.room_id);
+        
+        channel = supabase
+            .channel(`room-${data.room.room_id}-messages`, {
+                config: {
+                    presence: {
+                        key: data.user.profile_id
                     }
                 }
-            },
-        )
-        .subscribe(async (status) => {
-            if (status === "SUBSCRIBED") {
-                console.log("Subscribed to room messages channel");
-            }
-        });
+            })
+            .on(
+                "postgres_changes",
+                {
+                    event: "INSERT",
+                    schema: "public",
+                    table: "messages",
+                    filter: `room_id=eq.${data.room.room_id}`,
+                },
+                (payload) => {
+                    console.log("New message received via real-time:", payload);
+                    console.log("Current messages count:", messages.length);
+                    
+                    // Check if message is not already in the array (avoid duplicates)
+                    const messageExists = messages.some(msg => 
+                        msg.message_id === payload.new.message_id
+                    );
+                    
+                    if (!messageExists) {
+                        messages = [...messages, payload.new];
+                        console.log("Message added. New count:", messages.length);
+                        setTimeout(scrollToBottom, 100);
+                    } else {
+                        console.log("Message already exists, skipping duplicate");
+                    }
+                },
+            )
+            .subscribe((status) => {
+                console.log("Channel subscription status:", status);
+                if (status === 'SUBSCRIBED') {
+                    console.log("Successfully subscribed to real-time updates");
+                } else if (status === 'CHANNEL_ERROR') {
+                    console.error("Channel subscription error");
+                } else if (status === 'TIMED_OUT') {
+                    console.error("Channel subscription timed out");
+                }
+            });
+    }
 
     async function sendMessage() {
         if (!messageContent.trim()) return;
 
-        const tempMessage = {
-            content: messageContent,
-            room_id: data.room.room_id,
-            sender_id: data.profile_id,
-            send_at: new Date().toISOString(),
-            message_id: `temp-${Date.now()}`,
-            profiles: {
-                profile_id: data.profile_id,
-                fullname: "You",
-                email: "",
-            },
-        };
-
-        // Add message optimistically to UI
-        messages = [...messages, tempMessage];
-        const messageToSend = messageContent;
-        messageContent = "";
-        setTimeout(scrollToBottom, 100);
+        const messageToSend = messageContent.trim();
+        messageContent = ""; // Clear input immediately for better UX
 
         try {
-            await supabase.from("messages").insert([
-                {
-                    content: messageToSend,
-                    room_id: data.room.room_id,
-                    sender_id: data.profile_id,
-                },
-            ]);
+            const { data: insertedMessage, error } = await supabase
+                .from("messages")
+                .insert([
+                    {
+                        content: messageToSend,
+                        room_id: data.room.room_id,
+                        sender_id: data.user.profile_id,
+                    },
+                ])
+                .select();
+
+            if (error) {
+                console.error("Error sending message:", error);
+                // Restore message content if there's an error
+                messageContent = messageToSend;
+                alert("Failed to send message. Please try again.");
+            } else {
+                console.log("Message sent successfully:", insertedMessage);
+            }
         } catch (error) {
-            console.error("Failed to send message:", error);
-            // Remove the temporary message on error
-            messages = messages.filter(
-                (m) => m.message_id !== tempMessage.message_id,
-            );
+            console.error("Error sending message:", error);
+            messageContent = messageToSend;
+            alert("Failed to send message. Please try again.");
         }
     }
 
@@ -128,7 +127,7 @@
     }
 
     function isMyMessage(message: any) {
-        return message.sender_id === data.profile_id;
+        return message.sender_id == data.user.profile_id;
     }
 
     function formatTime(dateString: string) {
@@ -160,13 +159,12 @@
     <div
         class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
     >
-        <div class="flex items-center gap-2">
-            <Avatar size="sm" />
+        <div class="flex items-center gap-2">        
             <Heading
                 tag="h2"
                 class="text-lg font-semibold text-gray-900 dark:text-white"
             >
-                {data.room.name || "Room Chat"}
+                {data.room.name}
             </Heading>
             <P class="text-sm text-gray-500 dark:text-gray-400 ml-auto">
                 {messages.length} messages
@@ -193,15 +191,15 @@
         {#each messages as message, index}
             {@const showDate =
                 index === 0 ||
-                formatDate(message.send_at) !==
-                    formatDate(messages[index - 1].send_at)}
+                formatDate(message.send_at || message.created_at) !==
+                    formatDate(messages[index - 1].send_at || messages[index - 1].created_at)}
 
             {#if showDate}
                 <div class="flex justify-center">
                     <span
                         class="px-3 py-1 text-xs font-light text-gray-500 bg-gray-200 dark:bg-gray-700 dark:text-gray-400 rounded-full"
                     >
-                        {formatDate(message.send_at)}
+                        {formatDate(message.send_at || message.created_at)}
                     </span>
                 </div>
             {/if}
@@ -211,7 +209,7 @@
                     ? 'justify-end'
                     : 'justify-start'}"
             >
-                <div class="flex items-end space-x-2 max-w-full lg:max-w-md">
+                <div class="flex items-end space-x-2 max-w-xs lg:max-w-md">
                     {#if !isMyMessage(message)}
                         <Avatar size="sm" class="mb-auto" />
                     {/if}
@@ -234,7 +232,7 @@
                         <span
                             class="text-xs text-gray-500 dark:text-gray-400 mt-1 px-2"
                         >
-                            {formatTime(message.send_at)}
+                            {formatTime(message.send_at || message.created_at)}
                         </span>
                     </div>
 
@@ -251,8 +249,8 @@
         class="p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
     >
         <ButtonGroup class="w-full">
-            <Button size="sm" class="p-2">
-                <FileSolid class="w-5 h-5 text-gray-500" />
+            <Button size="sm" class="p-3" color="primary">
+                <FileSolid class="w-5 h-5" />
             </Button>
 
             <Input
@@ -265,8 +263,9 @@
 
             <Button
                 onclick={sendMessage}
-                color="primary"
                 disabled={!messageContent.trim()}
+                color="primary"
+                class="p-3 disabled:cursor-not-allowed"
             >
                 <PaperPlaneSolid class="w-5 h-5 text-white" />
             </Button>

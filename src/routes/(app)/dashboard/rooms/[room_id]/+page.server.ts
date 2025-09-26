@@ -28,7 +28,6 @@ export const load: PageServerLoad = async ({ params, cookies }) => {
             ) {
                 edges {
                     node {
-                        room_id
                         rooms {
                             room_id
                             name
@@ -45,14 +44,12 @@ export const load: PageServerLoad = async ({ params, cookies }) => {
     }
 
     let room = data.profiles_roomsCollection.edges[0].node.rooms;
-    console.log('Fetched room:', room);
     
     if (!room) {
         console.error('Room not found');
         throw redirect(300, '/dashboard/rooms');
     }
 
-    console.log('User has access to this room');
     
     query = `
         query {
@@ -88,8 +85,5 @@ export const load: PageServerLoad = async ({ params, cookies }) => {
 
     let messages = data.messagesCollection.edges.map((edge: any) => edge.node)
 
-
-
-
-    return { room, profile_id: user.profile_id, messages };
+    return { room, messages };
 };

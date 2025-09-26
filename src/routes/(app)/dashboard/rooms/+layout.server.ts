@@ -31,9 +31,7 @@ export const load: LayoutServerLoad = async ({ cookies}) => {
                             ){
                                 edges {
                                     node {
-                                        message_id
                                         content
-                                        send_at
                                         profiles {
                                             fullname
                                         }
@@ -55,7 +53,10 @@ export const load: LayoutServerLoad = async ({ cookies}) => {
         .map((room: any) => ({
             room_id: room.room_id,
             name: room.name,
-            last_message: room.messagesCollection.edges[0]?.node.content || null
+            last_message: {
+                content: room.messagesCollection.edges[0]?.node.content || null,
+                fullname: room.messagesCollection.edges[0]?.node.profiles.fullname || null
+            }
         }));
 
     
