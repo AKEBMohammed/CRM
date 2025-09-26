@@ -57,19 +57,20 @@ export const actions = {
         const role = formData.get('role');
         const email = formData.get('email');
         const password = formData.get('password');
-        const data = cookies.get('user');
+        const phone = formData.get('phone');
 
-        if (!data) {
+        const user = JSON.parse(cookies.get('user') || 'null');
+
+        if (!user || user.role !== 'admin') {
             return fail(401, { error: 'Unauthorized access. Please log in again.' });
         }
-        const user = JSON.parse(data);
 
-        if (!fullname || !role || !email || !password) {
+        if (!fullname || !role || !email || !password || !phone) {
             return fail(400, { error: 'All fields are required. Please fill in all the information.' });
         }
 
         const baseUrl = PUBLIC_BASE_URL || 'http://localhost:5173';
-        const emailRedirectTo = `${baseUrl}/dashboard`;
+        const emailRedirectTo = `${baseUrl}/auth`;
         const { data: newUser, error } = await supabase.auth.signUp({
             email: email.toString(),
             password: password.toString(),
@@ -88,33 +89,41 @@ export const actions = {
         }
 
         const mutationProfile = `
-            mutation ($fullname: String!, $role: user_role!, $company_id: BigInt, $user_id: UUID!) {
+            mutation ($fullname: String!, $email: String!, $phone: String!, $role: user_role!, $company_id: BigInt, $user_id: UUID!, $added_by: BigInt!) {
                 insertIntoprofilesCollection(
                 objects: [{
                     fullname: $fullname,
+                    email: $email,
+                    phone: $phone,
                     role: $role,
                     company_id: $company_id,
-                    user_id: $user_id
+                    user_id: $user_id,
+                    added_by: $added_by
                 }]
                 ) {
                 records {
                     fullname
+                    email
+                    phone
                     role
                     company_id
                     user_id
-                }
+                    added_by
                 }
             }
+        }
 `;
 
         const resProfile = await gql(mutationProfile, {
             fullname: fullname,
+            email: email.toString(),
+            phone: phone.toString(),
             role: role,
-            company_id: user.company,
-            user_id: userId
+            company_id: user.company_id,
+            user_id: userId,
+            added_by: user.profile_id
         });
 
-        //const resProfile = await gql(mutationProfile);
         if (!resProfile) {
             return fail(500, { error: 'Failed to create user profile in database.' });
         }
@@ -125,12 +134,11 @@ export const actions = {
     import: async ({ request, cookies }) => {
         const formData = await request.formData();
         const file = formData.get('file');
-        const data = cookies.get('user');
+        const user = JSON.parse(cookies.get('user') || 'null');
 
-        if (!data) {
+        if (!user) {
             return fail(401, { error: 'Unauthorized access. Please log in again.' });
         }
-        const user = JSON.parse(data);
 
         if (!file || !(file instanceof File)) {
             return fail(400, { error: 'No file uploaded. Please select a file to import.' });
@@ -162,6 +170,8 @@ export const actions = {
                         fullname: user_obj.fullname || user_obj.full_name || user_obj.name,
                         role: user_obj.role || 'user',
                         email: user_obj.email,
+                        phone: user_obj.phone || '',
+                        password: user_obj.password || null,
                         user_id: user_obj.user_id || null
                     };
 
@@ -180,54 +190,98 @@ export const actions = {
             return fail(400, { error: 'File should contain an array of users. Please check the file format.' });
         }
 
+        let successCount = 0;
+        let failedUsers: string[] = [];
+
         for (let u of users) {
             if (!u.fullname || !u.email) {
-                continue; // Skip invalid entries
+                console.warn('Skipping user with missing fullname or email:', u);
+                failedUsers.push(u.fullname || u.email || 'Unknown user');
+                continue;
             }
 
             // Create user in Supabase Auth if user_id is not provided
             let userId = u.user_id;
             if (!userId) {
-                const newUser = await supabase.auth.admin.createUser({
+                const { data: newUser, error } = await supabase.auth.signUp({
                     email: u.email,
-                    password: Math.random().toString(36).slice(-8), // Generate random password
+                    password: u.password,
+                    options: {
+                        emailRedirectTo: `${PUBLIC_BASE_URL || 'http://localhost:5173'}/auth`
+                    },
                 });
 
-                if (newUser.error) {
-                    console.error('Failed to create user:', newUser.error.message);
+                if (error) {
+                    console.error('Failed to create user:', error.message);
+                    failedUsers.push(u.fullname || u.email);
                     continue; // Skip this user and continue with others
                 }
 
-                userId = newUser.data.user?.id;
+                userId = newUser.user?.id;
                 if (!userId) {
+                    failedUsers.push(u.fullname || u.email);
                     continue; // Skip if we can't get user ID
                 }
-            }
-
-            let mutation = `
-            mutation {
-                createProfile(
-                    input: {
-                        fullname: "${u.fullname}",
-                        role: "${u.role || 'user'}",
-                        company_id: "${user.company}",
-                        user_id: "${userId}"
-                    }
-                ) {
-                    profile {
-                        profile_id
-                    }
+                if (!userId) {
+                    return fail(500, { error: 'Failed to retrieve user ID from created account.' });
                 }
             }
+
+            const mutationProfile = `
+                mutation ($fullname: String!, $email: String!, $phone: String!, $role: user_role!, $company_id: BigInt!, $user_id: UUID!, $added_by: BigInt! ) {
+                    insertIntoprofilesCollection(
+                    objects: [{
+                        fullname: $fullname,
+                        email: $email,
+                        phone: $phone,
+                        role: $role,
+                        company_id: $company_id,
+                        user_id: $user_id
+                        added_by: $added_by
+                    }]
+                    ) {
+                    records {
+                        profile_id
+                        fullname
+                        email
+                        phone
+                        role
+                        company_id
+                        user_id
+                        added_by
+                    }
+                    }
+                }
             `;
 
-            const res = await gql(mutation);
+            const res = await gql(mutationProfile, {
+                fullname: u.fullname,
+                email: u.email || '',
+                phone: u.phone || '',
+                role: u.role || 'user',
+                company_id: user.company_id,
+                user_id: userId,
+                added_by: user.profile_id,
+            });
+
             if (!res) {
                 console.error('Failed to create profile for user:', u.fullname);
+                failedUsers.push(u.fullname || u.email);
+            } else {
+                successCount++;
             }
         }
 
-        return { success: `Successfully imported ${users.length} users!` };
+        if (successCount === 0) {
+            return fail(500, { error: `Failed to import any users. ${failedUsers.length > 0 ? 'Failed users: ' + failedUsers.join(', ') : ''}` });
+        }
+
+        let message = `Successfully imported ${successCount} users!`;
+        if (failedUsers.length > 0) {
+            message += ` (${failedUsers.length} failed: ${failedUsers.join(', ')})`;
+        }
+
+        return { success: message };
     },
 
     export: async ({ request, cookies }) => {
@@ -244,16 +298,16 @@ export const actions = {
         let query = `
         query {
             profilesCollection(
-                filter: {  company_id: { eq: "${user.company}" } }
+                filter: {  company_id: { eq: "${user.company_id}" } }
             ) {
                 edges {
                     node {
                         profile_id
                         fullname
+                        phone
+                        email
                         role
-                        users {
-                            email
-                        }
+                        
                     }
                 }
             }
@@ -292,12 +346,13 @@ export const actions = {
         let mimeType: string;
 
         if (format === 'csv') {
-            const csvHeaders = ['Profile ID', 'Full Name', 'Role', 'Email'];
+            const csvHeaders = ['Profile ID', 'Full Name', 'Role', 'Email', 'Phone'];
             const csvRows = users.map((user: any) => [
                 user.profile_id,
                 user.fullname,
                 user.role,
-                user.email
+                user.email,
+                user.phone
             ]);
 
             fileContent = [
@@ -319,6 +374,7 @@ export const actions = {
         <fullname>${user.fullname}</fullname>
         <role>${user.role}</role>
         <email>${user.email}</email>
+        <phone>${user.phone}</phone>
     </user>`).join('')}
 </users>`.trim();
             mimeType = 'application/xml';
