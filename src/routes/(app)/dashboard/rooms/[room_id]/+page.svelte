@@ -6,6 +6,7 @@
         Heading,
         Input,
         Avatar,
+        P,
     } from "flowbite-svelte";
     import { FileSolid, PaperPlaneSolid } from "flowbite-svelte-icons";
     import { onMount } from "svelte";
@@ -27,14 +28,14 @@
     });
 
     let channel = supabase
-        .channel(`room:${data.room_id}:messages`, { config: { private: true } })
+        .channel(`room:${data.room.room_id}:messages`, { config: { private: true } })
         .on(
             "postgres_changes",
             {
                 event: "*",
                 schema: "public",
                 table: "messages",
-                filter: `room_id=eq.${data.room_id}`,
+                filter: `room_id=eq.${data.room.room_id}`,
             },
             (payload) => {
                 console.log("Change received!", payload);
@@ -76,7 +77,7 @@
         )
         .subscribe(async (status) => {
             if (status === "SUBSCRIBED") {
-                setIsConnected(true);
+                console.log("Subscribed to room messages channel");
             }
         });
 
@@ -85,7 +86,7 @@
 
         const tempMessage = {
             content: messageContent,
-            room_id: data.room_id,
+            room_id: data.room.room_id,
             sender_id: data.profile_id,
             send_at: new Date().toISOString(),
             message_id: `temp-${Date.now()}`,
@@ -106,7 +107,7 @@
             await supabase.from("messages").insert([
                 {
                     content: messageToSend,
-                    room_id: data.room_id,
+                    room_id: data.room.room_id,
                     sender_id: data.profile_id,
                 },
             ]);
@@ -159,21 +160,18 @@
     <div
         class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
     >
-        <div class="flex items-center space-x-3">
+        <div class="flex items-center gap-2">
             <Avatar size="sm" />
-            <div>
-                <Heading
-                    tag="h2"
-                    class="text-lg font-semibold text-gray-900 dark:text-white"
-                >
-                    Room Chat
-                </Heading>
-                <p class="text-sm text-gray-500 dark:text-gray-400">
-                    {messages.length} messages
-                </p>
-            </div>
+            <Heading
+                tag="h2"
+                class="text-lg font-semibold text-gray-900 dark:text-white"
+            >
+                {data.room.name || "Room Chat"}
+            </Heading>
+            <P class="text-sm text-gray-500 dark:text-gray-400 ml-auto">
+                {messages.length} messages
+            </P>
         </div>
-        <div class="text-sm text-gray-500 dark:text-gray-400">Online</div>
     </div>
 
     <!-- Messages Container -->
@@ -213,9 +211,9 @@
                     ? 'justify-end'
                     : 'justify-start'}"
             >
-                <div class="flex items-end space-x-2 max-w-xs lg:max-w-md">
+                <div class="flex items-end space-x-2 max-w-full lg:max-w-md">
                     {#if !isMyMessage(message)}
-                        <Avatar size="xs" class="mb-1" />
+                        <Avatar size="sm" class="mb-auto" />
                     {/if}
 
                     <div
@@ -225,7 +223,7 @@
                     >
                         <div
                             class="px-4 py-2 rounded-2xl {isMyMessage(message)
-                                ? 'bg-blue-500 text-white rounded-br-md'
+                                ? 'bg-primary-500 text-white rounded-br-md'
                                 : 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-bl-md border border-gray-200 dark:border-gray-600'}"
                         >
                             <p class="text-sm break-words">
@@ -241,7 +239,7 @@
                     </div>
 
                     {#if isMyMessage(message)}
-                        <Avatar size="xs" class="mb-1" />
+                        <Avatar size="sm" class="mb-auto" />
                     {/if}
                 </div>
             </div>
