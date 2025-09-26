@@ -15,6 +15,7 @@
     import avatar from "$lib/assets/user.png";
     import { page } from "$app/stores";
     import {
+        ArrowRightOutline,
         BellSolid,
         BrainSolid,
         CogOutline,
@@ -23,6 +24,7 @@
         UserCircleSolid,
     } from "flowbite-svelte-icons";
     import { supabase } from "$lib/supabase";
+    import { goto } from "$app/navigation";
     let currentRoute = $page.url.pathname;
 
     let { user, rooms } = $props();
@@ -44,21 +46,28 @@
                 <BrainSolid />
             </Button>
             <Button color="dark" id="chats-drop"><MessagesSolid /></Button>
-            <Dropdown  triggeredBy="#chats-drop">
-                <DropdownHeader>
-                    <Heading tag="h5" class="text-sm">Messages</Heading>
+            <Dropdown triggeredBy="#chats-drop" class="w-50">
+                <DropdownHeader class="flex gap-4">
+                    <Heading tag="h6">Messages</Heading>
+                    <Button size="xs" href="/dashboard/rooms" class="ml-auto">
+                        <ArrowRightOutline class="w-4 h-4" />
+                    </Button>
                 </DropdownHeader>
                 <DropdownGroup>
                     {#if rooms.length === 0}
-                        <span class="text-sm text-gray-500 px-4 py-2 block">
+                        <span class="text-md text-gray-500 px-4 py-2 block">
                             No messages
                         </span>
                     {:else}
                         {#each rooms as room}
-                            <DropdownItem class="flex flex-col" href={`/dashboard/rooms/${room.id}`}>
+                            <DropdownItem
+                                class="flex flex-col"
+                                href={`/dashboard/rooms/${room.id}`}
+                            >
                                 <span class="font-medium">{room.name}</span>
                                 <span class="text-sm text-gray-500 truncate"
-                                    >{room.last_message || "No messages yet"}</span
+                                    >{room.last_message ||
+                                        "No messages yet"}</span
                                 >
                             </DropdownItem>
                         {/each}
@@ -66,27 +75,21 @@
                 </DropdownGroup>
             </Dropdown>
             <Button color="dark"><BellSolid /></Button>
-            <Avatar
-                size="md"
-                alt="User settings"
-                id="user-drop"
-            >
-            {#if user?.user_metadata?.avatar_url}
-                <img
-                    class="rounded-full"
-                    src={user.user_metadata.avatar_url}
-                    alt="User Avatar"
-                />
+
+            {#if user?.avatar_url}
+                <Avatar size="sm" alt="User settings" id="user-drop">
+                    <img
+                        class="rounded-full"
+                        src={user.avatar_url}
+                        alt="User Avatar"
+                    />
+                </Avatar>
             {:else}
-                <UserCircleSolid class="shrink-0 h-8 w-8" />
+                <Avatar size="sm" alt="User settings" id="user-drop" />
             {/if}
-            </Avatar>
             <Dropdown triggeredBy="#user-drop">
                 <DropdownHeader>
-                    <span class="block text-sm"
-                        >{user?.user_metadata?.full_name ||
-                            "Unknown User"}</span
-                    >
+                    <span class="block text-md">{user?.fullname}</span>
                     <span class="block truncate text-sm font-medium"
                         >{user?.email}</span
                     >
@@ -100,7 +103,8 @@
                         class="flex items-center"
                         onclick={async () => {
                             await supabase.auth.signOut();
-                            location.href = "/";
+                            cookieStore.set("user","")
+                            goto("/auth");
                         }}
                     >
                         <ExclamationCircleOutline class="w-5 h-5 me-2" />

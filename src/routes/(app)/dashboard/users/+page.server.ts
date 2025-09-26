@@ -5,25 +5,24 @@ import { supabase } from '$lib/supabase';
 import { PUBLIC_BASE_URL } from '$env/static/public';
 
 export const load: PageServerLoad = async ({ params, cookies }) => {
-    let data = cookies.get('user');
-    if (!data) {
+    let user = JSON.parse(cookies.get('user') || 'null');
+    if (!user || user.role !== 'admin') {
         return fail(401, { error: 'Unauthorized access. Please log in again.' });
     }
-    const user = JSON.parse(data);
 
     let query = `
     query {
         profilesCollection(
-            filter: {  company_id: { eq: "${user.company}" } }
+            filter: {  company_id: { eq: "${user.company_id}" } }
         ) {
             edges {
                 node {
                     profile_id
                     fullname
+                    email
+                    phone
                     role
-                    users {
-                        email
-                    }
+                    
                 }
             }
         }
@@ -51,8 +50,6 @@ export const load: PageServerLoad = async ({ params, cookies }) => {
 
 export const actions = {
     add: async ({ request, cookies }) => {
-        console.log('Adding a user');
-
         const formData = await request.formData();
         const fullname = formData.get('fullname');
         const role = formData.get('role');
@@ -352,8 +349,8 @@ export const actions = {
             return fail(500, { error: 'Failed to generate download link. Please try again.' });
         }
 
-        return { 
-            success: `Export completed successfully! Your file contains ${users.length} users.`, 
+        return {
+            success: `Export completed successfully! Your file contains ${users.length} users.`,
             downloadUrl: urlData.signedUrl,
             filename: filename
         };

@@ -23,9 +23,8 @@ export const load: LayoutServerLoad = async ({ cookies}) => {
                         profile_id
                         fullname
                         role
-                        companies {
-                            company_id
-                        }
+                        email
+                        company_id
                     }
                 }
             }
@@ -47,7 +46,7 @@ export const load: LayoutServerLoad = async ({ cookies}) => {
             profiles_roomsCollection(
                 filter: {
                     profile_id: {
-                        eq: "${data.profilesCollection.edges[0]?.node.profile_id}"
+                        eq: "${profile.profile_id}"
                     }
                 }
             ) {
@@ -79,17 +78,16 @@ export const load: LayoutServerLoad = async ({ cookies}) => {
     
     `
     data = await gql(query);
+
     let rooms = data
         .profiles_roomsCollection
         .edges
         .map((edge: any) => edge.node.rooms)
         .map((room: any) => ({
-            id: room.room_id,
+            room_id: room.room_id,
             name: room.name,
             last_message: room.messagesCollection.edges[0]?.node.content || null
         }));
-
-    console.log(rooms);
     
     return {
         user: profile,
