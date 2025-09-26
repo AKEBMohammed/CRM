@@ -62,7 +62,7 @@
                         {#each rooms as room}
                             <DropdownItem
                                 class="flex flex-col"
-                                href={`/dashboard/rooms/${room.id}`}
+                                href={`/dashboard/rooms/${room.room_id}`}
                             >
                                 <span class="font-medium">{room.name}</span>
                                 <span class="text-sm text-gray-500 truncate"

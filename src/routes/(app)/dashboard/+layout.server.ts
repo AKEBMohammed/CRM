@@ -10,6 +10,8 @@ export const load: LayoutServerLoad = async ({ cookies}) => {
     }   
 
     let profile = JSON.parse(cookies.get('user') || 'null');
+    console.log(profile);
+    
 
     let query = `
         query {

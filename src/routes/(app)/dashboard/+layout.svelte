@@ -12,7 +12,7 @@
 >
     <Header user={data.user} rooms={data.rooms} />
     <Sidebar />
-    <article class="w-full h-full p-2 row-start-2 col-start-2 overflow-y-auto">
+    <article class="w-full h-full row-start-2 col-start-2 overflow-y-auto">
         {@render children()}
     </article>
 </main>

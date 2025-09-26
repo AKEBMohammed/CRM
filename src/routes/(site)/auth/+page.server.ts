@@ -50,6 +50,7 @@ async function signInWithEmail(email: string, password: string) {
 
     return {
         user_id: profile.user_id,
+        profile_id:profile.profile_id,
         fullname: profile.fullname,
         email: profile.email,
         phone: profile.phone,
