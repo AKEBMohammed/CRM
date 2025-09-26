@@ -1,4 +1,4 @@
-import { error, fail } from '@sveltejs/kit';
+import { fail } from '@sveltejs/kit';
 import { gql } from '$lib/graphql';
 import type { Actions, PageServerLoad } from './$types';
 import { supabase } from '$lib/supabase';

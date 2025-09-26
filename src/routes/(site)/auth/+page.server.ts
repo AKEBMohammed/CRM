@@ -91,7 +91,7 @@ async function completeProfile(fullname: string, email: string, phone: string, c
 
     const { data: updatedProfile, error: updatedProfileError } = await supabase
         .from('profiles')
-        .update({ companyId: companyData?.company_id })
+        .update({ company_id: companyData?.company_id })
         .eq('profile_id', profileData?.profile_id);
 
     if (updatedProfileError) {
