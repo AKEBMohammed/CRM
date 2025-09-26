@@ -20,7 +20,7 @@ async function signUpNewUser(email: string, password: string) {
         throw new Error(error.message);
     }
 
-    // return the created user's id (may be undefined if using confirmation flows)
+    // return the created user's data
     return data;
 }
 
@@ -47,7 +47,7 @@ async function completeProfile(fullname: string, company: string, industry: stri
     // Insert company and return its generated company_id
     const { data: companyData, error: companyError } = await supabase
         .from('companies')
-        .insert([{ name: company, industry }])
+        .insert([{ name: company, industry, created_by: userId }])
         .select('company_id')
         .single();
 
