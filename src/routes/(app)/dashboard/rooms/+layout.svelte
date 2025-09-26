@@ -5,13 +5,13 @@
 </script>
 
 <main class="w-full h-full row-start-2 col-start-2 overflow-y-auto flex">
-    <aside class="w-1/3 h-full p-4 bg-white dark:bg-gray-800 border-r border-gray-200">
+    <aside class="w-1/3 h-full p-2 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700">
         <Heading
             tag="h2"
-            class="text-lg font-semibold text-gray-900 dark:text-white mb-4"
+            class="text-lg font-semibold text-gray-900 dark:text-white mb-2"
             >Chat Rooms</Heading
         >
-        <Search placeholder="Search rooms..." size="md" class="mb-4" />
+        <Search placeholder="Search rooms..." size="md" class="mb-2" />
         {#each data.rooms as room}
             <Card href={`/dashboard/rooms/${room.room_id}`}
                 class="p-4 mb-2 bg-gray-100 dark:bg-gray-700 rounded-lg cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-600"
