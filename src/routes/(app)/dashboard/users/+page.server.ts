@@ -14,16 +14,15 @@ export const load: PageServerLoad = async ({ params, cookies }) => {
     let query = `
     query {
         profilesCollection(
-            filter: {  company_id: { eq: "${user.company}" } }
+            filter: {  company_id: { eq: "${user.company_id}" } }
         ) {
             edges {
                 node {
                     profile_id
                     fullname
                     role
-                    users {
-                        email
-                    }
+                    email
+                    phone
                 }
             }
         }
