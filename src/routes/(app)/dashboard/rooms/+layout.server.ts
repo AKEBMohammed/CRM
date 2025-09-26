@@ -1,55 +1,22 @@
+
 import { gql } from '$lib/graphql';
 import { supabase } from '$lib/supabase';
 import { redirect } from '@sveltejs/kit';
 import type { LayoutServerLoad } from './$types';
 
 export const load: LayoutServerLoad = async ({ cookies}) => {
-    const user = await supabase.auth.getUser();
-    if (!user.data.user) {
+    const user = JSON.parse(cookies.get('user') || 'null');
+    if (!user) {
         redirect(300, '/auth');
     }
+    
 
     let query = `
-        query {
-            profilesCollection(
-                filter: {
-                    user_id: { 
-                        eq: "${user.data.user?.id}"
-                    }
-                }
-            ) {
-                edges {
-                    node {
-                        profile_id
-                        fullname
-                        role
-                        companies {
-                            company_id
-                        }
-                    }
-                }
-            }
-        }
-    `
-    let data = await gql(query);    
-
-    let profile = {
-        user_id: user.data.user?.id,
-        profile_id: data.profilesCollection.edges[0]?.node.profile_id,
-        email: user.data.user?.email,
-        fullname: data.profilesCollection.edges[0]?.node.fullname,
-        role: data.profilesCollection.edges[0]?.node.role,
-        company: data.profilesCollection.edges[0]?.node.companies?.company_id
-    }
-
-    cookies.set('user', JSON.stringify(profile), { path: '/' });
-
-    query = `
         query {
             profiles_roomsCollection(
                 filter: {
                     profile_id: {
-                        eq: "${data.profilesCollection.edges[0]?.node.profile_id}"
+                        eq: "${user?.profile_id}"
                     }
                 }
             ) {
@@ -80,21 +47,19 @@ export const load: LayoutServerLoad = async ({ cookies}) => {
         }
     
     `
-    data = await gql(query);
+    let data = await gql(query);
     let rooms = data
         .profiles_roomsCollection
         .edges
         .map((edge: any) => edge.node.rooms)
         .map((room: any) => ({
-            id: room.room_id,
+            room_id: room.room_id,
             name: room.name,
             last_message: room.messagesCollection.edges[0]?.node.content || null
         }));
 
-    console.log(rooms);
     
     return {
-        user: profile,
         rooms
     };
 };
