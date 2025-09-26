@@ -7,41 +7,11 @@ export const load: LayoutServerLoad = async ({ cookies}) => {
     const user = await supabase.auth.getUser();
     if (!user.data.user) {
         redirect(300, '/auth');
-    }
+    }   
+
+    let profile = JSON.parse(cookies.get('user') || 'null');
 
     let query = `
-        query {
-            profilesCollection(
-                filter: {
-                    user_id: { 
-                        eq: "${user.data.user?.id}"
-                    }
-                }
-            ) {
-                edges {
-                    node {
-                        profile_id
-                        fullname
-                        role
-                        email
-                        company_id
-                    }
-                }
-            }
-        }
-    `
-    let data = await gql(query);    
-
-    let profile = {
-        user_id: user.data.user?.id,
-        profile_id: data.profilesCollection.edges[0]?.node.profile_id,
-        email: user.data.user?.email,
-        fullname: data.profilesCollection.edges[0]?.node.fullname,
-        role: data.profilesCollection.edges[0]?.node.role,
-        company: data.profilesCollection.edges[0]?.node.companies?.company_id
-    }
-
-    query = `
         query {
             profiles_roomsCollection(
                 filter: {
@@ -61,12 +31,7 @@ export const load: LayoutServerLoad = async ({ cookies}) => {
                             ){
                                 edges {
                                     node {
-                                        message_id
                                         content
-                                        send_at
-                                        profiles {
-                                            fullname
-                                        }
                                     }
                                 }
                             }
@@ -77,7 +42,7 @@ export const load: LayoutServerLoad = async ({ cookies}) => {
         }
     
     `
-    data = await gql(query);
+    let data = await gql(query);
 
     let rooms = data
         .profiles_roomsCollection

@@ -49,6 +49,7 @@ async function signInWithEmail(email: string, password: string) {
     console.log(profile);
 
     return {
+        user_id: profile.user_id,
         fullname: profile.fullname,
         email: profile.email,
         phone: profile.phone,
@@ -86,8 +87,6 @@ async function completeProfile(fullname: string, email: string, phone: string, c
         console.error('Error creating company:', companyError);
         return fail(500, 'Error creating company:' + companyError.message);
     }
-
-    console.log("Company id:", companyData.company_id);
 
     const { data: updatedProfile, error: updatedProfileError } = await supabase
         .from('profiles')
