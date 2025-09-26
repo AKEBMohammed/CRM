@@ -20,7 +20,7 @@
                     {room.name}
                 </Heading>
                 <P class="text-sm text-gray-600 dark:text-gray-300 truncate">
-                    {room.last_message || "No messages yet"}
+                    {(room.last_message.fullname + ": " + room.last_message.content) || "No messages yet"}
                 </P>
             </Card>
             
