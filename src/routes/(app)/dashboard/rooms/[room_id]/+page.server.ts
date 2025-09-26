@@ -29,7 +29,10 @@ export const load: PageServerLoad = async ({ params, cookies }) => {
                 edges {
                     node {
                         room_id
-                        
+                        rooms {
+                            room_id
+                            name
+                        }
                     }
                 }
             }
@@ -38,6 +41,14 @@ export const load: PageServerLoad = async ({ params, cookies }) => {
     let data = await gql(query);
     if (data.profiles_roomsCollection.edges.length === 0) {
         console.error('User does not have access to this room');
+        throw redirect(300, '/dashboard/rooms');
+    }
+
+    let room = data.profiles_roomsCollection.edges[0].node.rooms;
+    console.log('Fetched room:', room);
+    
+    if (!room) {
+        console.error('Room not found');
         throw redirect(300, '/dashboard/rooms');
     }
 
@@ -80,5 +91,5 @@ export const load: PageServerLoad = async ({ params, cookies }) => {
 
 
 
-    return { room_id: params.room_id, profile_id: user.profile_id, messages };
+    return { room, profile_id: user.profile_id, messages };
 };
