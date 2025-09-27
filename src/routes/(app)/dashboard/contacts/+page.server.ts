@@ -42,12 +42,11 @@ async function addContact(contact: { fullname: string; email: string; phone: str
     return true;
 }
 
-async function getContactsByUser(profile_id: number): Promise<any[]|false> {
+async function getContactsByUser(user: { profile_id: number, fullname: string, role: string }): Promise<any[] | false> {
     let query = `
     query {
-        contactsCollection(
-            filter: { created_by: { eq: "${profile_id}" } }
-        ) {
+        contactsCollection${user.role === 'admin' ?
+            '' : ` (filter: { created_by: { eq: "${user.profile_id}" } })`} {
             edges {
                 node {
                     fullname
@@ -67,11 +66,14 @@ async function getContactsByUser(profile_id: number): Promise<any[]|false> {
     }
     `;
 
+    console.log(query);
+    
+
     const result = await gql(query);
     if (!result) {
         return false;
     }
-    
+
 
     let contacts = result
         .contactsCollection
@@ -84,21 +86,24 @@ async function getContactsByUser(profile_id: number): Promise<any[]|false> {
                 phone: edge.node.phone,
                 address: edge.node.address,
                 company: edge.node.companies ? edge.node.companies.name : 'Unknown',
-                created_by: edge.node.profiles ? edge.node.profiles.fullname : 'Unknown'
+                created_by: edge.node.profiles ? edge.node.profiles.fullname : user.fullname
             };
-        });    
+        });
+
+        console.log(result.contactsCollection.edges[0]);
+        
 
     return contacts;
 }
 
 
 export const load: PageServerLoad = async ({ params, cookies }) => {
-    let user = JSON.parse(cookies.get('user') || 'null');    
+    let user = JSON.parse(cookies.get('user') || 'null');
     if (!user) {
         return fail(401, { error: 'Unauthorized access. Please log in again.' });
     }
 
-    const contacts = await getContactsByUser(user.profile_id);
+    const contacts = await getContactsByUser(user);
     if (!contacts) {
         return fail(500, { error: 'Failed to fetch contacts from database.' });
     }
@@ -246,7 +251,7 @@ export const actions = {
         }
 
 
-        let contacts = await getContactsByUser(user.profile_id);
+        let contacts = await getContactsByUser(user);
 
         if (!contacts || contacts.length === 0) {
             return fail(500, { error: 'Failed to fetch user profiles for export.' });
@@ -268,7 +273,7 @@ export const actions = {
         if (format === 'csv') {
             const csvHeaders = ['Profile ID', 'Full Name', 'Email', 'Phone', 'Address', 'Created By'];
             const csvRows = contacts.map((contact: any) => [
-                contact.profile_id,
+                contact.contact_id,
                 contact.fullname,
                 contact.email,
                 contact.phone,
@@ -291,7 +296,7 @@ export const actions = {
 <contacts>
     ${contacts.map((contact: any) => `
     <contact>
-        <profile_id>${contact.profile_id}</profile_id>
+        <profile_id>${contact.contact_id}</profile_id>
         <fullname>${contact.fullname}</fullname>
         <email>${contact.email}</email>
         <phone>${contact.phone}</phone>
