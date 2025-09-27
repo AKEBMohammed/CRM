@@ -65,8 +65,6 @@ async function getContactsByUser(user: { profile_id: number, fullname: string, r
         }
     }
     `;
-
-    console.log(query);
     
 
     const result = await gql(query);

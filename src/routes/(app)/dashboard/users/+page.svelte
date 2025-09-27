@@ -88,7 +88,7 @@
     </div>
 
     <Table
-        items={data.users}
+        items={data.profiles}
         
     />
 
