@@ -46,7 +46,6 @@ async function signInWithEmail(email: string, password: string) {
         throw new Error(profileError.message);
     }
 
-    console.log(profile);
 
     return {
         user_id: profile.user_id,
@@ -184,7 +183,6 @@ export const actions = {
                 return fail(400, { error: `Error: ${error.message}` });
             }
 
-            console.log('Password reset email sent:', data);
         } catch (error) {
             console.error('Error in forget action:', error);
             return fail(500, { error: 'Internal Server Error' });
