@@ -364,5 +364,118 @@ export const actions = {
             downloadUrl: urlData.signedUrl,
             filename: filename
         };
+    },
+
+    // Edit user action
+    edit: async ({ request, cookies }) => {
+        const user = JSON.parse(cookies.get('user') || 'null');
+
+        if (!user || user.role !== 'admin') {
+            return fail(401, { error: 'Unauthorized access. Please log in again.' });
+        }
+
+        const formData = await request.formData();
+        const profile_id = formData.get('profile_id') as string;
+        const fullname = formData.get('fullname') as string;
+        const email = formData.get('email') as string;
+        const phone = formData.get('phone') as string;
+        const role = formData.get('role') as string;
+
+        if (!profile_id || !fullname || !email || !phone || !role) {
+            return fail(400, { error: 'Missing required fields' });
+        }
+
+        try {
+            // Update user profile in database
+            const updateMutation = `
+                mutation ($profile_id: BigInt!, $fullname: String!, $email: String!, $phone: String!, $role: user_role!) {
+                    updateprofilesCollection(
+                        filter: { profile_id: { eq: $profile_id } }
+                        set: {
+                            fullname: $fullname,
+                            email: $email,
+                            phone: $phone,
+                            role: $role
+                        }
+                    ) {
+                        records {
+                            fullname
+                            email
+                            phone
+                            role
+                        }
+                    }
+                }
+            `;
+
+            const result = await gql(updateMutation, {
+                profile_id: parseInt(profile_id),
+                fullname,
+                email,
+                phone,
+                role
+            });
+
+            if (!result?.updateprofilesCollection?.records?.length) {
+                return fail(500, { error: 'Failed to update user' });
+            }
+
+            return {
+                success: `User ${fullname} updated successfully!`
+            };
+
+        } catch (err) {
+            console.error('Edit user error:', err);
+            return fail(500, { error: 'Failed to update user' });
+        }
+    },
+
+    // Delete user action
+    delete: async ({ request, cookies }) => {
+        const user = JSON.parse(cookies.get('user') || 'null');
+
+        if (!user || user.role !== 'admin') {
+            return fail(401, { error: 'Unauthorized access. Please log in again.' });
+        }
+
+        const formData = await request.formData();
+        const id = formData.get('id') as string;
+        const fullname = formData.get('fullname') as string;
+
+        if (!id) {
+            return fail(400, { error: 'Missing user ID' });
+        }
+
+        try {
+            // Delete user profile from database
+            const deleteMutation = `
+                mutation ($profile_id: BigInt!) {
+                    deleteFromprofilesCollection(
+                        filter: { profile_id: { eq: $profile_id } }
+                    ) {
+                        records {
+                            profile_id
+                            fullname
+                        }
+                    }
+                }
+            `;
+
+            const result = await gql(deleteMutation, {
+                id: parseInt(id)
+            });
+
+            if (!result?.deleteFromprofilesCollection?.records?.length) {
+                return fail(500, { error: 'Failed to delete user' });
+            }
+
+            return {
+                success: `User ${fullname || 'Unknown'} deleted successfully!`
+            };
+
+        } catch (err) {
+            console.error('Delete user error:', err);
+            return fail(500, { error: 'Failed to delete user' });
+        }
     }
 } satisfies Actions;

@@ -53,8 +53,22 @@
             {/if}
         </Banner>
     {/if}
-    
 
-    <DataTable data={data.contacts} title="Contacts" subtitle="Manage your contacts here." />
-
+    <DataTable
+        data={data.contacts || []}
+        title="Contacts"
+        subtitle="Manage your contacts here."
+        onDelete={ (data,index) => {
+            if (!confirm(`Are you sure you want to delete contact ${data[index].first_name} ${data[index].last_name}?`)) {
+                return false;
+            }
+            return true;
+        }}
+        onEdit={
+            (data, index) => `/dashboard/contacts/${data[index].id}/edit`
+        }
+        onInfo={
+            (data, index) => `/dashboard/contacts/${data[index].id}`
+        }
+    />
 </article>
