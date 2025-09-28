@@ -4,12 +4,54 @@ import type { Actions, PageServerLoad } from './$types';
 import { supabase } from '$lib/supabase';
 import { PUBLIC_BASE_URL } from '$env/static/public';
 
-export const load: PageServerLoad = async ({ params, cookies }) => {
-    let data = cookies.get('user');
-    if (!data) {
-        return fail(401, { error: 'Unauthorized access. Please log in again.' });
+async function addProfile(user_id: string, fullname: string, email: string, phone: string, company_id: number, role: string, added_by: number) {
+    const mutationProfile = `
+            mutation ($fullname: String!, $email: String!, $phone: String!, $role: user_role!, $company_id: BigInt, $user_id: UUID!, $added_by: BigInt!) {
+                insertIntoprofilesCollection(
+                objects: [{
+                    user_id: $user_id,
+                    fullname: $fullname,
+                    email: $email,
+                    phone: $phone,
+                    role: $role,
+                    company_id: $company_id,
+                    added_by: $added_by
+                }]
+                ) {
+                records {
+                    user_id
+                    fullname
+                    email
+                    phone
+                    role
+                    company_id
+                    added_by
+                }
+            }
+        }
+`;
+
+    const result = await gql(mutationProfile, {
+        fullname: fullname,
+        email: email,
+        phone: phone,
+        role: role,
+        company_id: company_id,
+        user_id: user_id,
+        added_by: added_by,
+    });
+
+    if (!result) {
+        return false;
     }
-    const user = JSON.parse(data);
+
+    return true;
+}
+
+async function getProfilesByUser(user: { company_id: number, profile_id: number, role: string }) {
+    if (user.role !== 'admin') {
+        return false;
+    }
 
     let query = `
     query {
@@ -18,46 +60,57 @@ export const load: PageServerLoad = async ({ params, cookies }) => {
         ) {
             edges {
                 node {
-                    profile_id
                     fullname
-                    role
-                    email
                     phone
+                    email
+                    role
                 }
             }
         }
     }
-    `;
+        `
 
-    const res = await gql(query);
-    if (!res) {
+    let result = await gql(query)
+
+    if (!result) {
+        return false;
+    }
+
+    let profiles = result.profilesCollection.edges.map((edge: any) => ({
+        fullname: edge.node.fullname,
+        email: edge.node.email,
+        phone: edge.node.phone,
+        role: edge.node.role,
+    }));
+
+    return profiles;
+}
+
+
+
+export const load: PageServerLoad = async ({ params, cookies }) => {
+    let user = JSON.parse(cookies.get('user') || 'null');
+    if (!user || user.role !== 'admin') {
+        return fail(401, { error: 'Unauthorized access. Please log in again.' });
+    }
+
+    let profiles = await getProfilesByUser(user);
+    if (!profiles) {
         return fail(500, { error: 'Failed to fetch user profiles from database.' });
     }
 
-    let users = res
-        .profilesCollection
-        .edges
-        .map((edge: any) => {
-            return {
-                email: edge.node.users?.email || 'N/A',
-                ...edge.node,
-            };
-        });
-
-    return { users };
+    return { profiles };
 
 };
 
 export const actions = {
     add: async ({ request, cookies }) => {
-        console.log('Adding a user');
-
         const formData = await request.formData();
         const fullname = formData.get('fullname');
         const role = formData.get('role');
         const email = formData.get('email');
-        const password = formData.get('password');
         const phone = formData.get('phone');
+        const password = formData.get('password');
 
         const user = JSON.parse(cookies.get('user') || 'null');
 
@@ -88,43 +141,9 @@ export const actions = {
             return fail(500, { error: 'Failed to retrieve user ID from created account.' });
         }
 
-        const mutationProfile = `
-            mutation ($fullname: String!, $email: String!, $phone: String!, $role: user_role!, $company_id: BigInt, $user_id: UUID!, $added_by: BigInt!) {
-                insertIntoprofilesCollection(
-                objects: [{
-                    fullname: $fullname,
-                    email: $email,
-                    phone: $phone,
-                    role: $role,
-                    company_id: $company_id,
-                    user_id: $user_id,
-                    added_by: $added_by
-                }]
-                ) {
-                records {
-                    fullname
-                    email
-                    phone
-                    role
-                    company_id
-                    user_id
-                    added_by
-                }
-            }
-        }
-`;
+        let result = await addProfile(userId, fullname.toString(), email.toString(), phone.toString(), user.company_id, role.toString(), user.profile_id);
 
-        const resProfile = await gql(mutationProfile, {
-            fullname: fullname,
-            email: email.toString(),
-            phone: phone.toString(),
-            role: role,
-            company_id: user.company_id,
-            user_id: userId,
-            added_by: user.profile_id
-        });
-
-        if (!resProfile) {
+        if (!result) {
             return fail(500, { error: 'Failed to create user profile in database.' });
         }
 
@@ -227,42 +246,7 @@ export const actions = {
                 }
             }
 
-            const mutationProfile = `
-                mutation ($fullname: String!, $email: String!, $phone: String!, $role: user_role!, $company_id: BigInt!, $user_id: UUID!, $added_by: BigInt! ) {
-                    insertIntoprofilesCollection(
-                    objects: [{
-                        fullname: $fullname,
-                        email: $email,
-                        phone: $phone,
-                        role: $role,
-                        company_id: $company_id,
-                        user_id: $user_id
-                        added_by: $added_by
-                    }]
-                    ) {
-                    records {
-                        profile_id
-                        fullname
-                        email
-                        phone
-                        role
-                        company_id
-                        user_id
-                        added_by
-                    }
-                    }
-                }
-            `;
-
-            const res = await gql(mutationProfile, {
-                fullname: u.fullname,
-                email: u.email || '',
-                phone: u.phone || '',
-                role: u.role || 'user',
-                company_id: user.company_id,
-                user_id: userId,
-                added_by: user.profile_id,
-            });
+            const res = await addProfile(userId, u.fullname, u.email, u.phone || '', user.company_id, u.role || 'user', user.profile_id);
 
             if (!res) {
                 console.error('Failed to create profile for user:', u.fullname);
@@ -295,41 +279,9 @@ export const actions = {
         }
         const user = JSON.parse(data);
 
-        let query = `
-        query {
-            profilesCollection(
-                filter: {  company_id: { eq: "${user.company_id}" } }
-            ) {
-                edges {
-                    node {
-                        profile_id
-                        fullname
-                        phone
-                        email
-                        role
-                        
-                    }
-                }
-            }
-        }
-        `;
+        let profiles = await getProfilesByUser(user);
 
-        const res = await gql(query);
-        if (!res) {
-            return fail(500, { error: 'Failed to fetch user profiles for export.' });
-        }
-
-        let users = res
-            .profilesCollection
-            .edges
-            .map((edge: any) => {
-                return {
-                    email: edge.node.users?.email || 'N/A',
-                    ...edge.node,
-                };
-            });
-
-        if (users.length === 0) {
+        if (!profiles || profiles.length === 0) {
             return fail(400, { error: 'No users available to export.' });
         }
 
@@ -347,12 +299,12 @@ export const actions = {
 
         if (format === 'csv') {
             const csvHeaders = ['Profile ID', 'Full Name', 'Role', 'Email', 'Phone'];
-            const csvRows = users.map((user: any) => [
-                user.profile_id,
-                user.fullname,
-                user.role,
-                user.email,
-                user.phone
+            const csvRows = profiles.map((profile: any) => [
+                profile.profile_id,
+                profile.fullname,
+                profile.role,
+                profile.email,
+                profile.phone
             ]);
 
             fileContent = [
@@ -362,19 +314,19 @@ export const actions = {
             mimeType = 'text/csv';
 
         } else if (format === 'json') {
-            fileContent = JSON.stringify(users, null, 2);
+            fileContent = JSON.stringify(profiles, null, 2);
             mimeType = 'application/json';
 
         } else if (format === 'xml') {
             fileContent = `<?xml version="1.0" encoding="UTF-8"?>
 <users>
-    ${users.map((user: any) => `
+    ${profiles.map((profile: any) => `
     <user>
-        <profile_id>${user.profile_id}</profile_id>
-        <fullname>${user.fullname}</fullname>
-        <role>${user.role}</role>
-        <email>${user.email}</email>
-        <phone>${user.phone}</phone>
+        <profile_id>${profile.profile_id}</profile_id>
+        <fullname>${profile.fullname}</fullname>
+        <role>${profile.role}</role>
+        <email>${profile.email}</email>
+        <phone>${profile.phone}</phone>
     </user>`).join('')}
 </users>`.trim();
             mimeType = 'application/xml';
@@ -407,8 +359,8 @@ export const actions = {
             return fail(500, { error: 'Failed to generate download link. Please try again.' });
         }
 
-        return { 
-            success: `Export completed successfully! Your file contains ${users.length} users.`, 
+        return {
+            success: `Export completed successfully! Your file contains ${profiles.length} users.`,
             downloadUrl: urlData.signedUrl,
             filename: filename
         };
