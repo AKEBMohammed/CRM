@@ -1,6 +1,6 @@
 <script lang="ts">
     import { enhance } from "$app/forms";
-    import { Table } from "@flowbite-svelte-plugins/datatable";
+    import DataTable from "$lib/components/DataTable.svelte";
     import {
         Button,
         Heading,
@@ -87,10 +87,17 @@
         </Button>
     </div>
 
-    <Table
-        items={data.profiles}
-        
-    />
+    <DataTable 
+        data={data.profiles}
+        onInfo={(rowData) => alert(`User Info:\nName: ${rowData.fullname}\nEmail: ${rowData.email}\nPhone: ${rowData.phone}\nRole: ${rowData.role}`)}
+        onEdit={(rowData) => alert(`Edit User:\nName: ${rowData.fullname}\nEmail: ${rowData.email}\nPhone: ${rowData.phone}\nRole: ${rowData.role}`)}
+        onDelete={(rowData) => {
+            if (confirm(`Are you sure you want to delete user ${rowData.fullname}?`)) {
+                // Implement delete logic here
+                alert(`User ${rowData.fullname} deleted.`);
+            }
+        }}
+        />
 
     <Modal title="Add User" bind:open={showAddUserModal} size="md">
         <P class="mb-4">Fill in the details to add a new user.</P>

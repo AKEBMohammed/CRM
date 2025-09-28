@@ -46,7 +46,6 @@ async function signInWithEmail(email: string, password: string) {
         throw new Error(profileError.message);
     }
 
-    console.log(profile);
 
     return {
         user_id: profile.user_id,

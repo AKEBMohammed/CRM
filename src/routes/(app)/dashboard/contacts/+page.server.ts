@@ -86,10 +86,7 @@ async function getContactsByUser(user: { profile_id: number, fullname: string, r
                 company: edge.node.companies ? edge.node.companies.name : 'Unknown',
                 created_by: edge.node.profiles ? edge.node.profiles.fullname : user.fullname
             };
-        });
-
-        console.log(result.contactsCollection.edges[0]);
-        
+        });        
 
     return contacts;
 }
