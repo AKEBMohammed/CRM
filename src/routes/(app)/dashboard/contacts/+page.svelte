@@ -68,10 +68,10 @@
         <Heading
             tag="h1"
             class="text-3xl font-bold mb-2 text-gray-900 dark:text-white"
-            >Users</Heading
+            >Contacts</Heading
         >
         <P class="mb-4 text-gray-500 dark:text-gray-400 col-start-1 row-start-2"
-            >Manage your users here.</P
+            >Manage your contacts here.</P
         >
         <Button class="w-fit" onclick={() => (showImportDataModal = true)}>
             <FileImportOutline class="w-5 h-5 mr-2" />
@@ -88,12 +88,12 @@
     </div>
 
     <Table
-        items={data.profiles}
+        items={data.contacts}
         
     />
 
-    <Modal title="Add User" bind:open={showAddUserModal} size="md">
-        <P class="mb-4">Fill in the details to add a new user.</P>
+    <Modal title="Add Contact" bind:open={showAddUserModal} size="md">
+        <P class="mb-4">Fill in the details to add a new contact.</P>
         <form
             use:enhance
             action="?/add"
@@ -106,25 +106,16 @@
             <Input name="phone" type="text" required />
             <Label class="mt-4">Email</Label>
             <Input name="email" type="email" required />
-            <Label class="mt-4">Password</Label>
-            <Input name="password" type="password" required />
-            <Label class="mt-4">Role</Label>
-            <Select
-                name="role"
-                items={[
-                    { name: "admin", value: "admin" },
-                    { name: "user", value: "user" },
-                ]}
-                value="user"
-            />
+            <Label class="mt-4">Address</Label>
+            <Input name="address" type="text" required />
 
             <Alert color="blue" class="mt-4 border-2">
                 <P class="font-medium text-blue-800">
-                    Do not forget to send the credentials to the new user!
+                    Do not forget to send the credentials to the new contact!
                 </P>
             </Alert>
 
-            <Button type="submit" class="w-2/3 self-center">Add user</Button>
+            <Button type="submit" class="w-2/3 self-center">Add contact</Button>
         </form>
     </Modal>
 
