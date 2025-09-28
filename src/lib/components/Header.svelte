@@ -10,6 +10,7 @@
         DropdownGroup,
         DropdownItem,
         Heading,
+        Tooltip,
     } from "flowbite-svelte";
     import favicon from "$lib/assets/favicon.png";
     import avatar from "$lib/assets/user.png";
@@ -45,7 +46,9 @@
             <Button color="dark">
                 <BrainSolid />
             </Button>
+            <Tooltip>AI Assistant</Tooltip>
             <Button color="dark" id="chats-drop"><MessagesSolid /></Button>
+            <Tooltip>Messages</Tooltip>
             <Dropdown triggeredBy="#chats-drop" class="w-50">
                 <DropdownHeader class="flex gap-4">
                     <Heading tag="h6">Messages</Heading>
@@ -75,6 +78,7 @@
                 </DropdownGroup>
             </Dropdown>
             <Button color="dark"><BellSolid /></Button>
+            <Tooltip>Notifications</Tooltip>
 
             {#if user?.avatar_url}
                 <Avatar size="sm" alt="User settings" id="user-drop">
