@@ -25,7 +25,6 @@ export const actions = {
                 return fail(400, { error: `Password Reset Error : ${error.message}` });
             }
 
-            console.log('Password reset successful for user:', data.user?.email);
         } catch (error) {
             console.error('Unexpected error during password reset:', error);
             return fail(500, { error: 'Internal Server Error' });
