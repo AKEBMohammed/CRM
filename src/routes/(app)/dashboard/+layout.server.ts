@@ -9,16 +9,8 @@ export const load: LayoutServerLoad = async ({ cookies}) => {
         redirect(300, '/auth');
     }   
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-    let profile = JSON.parse(cookies.get('user') || 'null');    
-=======
     let profile = JSON.parse(cookies.get('user') || 'null');
     
->>>>>>> dashboard
-=======
-    let profile = JSON.parse(cookies.get('user') || 'null');    
->>>>>>> 9001f82f518e6c4e62ff797d10fc8f9f0479f42e
 
     let query = `
         query {
