@@ -3,10 +3,12 @@
     import DataTable from "$lib/components/DataTable.svelte";
     import {
         Banner,
+        Breadcrumb,
+        BreadcrumbItem,
         Button,
         P,
     } from "flowbite-svelte";
-    import { DownloadOutline } from "flowbite-svelte-icons";
+    import { DownloadOutline, HomeSolid, UserSolid } from "flowbite-svelte-icons";
 
     let { data, form } = $props();
 
@@ -19,14 +21,16 @@
     function handleExport(exportData: any[]) {
         // Handle export action (e.g., trigger data export)
         console.log("Export action triggered", exportData);
-        
+
         // Convert data to CSV
         const headers = Object.keys(exportData[0] || {});
         const csvContent = [
             headers.join(","), // Header row
-            ...exportData.map(row => headers.map(header => `"${row[header]}"`).join(","))
+            ...exportData.map((row) =>
+                headers.map((header) => `"${row[header]}"`).join(","),
+            ),
         ].join("\n");
-        
+
         // Create and trigger download
         const blob = new Blob([csvContent], { type: "text/csv" });
         const url = window.URL.createObjectURL(blob);
@@ -69,17 +73,22 @@
     {/if}
 
     <DataTable
-        data={data.profiles}
+        data={data.profiles.map((profile) => ({
+            id: profile.profile_id,
+            fullname: profile.fullname,
+            email: profile.email,
+            phone: profile.phone,
+            role: profile.role,
+        })) || []}
         title="User Management"
         subtitle="Manage your application users and their permissions"
+        addAction="?/add"
         editAction="?/edit"
         deleteAction="?/delete"
-        onRefresh={handleRefresh}
-        onExport={handleExport}
-        pageSize={10}
+        exportAction="?/export"
+        importAction="?/import"
+        pageSize={5}
         showStats={true}
         allowColumnToggle={true}
-        allowExport={true}
-        allowPrint={true}
     />
 </article>

@@ -59,7 +59,8 @@ async function getProfilesByUser(user: { company_id: number, profile_id: number,
             filter: {  company_id: { eq: "${user.company_id}" } }
         ) {
             edges {
-                node {
+                node {       
+                    profile_id
                     fullname
                     phone
                     email
@@ -110,7 +111,10 @@ export const actions = {
         const role = formData.get('role');
         const email = formData.get('email');
         const phone = formData.get('phone');
-        const password = formData.get('password');
+        const password = formData.get('password') || '123456';
+
+        console.log('Add user action triggered with data:', { fullname, role, email, phone, password });
+        
 
         const user = JSON.parse(cookies.get('user') || 'null');
 

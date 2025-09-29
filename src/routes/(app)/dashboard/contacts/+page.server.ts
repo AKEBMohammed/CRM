@@ -49,6 +49,7 @@ async function getContactsByUser(user: { profile_id: number, fullname: string, r
             '' : ` (filter: { created_by: { eq: "${user.profile_id}" } })`} {
             edges {
                 node {
+                    contact_id
                     fullname
                     phone
                     email
@@ -336,5 +337,118 @@ export const actions = {
             downloadUrl: urlData.signedUrl,
             filename: filename
         };
+    },
+
+    // Edit contact action
+    edit: async ({ request, cookies }) => {
+        const user = JSON.parse(cookies.get('user') || 'null');
+
+        if (!user) {
+            return fail(401, { error: 'Unauthorized access. Please log in again.' });
+        }
+
+        const formData = await request.formData();
+        const contact_id = formData.get('id') as string;
+        const fullname = formData.get('fullname') as string;
+        const email = formData.get('email') as string;
+        const phone = formData.get('phone') as string;
+        const address = formData.get('address') as string;
+
+        if (!contact_id || !fullname || !email || !phone) {
+            return fail(400, { error: 'Missing required fields' });
+        }
+
+        try {
+            // Update contact in database
+            const updateMutation = `
+                mutation ($contact_id: BigInt!, $fullname: String!, $email: String!, $phone: String!, $address: String!) {
+                    updatecontactsCollection(
+                        filter: { contact_id: { eq: $contact_id } }
+                        set: {
+                            fullname: $fullname,
+                            email: $email,
+                            phone: $phone,
+                            address: $address
+                        }
+                    ) {
+                        records {
+                            fullname
+                            email
+                            phone
+                            address
+                        }
+                    }
+                }
+            `;
+
+            const result = await gql(updateMutation, {
+                contact_id: parseInt(contact_id),
+                fullname,
+                email,
+                phone,
+                address: address || ''
+            });
+
+            if (!result?.updatecontactsCollection?.records?.length) {
+                return fail(500, { error: 'Failed to update contact' });
+            }
+
+            return {
+                success: `Contact ${fullname} updated successfully!`
+            };
+
+        } catch (err) {
+            console.error('Edit contact error:', err);
+            return fail(500, { error: 'Failed to update contact' });
+        }
+    },
+    
+    // Delete contact action
+    delete: async ({ request, cookies }) => {
+        const user = JSON.parse(cookies.get('user') || 'null');
+
+        if (!user) {
+            return fail(401, { error: 'Unauthorized access. Please log in again.' });
+        }
+
+        const formData = await request.formData();
+        const id = formData.get('id') as string;
+        const fullname = formData.get('fullname') as string;
+
+        if (!id) {
+            return fail(400, { error: 'Missing contact ID' });
+        }
+
+        try {
+            // Delete contact from database
+            const deleteMutation = `
+                mutation ($contact_id: BigInt!) {
+                    deleteFromcontactsCollection(
+                        filter: { contact_id: { eq: $contact_id } }
+                    ) {
+                        records {
+                            contact_id
+                            fullname
+                        }
+                    }
+                }
+            `;
+
+            const result = await gql(deleteMutation, {
+                contact_id: parseInt(id)
+            });
+
+            if (!result?.deleteFromcontactsCollection?.records?.length) {
+                return fail(500, { error: 'Failed to delete contact' });
+            }
+
+            return {
+                success: `Contact ${fullname || 'Unknown'} deleted successfully!`
+            };
+
+        } catch (err) {
+            console.error('Delete contact error:', err);
+            return fail(500, { error: 'Failed to delete contact' });
+        }
     }
 } satisfies Actions;

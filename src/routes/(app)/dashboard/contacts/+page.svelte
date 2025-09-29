@@ -55,20 +55,23 @@
     {/if}
 
     <DataTable
-        data={data.contacts || []}
+        data={data.contacts?.map(contact => ({
+            id: contact.contact_id,
+            fullname: contact.fullname,
+            phone: contact.phone,
+            email: contact.email,
+            address: contact.address,
+            created_by: contact.created_by,
+        })) || []}
         title="Contacts"
         subtitle="Manage your contacts here."
-        onDelete={ (data,index) => {
-            if (!confirm(`Are you sure you want to delete contact ${data[index].first_name} ${data[index].last_name}?`)) {
-                return false;
-            }
-            return true;
-        }}
-        onEdit={
-            (data, index) => `/dashboard/contacts/${data[index].id}/edit`
-        }
-        onInfo={
-            (data, index) => `/dashboard/contacts/${data[index].id}`
-        }
+        addAction="?/add"
+        editAction="?/edit"
+        deleteAction="?/delete"
+        exportAction="?/export"
+        importAction="?/import"
+        pageSize={5}
+        showStats={true}
+        allowColumnToggle={true}
     />
 </article>
