@@ -47,8 +47,8 @@
         subtitle?: string;
         loading?: boolean;
         // Form actions for server-side operations
-        editAction?: string;     // Form action URL for edit
-        deleteAction?: string;   // Form action URL for delete
+        editAction?: string; // Form action URL for edit
+        deleteAction?: string; // Form action URL for delete
         // Optional callbacks for custom handling
         onRefresh?: () => void;
         onExport?: (data: any[]) => void;
@@ -92,9 +92,9 @@
     let showEditModal = $state(false);
     let showDeleteModal = $state(false);
 
-    // Selected user data for actions
-    let selectedUser = $state<any>(null);
-    let selectedUserIndex = $state<number>(-1);
+    // Selected data for actions
+    let selectedData = $state<any>(null);
+    let selectedDataIndex = $state<number>(-1);
 
     // Dynamic edit form data - will be populated based on actual data structure
     let editFormData = $state<Record<string, any>>({});
@@ -211,21 +211,21 @@
     }
 
     function handleInfo(rowData: any, rowIndex: number) {
-        selectedUser = rowData;
-        selectedUserIndex = rowIndex;
+        selectedData = rowData;
+        selectedDataIndex = rowIndex;
         showInfoModal = true;
     }
 
     function handleEdit(rowData: any, rowIndex: number) {
-        selectedUser = rowData;
-        selectedUserIndex = rowIndex;
+        selectedData = rowData;
+        selectedDataIndex = rowIndex;
         editFormData = { ...rowData }; // Pre-populate form with all data
         showEditModal = true;
     }
 
     function confirmDelete(rowData: any, rowIndex: number) {
-        selectedUser = rowData;
-        selectedUserIndex = rowIndex;
+        selectedData = rowData;
+        selectedDataIndex = rowIndex;
         showDeleteModal = true;
     }
 
@@ -233,29 +233,29 @@
     function handleEditSubmit(event: Event) {
         const form = event.target as HTMLFormElement;
         const formData = new FormData(form);
-        
+
         // Add the row index to form data for server processing
-        formData.append('rowIndex', selectedUserIndex.toString());
-        
+        formData.append("rowIndex", selectedDataIndex.toString());
+
         // Close modal after submission
         showEditModal = false;
-        selectedUser = null;
-        selectedUserIndex = -1;
+        selectedData = null;
+        selectedDataIndex = -1;
     }
 
     // Handle delete form submission
     function handleDeleteSubmit(event: Event) {
         const form = event.target as HTMLFormElement;
         const formData = new FormData(form);
-        
+
         // Add the row data to form for server processing
-        formData.append('rowIndex', selectedUserIndex.toString());
-        formData.append('userData', JSON.stringify(selectedUser));
-        
+        formData.append("rowIndex", selectedDataIndex.toString());
+        formData.append("userData", JSON.stringify(selectedData));
+
         // Close modal after submission
         showDeleteModal = false;
-        selectedUser = null;
-        selectedUserIndex = -1;
+        selectedData = null;
+        selectedDataIndex = -1;
     }
 
     function handleBulkAction() {
@@ -476,7 +476,9 @@
                             filteredData.length > 0}
                         onchange={(e) => {
                             const target = e.target as HTMLInputElement;
-                            target.checked ? selectAllRows() : deselectAllRows();
+                            target.checked
+                                ? selectAllRows()
+                                : deselectAllRows();
                         }}
                     />
                 </TableHeadCell>
@@ -544,26 +546,29 @@
                                 <!-- Always show info button -->
                                 <Button
                                     color="alternative"
-                                    onclick={() => handleInfo(item, globalIndex)}
+                                    onclick={() =>
+                                        handleInfo(item, globalIndex)}
                                 >
                                     <InfoCircleOutline class="w-4 h-4" />
                                 </Button>
-                                
+
                                 <!-- Show edit button if edit action provided -->
                                 {#if editAction}
                                     <Button
                                         color="alternative"
-                                        onclick={() => handleEdit(item, globalIndex)}
+                                        onclick={() =>
+                                            handleEdit(item, globalIndex)}
                                     >
                                         <PenOutline class="w-4 h-4" />
                                     </Button>
                                 {/if}
-                                
+
                                 <!-- Show delete button if delete action provided -->
                                 {#if deleteAction}
                                     <Button
                                         color="red"
-                                        onclick={() => confirmDelete(item, globalIndex)}
+                                        onclick={() =>
+                                            confirmDelete(item, globalIndex)}
                                     >
                                         <TrashBinOutline class="w-4 h-4" />
                                     </Button>
@@ -640,87 +645,43 @@
         {/if}
     </div>
 </Modal>
-<!-- 📋 USER INFO MODAL -->
-
-<!-- 📋 USER INFO MODAL -->
+<!-- INFO MODAL -->
 <Modal
     bind:open={showInfoModal}
     title="Item Information"
     autoclose
     class="min-w-full md:min-w-[500px]"
 >
-    {#if selectedUser}
-        <div class="flex items-center space-x-4 mb-6">
-            <div
-                class="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center"
-            >
-                <span class="text-white text-xl font-bold">
-                    {#if selectedUser.fullname || selectedUser.name || selectedUser.title}
-                        {(selectedUser.fullname || selectedUser.name || selectedUser.title)?.charAt(0)?.toUpperCase()}
+    {#if selectedData}
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {#each Object.entries(selectedData) as [key, value]}
+                <div
+                    class={typeof value === "string" && value.length > 100
+                        ? "md:col-span-2"
+                        : ""}
+                >
+                    <Label class="mb-2 capitalize">
+                        {key
+                            .replace(/([A-Z])/g, " $1")
+                            .replace(/^./, (str) => str.toUpperCase())}
+                    </Label>
+                    {#if typeof value === "boolean"}
+                        <Badge color={value ? "green" : "red"}>
+                            {value ? "Yes" : "No"}
+                        </Badge>
+                    {:else if typeof value === "number"}
+                        <p class="font-mono">{value.toLocaleString()}</p>
+                    {:else if typeof value === "string" && value.length > 100}
+                        <Textarea
+                            readonly
+                            class="w-full bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
+                            >{value}</Textarea
+                        >
                     {:else}
-                        #{selectedUserIndex + 1}
+                        <P>{value}</P>
                     {/if}
-                </span>
-            </div>
-            <div>
-                <h3 class="text-xl font-semibold text-gray-900 dark:text-white">
-                    {selectedUser.fullname || selectedUser.name || selectedUser.title || `Item #${selectedUserIndex + 1}`}
-                </h3>
-                {#if selectedUser.role || selectedUser.status || selectedUser.type}
-                    <Badge
-                        color={(selectedUser.role === "admin" || selectedUser.status === "active") ? "red" : "blue"}
-                        class="mt-1"
-                    >
-                        {selectedUser.role || selectedUser.status || selectedUser.type}
-                    </Badge>
-                {/if}
-            </div>
-        </div>
-
-        <div class="space-y-4">
-            {#each Object.entries(selectedUser) as [key, value]}
-                <div>
-                    <span
-                        class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-                    >
-                        {key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
-                    </span>
-                    <p
-                        class="text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-800 p-2 rounded"
-                    >
-                        {#if typeof value === 'boolean'}
-                            <Badge color={value ? "green" : "red"}>
-                                {value ? "Yes" : "No"}
-                            </Badge>
-                        {:else if typeof value === 'number'}
-                            <span class="font-mono">{value.toLocaleString()}</span>
-                        {:else if value === null || value === undefined}
-                            <span class="text-gray-400 italic">Not provided</span>
-                        {:else}
-                            {value}
-                        {/if}
-                    </p>
                 </div>
             {/each}
-            
-            <div>
-                <span
-                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-                >
-                    Row Index
-                </span>
-                <p
-                    class="text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-800 p-2 rounded"
-                >
-                    #{selectedUserIndex}
-                </p>
-            </div>
-        </div>
-
-        <div class="flex justify-end mt-6">
-            <Button color="alternative" onclick={() => (showInfoModal = false)}>
-                Close
-            </Button>
         </div>
     {/if}
 </Modal>
@@ -732,7 +693,7 @@
     autoclose
     class="min-w-full md:min-w-[600px]"
 >
-    {#if selectedUser && editAction}
+    {#if selectedData && editAction}
         <form
             action={editAction}
             method="POST"
@@ -740,42 +701,57 @@
             class="space-y-4"
         >
             <!-- Hidden field for row identification -->
-            <input type="hidden" name="id" value={selectedUser.id || selectedUserIndex} />
-            
+            <input
+                type="hidden"
+                name="id"
+                value={selectedData.id || selectedDataIndex}
+            />
+
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {#each Object.entries(editFormData) as [key, value]}
-                    {#if key !== 'id'}
-                        <div class="{typeof value === 'string' && value.length > 100 ? 'md:col-span-2' : ''}">
+                    {#if key !== "id"}
+                        <div
+                            class={typeof value === "string" &&
+                            value.length > 100
+                                ? "md:col-span-2"
+                                : ""}
+                        >
                             <Label for="edit-{key}" class="mb-2 capitalize">
-                                {key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
+                                {key
+                                    .replace(/([A-Z])/g, " $1")
+                                    .replace(/^./, (str) => str.toUpperCase())}
                             </Label>
-                            
-                            {#if key === 'role' || key === 'status' || key === 'type'}
+
+                            {#if key === "role" || key === "status" || key === "type"}
                                 <!-- Dropdown for role/status/type fields -->
-                                <Select 
-                                    id="edit-{key}" 
-                                    name={key} 
+                                <Select
+                                    id="edit-{key}"
+                                    name={key}
                                     bind:value={editFormData[key]}
                                 >
                                     <option value="">Select {key}</option>
-                                    {#if key === 'role'}
+                                    {#if key === "role"}
                                         <option value="admin">Admin</option>
                                         <option value="user">User</option>
-                                        <option value="manager">Manager</option>
-                                        <option value="editor">Editor</option>
-                                    {:else if key === 'status'}
+                                    {:else if key === "status"}
                                         <option value="active">Active</option>
-                                        <option value="inactive">Inactive</option>
+                                        <option value="inactive"
+                                            >Inactive</option
+                                        >
                                         <option value="pending">Pending</option>
-                                        <option value="suspended">Suspended</option>
-                                    {:else if key === 'type'}
+                                        <option value="suspended"
+                                            >Suspended</option
+                                        >
+                                    {:else if key === "type"}
                                         <option value="premium">Premium</option>
-                                        <option value="standard">Standard</option>
+                                        <option value="standard"
+                                            >Standard</option
+                                        >
                                         <option value="basic">Basic</option>
                                         <option value="trial">Trial</option>
                                     {/if}
                                 </Select>
-                            {:else if typeof value === 'boolean'}
+                            {:else if typeof value === "boolean"}
                                 <!-- Toggle for boolean fields -->
                                 <div class="flex items-center space-x-2">
                                     <Toggle
@@ -783,11 +759,15 @@
                                         name={key}
                                         id="edit-{key}"
                                     />
-                                    <span class="text-sm text-gray-600 dark:text-gray-400">
-                                        {editFormData[key] ? 'Enabled' : 'Disabled'}
+                                    <span
+                                        class="text-sm text-gray-600 dark:text-gray-400"
+                                    >
+                                        {editFormData[key]
+                                            ? "Enabled"
+                                            : "Disabled"}
                                     </span>
                                 </div>
-                            {:else if typeof value === 'number'}
+                            {:else if typeof value === "number"}
                                 <!-- Number input -->
                                 <Input
                                     type="number"
@@ -796,7 +776,7 @@
                                     bind:value={editFormData[key]}
                                     placeholder="Enter {key}..."
                                 />
-                            {:else if key.toLowerCase().includes('email')}
+                            {:else if key.toLowerCase().includes("email")}
                                 <!-- Email input -->
                                 <Input
                                     type="email"
@@ -805,7 +785,7 @@
                                     bind:value={editFormData[key]}
                                     placeholder="Enter email address..."
                                 />
-                            {:else if key.toLowerCase().includes('phone')}
+                            {:else if key.toLowerCase().includes("phone")}
                                 <!-- Phone input -->
                                 <Input
                                     type="tel"
@@ -814,7 +794,7 @@
                                     bind:value={editFormData[key]}
                                     placeholder="Enter phone number..."
                                 />
-                            {:else if key.toLowerCase().includes('password')}
+                            {:else if key.toLowerCase().includes("password")}
                                 <!-- Password input -->
                                 <Input
                                     type="password"
@@ -823,7 +803,9 @@
                                     bind:value={editFormData[key]}
                                     placeholder="Enter password..."
                                 />
-                            {:else if key.toLowerCase().includes('url') || key.toLowerCase().includes('website')}
+                            {:else if key.toLowerCase().includes("url") || key
+                                    .toLowerCase()
+                                    .includes("website")}
                                 <!-- URL input -->
                                 <Input
                                     type="url"
@@ -832,7 +814,7 @@
                                     bind:value={editFormData[key]}
                                     placeholder="Enter URL..."
                                 />
-                            {:else if key.toLowerCase().includes('date')}
+                            {:else if key.toLowerCase().includes("date")}
                                 <!-- Date input -->
                                 <Input
                                     type="date"
@@ -840,7 +822,7 @@
                                     name={key}
                                     bind:value={editFormData[key]}
                                 />
-                            {:else if typeof value === 'string' && value.length > 100}
+                            {:else if typeof value === "string" && value.length > 100}
                                 <!-- Textarea for long text -->
                                 <Textarea
                                     id="edit-{key}"
@@ -869,7 +851,7 @@
                 >
                     <InfoCircleOutline class="w-5 h-5" />
                     <span class="text-sm">
-                        You are editing item at index #{selectedUserIndex}
+                        You are editing item at index #{selectedDataIndex}
                     </span>
                 </div>
             </div>
@@ -891,16 +873,11 @@
     {/if}
 </Modal>
 
-<!-- 🗑️ USER DELETE MODAL -->
+<!-- DELETE MODAL -->
 <Modal bind:open={showDeleteModal} title="Confirm Deletion" autoclose>
-    {#if selectedUser && deleteAction}
-        <div class="text-center space-y-4">
-            <div
-                class="mx-auto w-16 h-16 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center"
-            >
-                <TrashBinOutline class="w-8 h-8 text-red-500" />
-            </div>
-
+    {#if selectedData && deleteAction}
+        <div class="w-full p-2 bg-red-100 dark:bg-red-900/20 flex">
+            <TrashBinOutline class="w-8 h-8 m-4 text-red-500" />
             <div>
                 <h3
                     class="text-lg font-semibold text-gray-900 dark:text-white mb-2"
@@ -911,58 +888,52 @@
                     Are you sure you want to delete the following user?
                 </p>
             </div>
-
-            <Card class="bg-gray-50 dark:bg-gray-800 border-l-4 border-red-500">
-                <div class="text-left space-y-2">
-                    <p>
-                        <span class="font-medium">Name:</span>
-                        {selectedUser.fullname}
-                    </p>
-                    <p>
-                        <span class="font-medium">Email:</span>
-                        {selectedUser.email}
-                    </p>
-                    <p>
-                        <span class="font-medium">Role:</span>
-                        {selectedUser.role}
-                    </p>
-                    <p>
-                        <span class="font-medium">Index:</span>
-                        #{selectedUserIndex}
-                    </p>
-                </div>
-            </Card>
-
-            <Alert color="red" class="text-left">
-                <InfoCircleOutline slot="icon" class="w-4 h-4" />
-                <span class="font-medium">Warning!</span>
-                This action cannot be undone. The user will be permanently deleted
-                from the system.
-            </Alert>
-
-            <form 
-                action={deleteAction} 
-                method="POST" 
-                onsubmit={handleDeleteSubmit}
-                class="flex justify-center space-x-4 pt-4"
-            >
-                <!-- Hidden fields to identify what to delete -->
-                <input type="hidden" name="id" value={selectedUser.id || selectedUserIndex} />
-                <input type="hidden" name="fullname" value={selectedUser.fullname} />
-                <input type="hidden" name="email" value={selectedUser.email} />
-                
-                <Button
-                    color="alternative"
-                    onclick={() => (showDeleteModal = false)}
-                    type="button"
-                >
-                    Cancel
-                </Button>
-                <Button color="red" type="submit">
-                    <TrashBinOutline class="w-4 h-4 mr-2" />
-                    Yes, Delete User
-                </Button>
-            </form>
         </div>
+
+        <div class="text-left space-y-2">
+            {#each Object.entries(selectedData) as [key, value]}
+                <P>{key}: {value}</P>
+            {/each}
+        </div>
+
+        <Alert color="red">
+            {#snippet icon()}
+                <InfoCircleOutline class="w-8 h-8" />
+            {/snippet}
+            <span class="font-medium">Warning!</span>
+            This action cannot be undone. The user will be permanently deleted from
+            the system.
+        </Alert>
+        <form
+            action={deleteAction}
+            method="POST"
+            onsubmit={handleDeleteSubmit}
+            class="flex justify-center space-x-4 pt-4"
+        >
+            <!-- Hidden fields to identify what to delete -->
+            <input
+                type="hidden"
+                name="id"
+                value={selectedData.id || selectedDataIndex}
+            />
+            <input
+                type="hidden"
+                name="fullname"
+                value={selectedData.fullname}
+            />
+            <input type="hidden" name="email" value={selectedData.email} />
+
+            <Button
+                color="alternative"
+                onclick={() => (showDeleteModal = false)}
+                type="button"
+            >
+                Cancel
+            </Button>
+            <Button color="red" type="submit">
+                <TrashBinOutline class="w-4 h-4 mr-2" />
+                Yes, Delete User
+            </Button>
+        </form>
     {/if}
 </Modal>
