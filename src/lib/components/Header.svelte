@@ -43,7 +43,7 @@
         {#if currentRoute === "/"}
             <Button href="/auth" color="primary">Get started!</Button>
         {:else if user}
-            <Button color="dark">
+            <Button color="dark" href="/dashboard/assistant">
                 <BrainSolid />
             </Button>
             <Tooltip>AI Assistant</Tooltip>
