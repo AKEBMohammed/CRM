@@ -4,6 +4,7 @@ import { supabase } from '$lib/supabase';
 import { redirect } from '@sveltejs/kit';
 import type { LayoutServerLoad } from './$types';
 
+<<<<<<< HEAD
 async function getProfilesByUser(user: { company_id: number, profile_id: number, role: string }) {
     if (user.role !== 'admin') {
         return false;
@@ -45,6 +46,8 @@ async function getProfilesByUser(user: { company_id: number, profile_id: number,
 }
 
 
+=======
+>>>>>>> 4e83c6e8251227a338da5f51584d1df7d01b13db
 export const load: LayoutServerLoad = async ({ cookies}) => {
     const user = JSON.parse(cookies.get('user') || 'null');
     if (!user) {
