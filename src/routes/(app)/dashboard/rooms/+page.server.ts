@@ -57,8 +57,6 @@ export const actions = {
         const newRoom = response.insertIntoroomsCollection.records[0];
         console.log('New Room:', newRoom);
 
-
-        // Now, associate selected profiles with the new room
         if (profiles.length > 0) {
             for (let profileId of profiles) {
                 const assocMutation = `
@@ -80,10 +78,9 @@ export const actions = {
                 await gql(assocMutation);
             }
         }
-
         console.log('Room created successfully:', newRoom);
 
 
-        return redirect(302, `/dashboard/rooms/${newRoom.room_id}`);
+        redirect(302, `/dashboard/rooms/${newRoom.room_id}`);
     }
 } satisfies Actions;
