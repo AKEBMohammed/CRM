@@ -5,9 +5,6 @@ import { redirect } from '@sveltejs/kit';
 import type { LayoutServerLoad } from './$types';
 
 async function getProfilesByUser(user: { company_id: number, profile_id: number, role: string }) {
-    if (user.role !== 'admin') {
-        return false;
-    }
 
     let query = `
     query {

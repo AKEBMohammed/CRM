@@ -4,6 +4,8 @@
         Avatar,
         Button,
         ButtonGroup,
+        Dropdown,
+        DropdownItem,
         Heading,
         Input,
         P,
@@ -15,16 +17,56 @@
     } from "flowbite-svelte-icons";
     import { onDestroy } from "svelte";
 
-    let { room, user, messages } = $props();
+    interface MessageView {
+        profile_id: number;
+        fullname: string;
+        email: string;
+        seen_at: string;
+        avatar?: string;
+    }
+
+    interface Message {
+        message_id: number;
+        content: string;
+        send_at: string;
+        created_at?: string;
+        sender_id: number;
+        fullname: string;
+        email: string;
+        views: MessageView[];
+    }
+
+    let {
+        room,
+        user,
+        messages,
+    }: {
+        room: any;
+        user: any;
+        messages: Message[];
+    } = $props();
 
     let messageContent = $state("");
     let messagesContainer: HTMLElement | undefined;
     let channel: any;
+    let viewCheckTimeout: any;
+
+    // Debounced function to check and mark viewed messages
+    function scheduleViewCheck() {
+        if (viewCheckTimeout) {
+            clearTimeout(viewCheckTimeout);
+        }
+        viewCheckTimeout = setTimeout(() => {
+            markMessagesAsViewed();
+        }, 1000); // Wait 1 second of inactivity before marking as viewed
+    }
 
     // Auto-scroll to bottom when new messages arrive
     function scrollToBottom() {
         if (messagesContainer) {
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            // Mark messages as viewed when scrolling to bottom
+            setTimeout(() => markMessagesAsViewed(), 500);
         }
     }
 
@@ -49,7 +91,7 @@
                     table: "messages",
                     filter: `room_id=eq.${room.room_id}`,
                 },
-                (payload) => {
+                async (payload) => {
                     console.log("New message received via real-time:", payload);
                     console.log("Current messages count:", messages.length);
 
@@ -59,12 +101,77 @@
                     );
 
                     if (!messageExists) {
-                        messages = [...messages, payload.new];
-                        console.log(
-                            "Message added. New count:",
-                            messages.length,
-                        );
-                        setTimeout(scrollToBottom, 100);
+                        // Fetch the complete message with views and sender info
+                        const { data: completeMessage, error } = await supabase
+                            .from("messages")
+                            .select(
+                                `
+                                *,
+                                profiles!messages_sender_id_fkey (
+                                    fullname,
+                                    email
+                                ),
+                                views (
+                                    profile_id,
+                                    seen_at,
+                                    profiles (
+                                        fullname,
+                                        email
+                                    )
+                                )
+                            `,
+                            )
+                            .eq("message_id", payload.new.message_id)
+                            .single();
+
+                        if (!error && completeMessage) {
+                            // Transform the data to match our expected format
+                            const formattedMessage: Message = {
+                                message_id: completeMessage.message_id,
+                                content: completeMessage.content,
+                                send_at: completeMessage.send_at,
+                                sender_id: completeMessage.sender_id,
+                                fullname:
+                                    completeMessage.profiles?.fullname ||
+                                    "Unknown",
+                                email: completeMessage.profiles?.email || "",
+                                views:
+                                    completeMessage.views?.map(
+                                        (view: any): MessageView => ({
+                                            profile_id: view.profile_id,
+                                            fullname:
+                                                view.profiles?.fullname ||
+                                                "Unknown",
+                                            email: view.profiles?.email || "",
+                                            seen_at: view.seen_at,
+                                        }),
+                                    ) || [],
+                            };
+
+                            messages = [...messages, formattedMessage];
+                            console.log(
+                                "Message added. New count:",
+                                messages.length,
+                            );
+                            setTimeout(scrollToBottom, 100);
+                        } else {
+                            console.error(
+                                "Error fetching complete message:",
+                                error,
+                            );
+                            // Fallback to basic message data
+                            const fallbackMessage: Message = {
+                                message_id: payload.new.message_id,
+                                content: payload.new.content,
+                                send_at: payload.new.send_at,
+                                sender_id: payload.new.sender_id,
+                                fullname: "Unknown",
+                                email: "",
+                                views: [],
+                            };
+                            messages = [...messages, fallbackMessage];
+                            setTimeout(scrollToBottom, 100);
+                        }
                     } else {
                         console.log(
                             "Message already exists, skipping duplicate",
@@ -72,10 +179,75 @@
                     }
                 },
             )
+            .on(
+                "postgres_changes",
+                {
+                    event: "INSERT",
+                    schema: "public",
+                    table: "views",
+                },
+                async (payload) => {
+                    console.log("New view received via real-time:", payload);
+
+                    // Check if this view is for a message in our current room
+                    const relevantMessage = messages.find(
+                        (msg: Message) =>
+                            msg.message_id === payload.new.message_id,
+                    );
+
+                    if (relevantMessage) {
+                        // Fetch the viewer's profile info
+                        const { data: profile, error } = await supabase
+                            .from("profiles")
+                            .select("fullname, email")
+                            .eq("profile_id", payload.new.profile_id)
+                            .single();
+
+                        if (!error && profile) {
+                            const newView: MessageView = {
+                                profile_id: payload.new.profile_id,
+                                fullname: profile.fullname,
+                                email: profile.email,
+                                seen_at: payload.new.seen_at,
+                            };
+
+                            // Update the message's views array
+                            messages = messages.map((msg: Message) => {
+                                if (msg.message_id === payload.new.message_id) {
+                                    const existingViewIndex =
+                                        msg.views.findIndex(
+                                            (v: MessageView) =>
+                                                v.profile_id ===
+                                                payload.new.profile_id,
+                                        );
+
+                                    if (existingViewIndex === -1) {
+                                        // Add new view
+                                        return {
+                                            ...msg,
+                                            views: [...msg.views, newView],
+                                        };
+                                    } else {
+                                        // Update existing view
+                                        const updatedViews = [...msg.views];
+                                        updatedViews[existingViewIndex] =
+                                            newView;
+                                        return { ...msg, views: updatedViews };
+                                    }
+                                }
+                                return msg;
+                            });
+                        }
+                    }
+                },
+            )
             .subscribe((status) => {
                 console.log("Channel subscription status:", status);
                 if (status === "SUBSCRIBED") {
                     console.log("Successfully subscribed to real-time updates");
+
+                    // Mark messages as viewed when component loads
+                    markMessagesAsViewed();
                 } else if (status === "CHANNEL_ERROR") {
                     console.error("Channel subscription error");
                 } else if (status === "TIMED_OUT") {
@@ -88,6 +260,9 @@
         if (channel) {
             console.log("Unsubscribing from channel");
             supabase.removeChannel(channel);
+        }
+        if (viewCheckTimeout) {
+            clearTimeout(viewCheckTimeout);
         }
     });
 
@@ -131,13 +306,18 @@
         }
     }
 
-    function isMyMessage(message: any) {
-        console.log("Checking if message is mine:", message.sender_id, user.profile_id);
-        
+    function isMyMessage(message: Message) {
+        console.log(
+            "Checking if message is mine:",
+            message.sender_id,
+            user.profile_id,
+        );
+
         return message.sender_id == user.profile_id;
     }
 
-    function formatTime(dateString: string) {
+    function formatTime(dateString: string | undefined): string {
+        if (!dateString) return "";
         const date = new Date(dateString);
         return date.toLocaleTimeString([], {
             hour: "2-digit",
@@ -145,7 +325,8 @@
         });
     }
 
-    function formatDate(dateString: string) {
+    function formatDate(dateString: string | undefined): string {
+        if (!dateString) return "";
         const date = new Date(dateString);
         const today = new Date();
         const yesterday = new Date(today);
@@ -159,10 +340,50 @@
             return date.toLocaleDateString();
         }
     }
+
+    async function markMessagesAsViewed() {
+        try {
+            // Get all message IDs that this user hasn't viewed yet
+            const messageIds = messages
+                .filter(
+                    (msg: Message) =>
+                        msg.sender_id !== user.profile_id && // Don't mark own messages as viewed
+                        !msg.views?.some(
+                            (view: MessageView) =>
+                                view.profile_id === user.profile_id,
+                        ), // Haven't viewed yet
+                )
+                .map((msg: Message) => msg.message_id);
+
+            if (messageIds.length > 0) {
+                // Mark messages as viewed
+                const viewRecords = messageIds.map((messageId: number) => ({
+                    message_id: messageId,
+                    profile_id: user.profile_id,
+                    seen_at: new Date().toISOString(),
+                }));
+
+                const { error } = await supabase
+                    .from("views")
+                    .insert(viewRecords);
+
+                if (error) {
+                    console.error("Error marking messages as viewed:", error);
+                } else {
+                    console.log(
+                        `Marked ${viewRecords.length} messages as viewed`,
+                    );
+                }
+            }
+        } catch (error) {
+            console.error("Error in markMessagesAsViewed:", error);
+        }
+    }
 </script>
 
 <div
     bind:this={messagesContainer}
+    onscroll={scheduleViewCheck}
     class="flex-1 overflow-y-auto space-y-4 p-4 bg-gray-50 dark:bg-gray-900"
 >
     {#if messages.length === 0}
@@ -232,12 +453,43 @@
                             {formatTime(message.send_at || message.created_at)}
                         </span>
                         {#if isMyMessage(message)}
-                            <span
-                                class="text-xs text-gray-500 dark:text-gray-400 m-1"
-                            >
-                                <CheckOutline class="w-4 h-4 inline -m-3 text-primary-500" />
-                                <CheckOutline class="w-4 h-4 inline text-primary-500" />
-                            </span>
+                            {#if message.views.length > 0}
+                                <span
+                                    class="text-xs text-gray-500 dark:text-gray-400 m-1"
+                                >
+                                    <CheckOutline
+                                        class="w-4 h-4 inline -m-3 text-primary-500"
+                                    />
+                                    <CheckOutline
+                                        class="w-4 h-4 inline text-primary-500"
+                                    />
+                                </span>
+                                <Dropdown simple class="space-y-1">
+                                    <DropdownItem class="text-xs text-gray-500">
+                                        Seen by {message.views.length}
+                                        {message.views.length === 1
+                                            ? "person"
+                                            : "people"}
+                                    </DropdownItem>
+                                    {#each message.views as viewer}
+                                        <DropdownItem class="flex">
+                                            <Avatar
+                                                size="xs"
+                                                src={viewer.avatar}
+                                                class="mr-2"
+                                            />
+                                            <span
+                                                class="text-sm text-gray-900 dark:text-white"
+                                                >{viewer.fullname}</span
+                                            >
+                                        </DropdownItem>
+                                    {/each}
+                                </Dropdown>
+                            {:else}
+                                <CheckOutline
+                                    class="w-4 h-4 inline text-primary-500"
+                                />
+                            {/if}
                         {/if}
                     </div>
                 </div>
