@@ -23,6 +23,7 @@
     <div class="relative w-1/3 h-full border-r border-gray-200 dark:border-gray-700">
         <Sidebar
             isOpen={true}
+            alwaysOpen={true}
             backdrop={false}
             position="absolute"
             class="w-full h-full"

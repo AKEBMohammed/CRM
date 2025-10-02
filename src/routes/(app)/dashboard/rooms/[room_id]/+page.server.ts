@@ -1,7 +1,6 @@
 import { redirect } from "@sveltejs/kit";
 import type { PageServerLoad } from "./$types";
 import { gql } from "$lib/graphql";
-import { supabase } from "$lib/supabase";
 
 
 
@@ -9,7 +8,7 @@ export const load: PageServerLoad = async ({ params, cookies }) => {
     const user = JSON.parse(cookies.get('user') || 'null');
     if (!user) {
         redirect(300, '/auth');
-    }
+    }    
 
     //Check if the user has access to this room
     let query = `
@@ -58,7 +57,9 @@ export const load: PageServerLoad = async ({ params, cookies }) => {
                     room_id: {
                         eq: "${params.room_id}"
                     }
-                },
+                    
+                }
+                last: 50
                 orderBy: [{ send_at: AscNullsLast }]) {
                     edges {
                         node {
@@ -69,6 +70,18 @@ export const load: PageServerLoad = async ({ params, cookies }) => {
                             profiles {
                                 fullname
                                 email
+                            }
+                            viewsCollection {
+                                edges {
+                                    node {
+                                        profile_id
+                                        viewed_at
+                                        profiles {
+                                            fullname
+                                            email
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
