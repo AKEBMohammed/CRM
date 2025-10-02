@@ -2,6 +2,74 @@ import { redirect } from "@sveltejs/kit";
 import type { PageServerLoad } from "./$types";
 import { gql } from "$lib/graphql";
 
+async function getMessagesWithViewsByRoom(room_id: number) {
+    let query = `
+        query {
+                messagesCollection(
+                filter: {
+                    room_id: {
+                        eq: "${room_id}"
+                    }
+                    
+                }
+                last: 50
+                orderBy: [{ send_at: AscNullsLast }]) {
+                    edges {
+                        node {
+                            message_id
+                            content
+                            send_at
+                            sender_id
+                            profiles {
+                                fullname
+                                email
+                            }
+                            viewsCollection {
+                                edges {
+                                    node {
+                                        profile_id
+                                        seen_at
+                                        profiles {
+                                            fullname
+                                            email
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        
+    `
+    let data = await gql(query);
+
+    if (!data.messagesCollection) {
+        return [];
+    }
+
+    let results = data.messagesCollection.edges.map((edge: any) => {
+        let message = {
+            message_id: edge.node.message_id,
+            content: edge.node.content,
+            send_at: edge.node.send_at,
+            sender_id: edge.node.sender_id,
+            fullname: edge.node.profiles.fullname,
+            email: edge.node.profiles.email,
+            views: edge.node.viewsCollection.edges.map((viewEdge: any) => ({
+                profile_id: viewEdge.node.profile_id,
+                fullname: viewEdge.node.profiles.fullname,
+                email: viewEdge.node.profiles.email,
+                seen_at: viewEdge.node.seen_at,
+
+            }))
+        };
+        return message;
+    });
+
+    return results;
+}
+
 
 
 export const load: PageServerLoad = async ({ params, cookies }) => {
@@ -50,53 +118,7 @@ export const load: PageServerLoad = async ({ params, cookies }) => {
     }
 
     
-    query = `
-        query {
-                messagesCollection(
-                filter: {
-                    room_id: {
-                        eq: "${params.room_id}"
-                    }
-                    
-                }
-                last: 50
-                orderBy: [{ send_at: AscNullsLast }]) {
-                    edges {
-                        node {
-                            message_id
-                            content
-                            send_at
-                            sender_id
-                            profiles {
-                                fullname
-                                email
-                            }
-                            viewsCollection {
-                                edges {
-                                    node {
-                                        profile_id
-                                        viewed_at
-                                        profiles {
-                                            fullname
-                                            email
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        
-    `
-    data = await gql(query);
-
-    if (!data.messagesCollection) {
-        throw redirect(300, '/dashboard/rooms');
-    }
-
-
-    let messages = data.messagesCollection.edges.map((edge: any) => edge.node)
+    let messages = await getMessagesWithViewsByRoom(parseInt(params.room_id));
 
     return { room, messages };
 };

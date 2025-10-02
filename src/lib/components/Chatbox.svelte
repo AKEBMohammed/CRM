@@ -132,6 +132,8 @@
     }
 
     function isMyMessage(message: any) {
+        console.log("Checking if message is mine:", message.sender_id, user.profile_id);
+        
         return message.sender_id == user.profile_id;
     }
 
@@ -216,7 +218,7 @@
                                 tag="h4"
                                 class="text-sm break-words whitespace-pre-wrap"
                             >
-                                {message.profiles.fullname}
+                                {message.fullname}
                             </Heading>
                         {/if}
                         <P class="text-sm break-words">
