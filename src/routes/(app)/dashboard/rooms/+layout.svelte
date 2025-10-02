@@ -6,6 +6,7 @@
         Heading,
         Input,
         Label,
+        List,
         Listgroup,
         ListgroupItem,
         Modal,
@@ -20,7 +21,9 @@
 </script>
 
 <main class="w-full h-full row-start-2 col-start-2 overflow-y-auto flex">
-    <div class="relative w-1/3 h-full border-r border-gray-200 dark:border-gray-700">
+    <div
+        class="relative w-1/3 h-full border-r border-gray-200 dark:border-gray-700"
+    >
         <Sidebar
             isOpen={true}
             alwaysOpen={true}
@@ -42,26 +45,24 @@
                 <PlusOutline class="w-4 h-4 mr-2" />
                 New Room
             </Button>
-            {#each data.rooms as room}
-                <Card
-                    href={`/dashboard/rooms/${room.room_id}`}
-                    class="w-full p-2 mb-2 bg-gray-100 dark:bg-gray-700 rounded-lg cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-600"
-                >
-                    <Heading
-                        tag="h3"
-                        class="text-md font-bold text-gray-900 dark:text-white"
+            <Listgroup class="w-full h-500 overflow-y-scroll" rounded={false}>
+                {#each data.rooms as room}
+                    <ListgroupItem
+                        href={`/dashboard/rooms/${room.room_id}`}
+                        class="flex flex-col justify-start items-start"
                     >
-                        {room.name}
-                    </Heading>
-                    <P
-                        class="text-sm text-gray-600 dark:text-gray-300 truncate"
-                    >
-                        {room.last_message.fullname +
-                            ": " +
-                            room.last_message.content || "No messages yet"}
-                    </P>
-                </Card>
-            {/each}
+                        <Heading tag="h5" class="text-gray-900 dark:text-white">
+                            {room.name}
+                        </Heading>
+                        <P
+                            class="text-sm text-gray-600 dark:text-gray-300 truncate"
+                        >
+                            <b>{room.last_message.fullname}</b>: {room
+                                .last_message.content || "No messages yet"}
+                        </P>
+                    </ListgroupItem>
+                {/each}
+            </Listgroup>
         </Sidebar>
     </div>
 
