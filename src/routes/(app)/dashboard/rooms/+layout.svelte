@@ -29,11 +29,9 @@
             alwaysOpen={true}
             backdrop={false}
             position="absolute"
-            class="w-full h-screen"
+            class="w-full h-full"
         >
-            <Heading
-                tag="h4"
-                class="text-gray-900 dark:text-white mb-2"
+            <Heading tag="h4" class="text-gray-900 dark:text-white mb-2"
                 >Chat Rooms</Heading
             >
             <Search placeholder="Search rooms..." size="md" class="mb-2" />
@@ -45,7 +43,7 @@
                 <PlusOutline class="w-4 h-4 mr-2" />
                 New Room
             </Button>
-            <Listgroup class="w-full overflow-y-scroll" rounded={false}>
+            <Listgroup class="w-full h-120 overflow-y-scroll" rounded={false}>
                 {#each data.rooms as room}
                     <ListgroupItem
                         href={`/dashboard/rooms/${room.room_id}`}
