@@ -1,6 +1,7 @@
-import { fail, redirect } from "@sveltejs/kit";
+import { error, fail, redirect } from "@sveltejs/kit";
 import type { Actions, PageServerLoad } from "./$types";
 import { gql } from "$lib/graphql";
+import { getProfile } from "$lib/supabase";
 
 async function getMessagesWithViewsByRoom(room_id: number) {
     let query = `
@@ -113,7 +114,6 @@ async function checkUserAccess(params: { room_id: number; user: any }) {
     let room = data.profiles_roomsCollection.edges[0].node.rooms;
 
     if (!room) {
-        console.error('Room not found');
         throw redirect(300, '/dashboard/rooms');
     }
 
@@ -121,7 +121,7 @@ async function checkUserAccess(params: { room_id: number; user: any }) {
 }
 
 export const load: PageServerLoad = async ({ params, cookies }) => {
-    const user = JSON.parse(cookies.get('user') || 'null');
+    const user = await getProfile()
     if (!user) {
         redirect(300, '/auth');
     }
@@ -141,9 +141,7 @@ export const load: PageServerLoad = async ({ params, cookies }) => {
 
 export const actions = {
     add: async ({ request, cookies, params }) => {
-        console.log('Adding profile to room');
-
-        const user = JSON.parse(cookies.get('user') || 'null');
+        const user = await getProfile()
         if (!user) {
             throw redirect(302, '/auth');
         }
@@ -152,7 +150,7 @@ export const actions = {
         const profiles = formData.getAll('profile') as string[];
 
         if (profiles.length === 0) {
-            return fail(400, 'Profile ID is required');
+            return fail(400, { error: 'Profile ID is required' });
         }
 
         // Check if the user has access to the room
@@ -177,9 +175,7 @@ export const actions = {
 
             let response = await gql(mutation);
             if (!response?.insertIntoprofiles_roomsCollection?.records?.length) {
-                console.log('Failed to add profile to room', response);
-
-                return fail(400, 'Failed to add profile to room');
+                return fail(400, { error: 'Failed to add profile to room' });
             }
 
         }
@@ -190,7 +186,7 @@ export const actions = {
     },
 
     leave: async ({ request, cookies, params }) => {
-        const user = JSON.parse(cookies.get('user') || 'null');
+        const user = await getProfile()
         if (!user) {
             throw redirect(302, '/auth');
         }
@@ -224,7 +220,7 @@ export const actions = {
     },
 
     delete: async ({ request, cookies, params }) => {
-        const user = JSON.parse(cookies.get('user') || 'null');
+        const user = await getProfile()
         if (!user) {
             throw redirect(302, '/auth');
         }
@@ -233,9 +229,7 @@ export const actions = {
         let room = await checkUserAccess({ room_id: parseInt(params.room_id), user });
 
         if (room.created_by != user.profile_id) {
-            console.log('Only the creator can delete the room');
-
-            return fail(403, 'Only the creator can delete the room');
+            return fail(403, { error: 'Only the creator can delete the room' });
         }
 
         const mutation = `
@@ -254,7 +248,7 @@ export const actions = {
 
         if (response?.deleteFromroomsCollection?.records.length === 0) {
 
-            return fail(400, 'Failed to delete room');
+            return fail(400, { error: 'Failed to delete room' });
         }
 
         redirect(300, '/dashboard/rooms')

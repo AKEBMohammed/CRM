@@ -144,7 +144,7 @@ export const actions = {
     import: async ({ request, cookies }) => {
         const formData = await request.formData();
         const file = formData.get('file');
-        const user = JSON.parse(cookies.get('user') || 'null');
+        const user = await getProfile()
 
         if (!user) {
             return fail(401, { error: 'Unauthorized access. Please log in again.' });
@@ -241,7 +241,7 @@ export const actions = {
     export: async ({ request, cookies }) => {
         const formData = await request.formData();
         const format = formData.get('format');
-        const user = JSON.parse(cookies.get('user') || 'null');
+        const user = await getProfile()
         if (!user) {
             return fail(401, { error: 'Unauthorized access. Please log in again.' });
         }
@@ -341,7 +341,7 @@ export const actions = {
 
     // Edit contact action
     edit: async ({ request, cookies }) => {
-        const user = JSON.parse(cookies.get('user') || 'null');
+        const user = await getProfile()
 
         if (!user) {
             return fail(401, { error: 'Unauthorized access. Please log in again.' });
@@ -405,7 +405,7 @@ export const actions = {
     
     // Delete contact action
     delete: async ({ request, cookies }) => {
-        const user = JSON.parse(cookies.get('user') || 'null');
+        const user = await getProfile()
 
         if (!user) {
             return fail(401, { error: 'Unauthorized access. Please log in again.' });

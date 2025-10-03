@@ -15,7 +15,7 @@ export async function getProfile() {
         .eq('user_id', user.data.user?.id)
         .single();
     
-    if( error ) redirect(300, '/auth')
+    if( error ) return null;
 
     return {
         user_id: user.data.user?.id,

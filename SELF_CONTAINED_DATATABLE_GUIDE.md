@@ -79,7 +79,7 @@ import type { Actions } from './$types';
 export const actions = {
     // Edit user action
     edit: async ({ request, cookies }) => {
-        const user = JSON.parse(cookies.get('user') || 'null');
+        const user = await getProfile()
         
         if (!user || user.role !== 'admin') {
             return fail(401, { error: 'Unauthorized access' });
@@ -106,7 +106,7 @@ export const actions = {
 
     // Delete user action
     delete: async ({ request, cookies }) => {
-        const user = JSON.parse(cookies.get('user') || 'null');
+        const user = await getProfile()
         
         if (!user || user.role !== 'admin') {
             return fail(401, { error: 'Unauthorized access' });

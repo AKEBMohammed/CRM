@@ -1,6 +1,6 @@
 
 import { gql } from '$lib/graphql';
-import { supabase } from '$lib/supabase';
+import { getProfile, supabase } from '$lib/supabase';
 import { redirect } from '@sveltejs/kit';
 import type { LayoutServerLoad } from './$types';
 
@@ -43,7 +43,7 @@ async function getProfilesByUser(user: { company_id: number, profile_id: number,
 
 
 export const load: LayoutServerLoad = async ({ cookies}) => {
-    const user = JSON.parse(cookies.get('user') || 'null');
+    const user = await getProfile()
     if (!user) {
         redirect(300, '/auth');
     }

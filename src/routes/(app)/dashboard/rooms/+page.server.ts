@@ -1,12 +1,13 @@
 import { gql } from "$lib/graphql";
 import { fail, redirect } from "@sveltejs/kit";
 import type { Actions } from "./$types";
+import { getProfile } from "$lib/supabase";
 
 
 
 export const actions = {
     create: async ({ request, cookies }) => {
-        const user = JSON.parse(cookies.get('user') || 'null');
+        const user = await getProfile()
         if (!user) {
             throw redirect(302, '/auth');
         }
