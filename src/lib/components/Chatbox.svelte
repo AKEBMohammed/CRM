@@ -8,12 +8,19 @@
         DropdownItem,
         Heading,
         Input,
+        Listgroup,
+        Label,
+        Modal,
         P,
+        ListgroupItem,
+        Card,
     } from "flowbite-svelte";
     import {
         CheckOutline,
+        DownloadOutline,
         FileSolid,
         PaperPlaneSolid,
+        TrashBinSolid,
     } from "flowbite-svelte-icons";
     import { onDestroy } from "svelte";
 
@@ -34,6 +41,7 @@
         fullname: string;
         email: string;
         views: MessageView[];
+        files: any;
     }
 
     let {
@@ -50,6 +58,8 @@
     let messagesContainer: HTMLElement | undefined;
     let channel: any;
     let viewCheckTimeout: any;
+    let showSendFileModal = $state(false);
+    let selectedFile: File | null = $state(null);
 
     // Debounced function to check and mark viewed messages
     function scheduleViewCheck() {
@@ -282,15 +292,57 @@
                         sender_id: user.profile_id,
                     },
                 ])
-                .select();
+                .select("*");
 
             if (error) {
                 console.error("Error sending message:", error);
                 // Restore message content if there's an error
                 messageContent = messageToSend;
                 alert("Failed to send message. Please try again.");
+                return;
             } else {
                 console.log("Message sent successfully:", insertedMessage);
+            }
+
+            if (selectedFile && insertedMessage && insertedMessage[0]) {
+                let pname = `chat-${room.room_id}-${user.user_id}-${Date.now().toString().replace(/:/g, "").replace(/-/g, "")}`;
+                let { error: fileError } = await supabase.storage
+                    .from("shared")
+                    .upload(pname, selectedFile);
+
+                if (fileError) {
+                    console.error("Error uploading file:", fileError);
+                }
+
+                let { data: insertedFile, error: insertedFileError } =
+                    await supabase
+                        .from("files")
+                        .insert([
+                            {
+                                v_name: selectedFile.name,
+                                p_name: pname,
+                            },
+                        ])
+                        .select("file_id")
+                        .single();
+
+                if (insertedFile) {
+                    let { data: updatedMessage, error: updatedMessageError } =
+                        await supabase
+                            .from("messages")
+                            .update({
+                                file_id: insertedFile.file_id,
+                            })
+                            .eq("message_id", insertedMessage[0].message_id);
+
+                    if (updatedMessageError) {
+                        console.error(
+                            "Error updating message with file_id:",
+                            updatedMessageError,
+                        );
+                    }
+                }
+                selectedFile = null;
             }
         } catch (error) {
             console.error("Error sending message:", error);
@@ -307,12 +359,6 @@
     }
 
     function isMyMessage(message: Message) {
-        console.log(
-            "Checking if message is mine:",
-            message.sender_id,
-            user.profile_id,
-        );
-
         return message.sender_id == user.profile_id;
     }
 
@@ -377,6 +423,13 @@
             }
         } catch (error) {
             console.error("Error in markMessagesAsViewed:", error);
+        }
+    }
+
+    function handleFileSelect(event: Event) {
+        const input = event.target as HTMLInputElement;
+        if (input.files && input.files.length > 0) {
+            selectedFile = input.files[0];
         }
     }
 </script>
@@ -492,6 +545,21 @@
                             {/if}
                         {/if}
                     </div>
+                    {#if message.files}
+                        <div
+                            class="w-fit flex gap-2 mt-2 border p-2 rounded-lg dark:border-gray-500 bg-gray-100 dark:bg-gray-900"
+                        >
+                            <FileSolid
+                                class="w-6 h-6 mr-2 text-gray-500 dark:text-gray-400"
+                                size="md"
+                            />
+                            <P>{message.files.v_name}</P>
+
+                            <Button color="alternative" size="xs">
+                                <DownloadOutline class="w-5 h-5 text-white" />
+                            </Button>
+                        </div>
+                    {/if}
                 </div>
 
                 {#if isMyMessage(message)}
@@ -506,10 +574,44 @@
 <div
     class="p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
 >
+    {#if selectedFile}
+        <div class="bg-green-50 dark:bg-green-900/20 p-4 mb-2 flex rounded-lg">
+            <FileSolid
+                class="w-6 h-6 inline mr-2 text-green-600 dark:text-green-400"
+            />
+            <span class="text-green-800 dark:text-green-200 font-medium"
+                >{selectedFile.name}</span
+            >
+            <Button
+                size="sm"
+                color="red"
+                class="inline ml-auto p-1"
+                onclick={() => (selectedFile = null)}
+            >
+                <TrashBinSolid class="w-4 h-4 text-white" />
+            </Button>
+        </div>
+    {/if}
     <ButtonGroup class="w-full">
-        <Button size="sm" class="p-3" color="primary">
+        <Button
+            size="sm"
+            class="p-3"
+            color="primary"
+            onclick={() => {
+                const fileInput = document.getElementById(
+                    "chatbox-file-input",
+                ) as HTMLInputElement;
+                if (fileInput) fileInput.click();
+            }}
+        >
             <FileSolid class="w-5 h-5" />
         </Button>
+        <input
+            id="chatbox-file-input"
+            type="file"
+            class="hidden"
+            onchange={handleFileSelect}
+        />
 
         <Input
             type="text"

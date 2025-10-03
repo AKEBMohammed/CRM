@@ -24,6 +24,11 @@ async function getMessagesWithViewsByRoom(room_id: number) {
                                 fullname
                                 email
                             }
+                            files {
+                                file_id
+                                p_name
+                                v_name
+                            }
                             viewsCollection {
                                 edges {
                                     node {
@@ -36,6 +41,7 @@ async function getMessagesWithViewsByRoom(room_id: number) {
                                     }
                                 }
                             }
+
                         }
                     }
                 }
@@ -49,6 +55,8 @@ async function getMessagesWithViewsByRoom(room_id: number) {
     }
 
     let results = data.messagesCollection.edges.map((edge: any) => {
+        console.log(edge.node.files);
+
         let message = {
             message_id: edge.node.message_id,
             content: edge.node.content,
@@ -62,7 +70,8 @@ async function getMessagesWithViewsByRoom(room_id: number) {
                 email: viewEdge.node.profiles.email,
                 seen_at: viewEdge.node.seen_at,
 
-            }))
+            })),
+            files: edge.node.files
         };
         return message;
     });
@@ -76,7 +85,7 @@ export const load: PageServerLoad = async ({ params, cookies }) => {
     const user = JSON.parse(cookies.get('user') || 'null');
     if (!user) {
         redirect(300, '/auth');
-    }    
+    }
 
     //Check if the user has access to this room
     let query = `
@@ -111,13 +120,13 @@ export const load: PageServerLoad = async ({ params, cookies }) => {
     }
 
     let room = data.profiles_roomsCollection.edges[0].node.rooms;
-    
+
     if (!room) {
         console.error('Room not found');
         throw redirect(300, '/dashboard/rooms');
     }
 
-    
+
     let messages = await getMessagesWithViewsByRoom(parseInt(params.room_id));
 
     return { room, messages };
