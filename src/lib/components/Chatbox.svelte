@@ -14,6 +14,9 @@
         P,
         ListgroupItem,
         Card,
+        Badge,
+        Tooltip,
+        Spinner,
     } from "flowbite-svelte";
     import {
         CheckOutline,
@@ -21,6 +24,10 @@
         FileSolid,
         PaperPlaneSolid,
         TrashBinSolid,
+        ReplyOutline,
+        CloseOutline,
+        DotsVerticalOutline,
+        EyeOutline,
     } from "flowbite-svelte-icons";
     import { onDestroy } from "svelte";
 
@@ -59,9 +66,10 @@
     let messagesContainer: HTMLElement | undefined;
     let channel: any;
     let viewCheckTimeout: any;
-    let showSendFileModal = $state(false);
     let selectedFile: File | null = $state(null);
     let replyTo: Message | null = $state(null);
+    let isTyping = $state(false);
+    let showEmojiPicker = $state(false);
 
     // Debounced function to check and mark viewed messages
     function scheduleViewCheck() {
@@ -134,16 +142,6 @@
                                         v_name,
                                         p_name
                                     ),
-                                    reply_to:messages!messages_reply_id_fkey (
-                                        message_id,
-                                        content,
-                                        send_at,
-                                        sender_id,
-                                        profiles!messages_sender_id_fkey (
-                                            fullname,
-                                            email
-                                        )
-                                    ),
                                     views (
                                         profile_id,
                                         seen_at,
@@ -206,7 +204,7 @@
                                     fullname: "Unknown",
                                     email: "",
                                     files: null,
-                                    reply_to: payload.new.reply_id || null,
+                                    reply_to: payload.new.reply_to || null,
                                     views: [],
                                 };
                                 messages = [...messages, fallbackMessage];
@@ -242,16 +240,6 @@
                                         file_id,
                                         v_name,
                                         p_name
-                                    ),
-                                    reply_to:messages!messages_reply_id_fkey (
-                                        message_id,
-                                        content,
-                                        send_at,
-                                        sender_id,
-                                        profiles!messages_sender_id_fkey (
-                                            fullname,
-                                            email
-                                        )
                                     ),
                                     views (
                                         profile_id,
@@ -421,7 +409,6 @@
                     },
                 ])
                 .select("*");
-            replyTo = null;
 
             if (error) {
                 console.error("Error sending message:", error);
@@ -431,6 +418,7 @@
                 return;
             } else {
                 console.log("Message sent successfully:", insertedMessage);
+                replyTo = null; // Clear reply after successful message send
             }
 
             if (selectedFile && insertedMessage && insertedMessage[0]) {
@@ -484,6 +472,14 @@
         if (event.key === "Enter" && !event.shiftKey) {
             event.preventDefault();
             sendMessage();
+        }
+
+        // Show typing indicator
+        if (!isTyping && messageContent.trim()) {
+            isTyping = true;
+            setTimeout(() => {
+                isTyping = false;
+            }, 3000);
         }
     }
 
@@ -561,6 +557,35 @@
         }
     }
 
+    function getMessageStatus(message: Message) {
+        if (!isMyMessage(message)) return null;
+
+        if (message.views.length > 0) {
+            return {
+                type: "read",
+                count: message.views.length,
+                viewers: message.views,
+            };
+        }
+        return { type: "sent" };
+    }
+
+    function getInitials(fullname: string): string {
+        return fullname
+            .split(" ")
+            .map((n) => n[0])
+            .join("")
+            .toUpperCase()
+            .slice(0, 2);
+    }
+
+    function formatFileSize(bytes: number): string {
+        if (bytes === 0) return "0 Bytes";
+        const k = 1024;
+        const sizes = ["Bytes", "KB", "MB", "GB"];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+    }
     async function getFileDownloadUrl(
         fileName: string,
     ): Promise<string | null> {
@@ -582,16 +607,33 @@
     }
 </script>
 
+<!-- Professional CRM Chat Interface -->
+<!-- Messages Container -->
 <div
     bind:this={messagesContainer}
     onscroll={scheduleViewCheck}
-    class="flex-1 overflow-y-auto space-y-4 p-4 bg-gray-50 dark:bg-gray-900"
+    class="flex-1 overflow-y-auto p-4 space-y-4 bg-gradient-to-b from-gray-50/50 to-white dark:from-gray-900/50 dark:to-gray-900"
 >
     {#if messages.length === 0}
         <div class="flex items-center justify-center h-full">
-            <div class="text-center text-gray-500 dark:text-gray-400">
-                <p class="text-lg mb-2">No messages yet</p>
-                <p class="text-sm">Start a conversation by sending a message</p>
+            <div class="text-center max-w-sm mx-auto">
+                <div
+                    class="w-16 h-16 mx-auto mb-4 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center"
+                >
+                    <PaperPlaneSolid
+                        class="w-8 h-8 text-gray-400 dark:text-gray-600"
+                    />
+                </div>
+                <Heading
+                    tag="h4"
+                    class="text-lg font-semibold text-gray-900 dark:text-white mb-2"
+                >
+                    Start the conversation
+                </Heading>
+                <P class="text-sm text-gray-500 dark:text-gray-400">
+                    Send your first message to begin communicating with your
+                    team or clients.
+                </P>
             </div>
         </div>
     {/if}
@@ -604,222 +646,358 @@
                     messages[index - 1].send_at ||
                         messages[index - 1].created_at,
                 )}
+        {@const messageStatus = getMessageStatus(message)}
 
         {#if showDate}
-            <div class="flex justify-center">
-                <span
-                    class="px-3 py-1 text-xs font-light text-gray-500 bg-gray-200 dark:bg-gray-700 dark:text-gray-400 rounded-full"
-                >
+            <div class="flex justify-center my-6">
+                <Badge color="gray" class="px-3 py-1 text-xs font-medium">
                     {formatDate(message.send_at || message.created_at)}
-                </span>
+                </Badge>
             </div>
         {/if}
 
-        <div
-            class="flex {isMyMessage(message)
-                ? 'justify-end'
-                : 'justify-start'}"
-        >
-            <div class="flex items-end space-x-2 max-w-xs lg:max-w-md">
+        <div class="group relative">
+            <div
+                class="flex {isMyMessage(message)
+                    ? 'justify-end'
+                    : 'justify-start'} items-end space-x-2"
+            >
+                <!-- Sender Avatar (for received messages) -->
                 {#if !isMyMessage(message)}
-                    <Avatar size="sm" class="mb-auto" />
+                    <div class="flex-shrink-0 mb-1">
+                        <Avatar size="sm" class="shadow-sm">
+                            <div
+                                class="w-8 h-8 bg-gradient-to-br from-primary-400 to-primary-600 rounded-full flex items-center justify-center text-white text-xs font-semibold"
+                            >
+                                {getInitials(message.fullname)}
+                            </div>
+                        </Avatar>
+                    </div>
                 {/if}
 
+                <!-- Message Content -->
                 <div
-                    class="flex flex-col {isMyMessage(message)
+                    class="flex flex-col max-w-xs lg:max-w-md xl:max-w-lg {isMyMessage(
+                        message,
+                    )
                         ? 'items-end'
                         : 'items-start'}"
                 >
+                    <!-- Reply Context -->
                     {#if message.reply_to}
                         {@const repliedMessage = messages.find(
                             (m) => m.message_id === message.reply_to,
                         )}
-                        <button
-                            type="button"
-                            class="opacity-70 hover:opacity-100 px-4 py-2 rounded-2xl {isMyMessage(
+                        {#if repliedMessage}
+                            <div
+                                class="mb-2 p-2 bg-gray-100 dark:bg-gray-800 rounded-lg border-l-3 border-primary-500 max-w-full"
+                            >
+                                <div class="flex items-center space-x-2 mb-1">
+                                    <ReplyOutline
+                                        class="w-3 h-3 text-primary-500"
+                                    />
+                                    <P
+                                        class="text-xs font-medium text-primary-600 dark:text-primary-400"
+                                    >
+                                        {repliedMessage.fullname}
+                                    </P>
+                                </div>
+                                <P
+                                    class="text-xs text-gray-600 dark:text-gray-400 truncate"
+                                >
+                                    {repliedMessage.content}
+                                </P>
+                            </div>
+                        {/if}
+                    {/if}
+
+                    <!-- Main Message Bubble -->
+                    <div class="relative group">
+                        <div
+                            class="px-4 py-3 rounded-2xl shadow-sm transition-all duration-200 hover:shadow-md {isMyMessage(
                                 message,
                             )
                                 ? 'bg-primary-500 text-white rounded-br-md'
-                                : 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-bl-md border border-gray-200 dark:border-gray-600'}"
-                            aria-label="Reply to message"
+                                : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700 rounded-bl-md'}"
                         >
-                            <Heading
-                                tag="h4"
-                                class="text-sm break-words whitespace-pre-wrap"
-                            >
-                                {repliedMessage?.fullname}
-                            </Heading>
-                            <P class="text-sm break-words">
-                                {repliedMessage?.content}
-                            </P>
-                        </button>
-                    
-                    {/if}
-                    <button
-                        type="button"
-                        class="px-4 py-2 rounded-2xl {isMyMessage(message)
-                            ? 'bg-primary-500 text-white rounded-br-md'
-                            : 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-bl-md border border-gray-200 dark:border-gray-600'}"
-                        aria-label="Reply to message"
-                        onclick={() => (replyTo = message)}
-                        onkeydown={(event) => {
-                            if (event.key === "Enter" || event.key === " ") {
-                                event.preventDefault();
-                                replyTo = message;
-                            }
-                        }}
-                    >
-                        {#if !isMyMessage(message)}
-                            <Heading
-                                tag="h4"
-                                class="text-sm break-words whitespace-pre-wrap"
-                            >
-                                {message.fullname}
-                            </Heading>
-                        {/if}
-                        <P class="text-sm break-words">
-                            {message.content}
-                        </P>
-                    </button>
-                    <div class="flex flex-row-reverse items-center space-x-1">
-                        <span
-                            class="text-xs text-gray-500 dark:text-gray-400 mt-1"
-                        >
-                            {formatTime(message.send_at || message.created_at)}
-                        </span>
-                        {#if isMyMessage(message)}
-                            {#if message.views.length > 0}
-                                <span
-                                    class="text-xs text-gray-500 dark:text-gray-400 m-1"
-                                >
-                                    <CheckOutline
-                                        class="w-4 h-4 inline -m-3 text-primary-500"
-                                    />
-                                    <CheckOutline
-                                        class="w-4 h-4 inline text-primary-500"
-                                    />
-                                </span>
-                                <Dropdown simple class="space-y-1">
-                                    <DropdownItem class="text-xs text-gray-500">
-                                        Seen by {message.views.length}
-                                        {message.views.length === 1
-                                            ? "person"
-                                            : "people"}
-                                    </DropdownItem>
-                                    {#each message.views as viewer}
-                                        <DropdownItem class="flex">
-                                            <Avatar
-                                                size="xs"
-                                                src={viewer.avatar}
-                                                class="mr-2"
-                                            />
-                                            <span
-                                                class="text-sm text-gray-900 dark:text-white"
-                                                >{viewer.fullname}</span
-                                            >
-                                        </DropdownItem>
-                                    {/each}
-                                </Dropdown>
-                            {:else}
-                                <CheckOutline
-                                    class="w-4 h-4 inline text-primary-500"
-                                />
+                            <!-- Sender Name (for received messages) -->
+                            {#if !isMyMessage(message)}
+                                <div class="mb-1">
+                                    <P
+                                        class="text-xs font-semibold text-primary-600 dark:text-primary-400"
+                                    >
+                                        {message.fullname}
+                                    </P>
+                                </div>
                             {/if}
-                        {/if}
-                    </div>
-                    {#if message.files}
-                        <div
-                            class="w-fit flex gap-2 mt-2 border p-2 rounded-lg dark:border-gray-500 bg-gray-100 dark:bg-gray-900"
-                        >
-                            <FileSolid
-                                class="w-6 h-6 mr-2 text-gray-500 dark:text-gray-400"
-                                size="md"
-                            />
-                            <P>{message.files.v_name}</P>
-                            <Button
-                                color="alternative"
-                                size="xs"
-                                onclick={async () => {
-                                    const downloadUrl =
-                                        await getFileDownloadUrl(
-                                            message.files.p_name,
-                                        );
-                                    console.log(message.files.p_name);
 
-                                    console.log(downloadUrl);
-
-                                    if (downloadUrl) {
-                                        window.open(downloadUrl, "_blank");
-                                    } else {
-                                        alert(
-                                            "Failed to get download link. Please try again later.",
-                                        );
-                                    }
-                                }}
-                                class="ml-auto p-1"
+                            <!-- Message Content -->
+                            <P
+                                class="text-sm leading-relaxed break-words whitespace-pre-wrap"
                             >
-                                <DownloadOutline class="w-5 h-5 text-white" />
+                                {message.content}
+                            </P>
+
+                            <!-- File Attachment -->
+                            {#if message.files}
+                                <div
+                                    class="mt-3 p-3 rounded-lg {isMyMessage(
+                                        message,
+                                    )
+                                        ? 'bg-primary-600'
+                                        : 'bg-gray-50 dark:bg-gray-700'} border border-opacity-20"
+                                >
+                                    <div
+                                        class="flex items-center justify-between"
+                                    >
+                                        <div
+                                            class="flex items-center space-x-3"
+                                        >
+                                            <div
+                                                class="p-2 {isMyMessage(message)
+                                                    ? 'bg-primary-700'
+                                                    : 'bg-gray-200 dark:bg-gray-600'} rounded-lg"
+                                            >
+                                                <FileSolid
+                                                    class="w-4 h-4 {isMyMessage(
+                                                        message,
+                                                    )
+                                                        ? 'text-primary-100'
+                                                        : 'text-gray-600 dark:text-gray-400'}"
+                                                />
+                                            </div>
+                                            <div>
+                                                <P
+                                                    class="text-sm font-medium {isMyMessage(
+                                                        message,
+                                                    )
+                                                        ? 'text-primary-100'
+                                                        : 'text-gray-900 dark:text-white'}"
+                                                >
+                                                    {message.files.v_name}
+                                                </P>
+                                                <P
+                                                    class="text-xs {isMyMessage(
+                                                        message,
+                                                    )
+                                                        ? 'text-primary-200'
+                                                        : 'text-gray-500 dark:text-gray-400'}"
+                                                >
+                                                    Document
+                                                </P>
+                                            </div>
+                                        </div>
+                                        <Button
+                                            size="xs"
+                                            color={isMyMessage(message)
+                                                ? "light"
+                                                : "primary"}
+                                            class="ml-2"
+                                            onclick={async () => {
+                                                const downloadUrl =
+                                                    await getFileDownloadUrl(
+                                                        message.files.p_name,
+                                                    );
+                                                if (downloadUrl) {
+                                                    window.open(
+                                                        downloadUrl,
+                                                        "_blank",
+                                                    );
+                                                } else {
+                                                    alert(
+                                                        "Failed to get download link. Please try again later.",
+                                                    );
+                                                }
+                                            }}
+                                        >
+                                            <DownloadOutline
+                                                class="w-3 h-3 mr-1"
+                                            />
+                                            Download
+                                        </Button>
+                                    </div>
+                                </div>
+                            {/if}
+                        </div>
+
+                        <!-- Reply Button (appears on hover) -->
+                        <div
+                            class="absolute top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 {isMyMessage(
+                                message,
+                            )
+                                ? '-left-10'
+                                : '-right-10'}"
+                        >
+                            <Button
+                                size="xs"
+                                color="light"
+                                class="p-2 shadow-md"
+                                onclick={() => (replyTo = message)}
+                            >
+                                <ReplyOutline class="w-4 h-4" />
                             </Button>
                         </div>
-                    {/if}
+                    </div>
+
+                    <!-- Message Metadata -->
+                    <div class="flex items-center space-x-2 mt-1 px-1">
+                        <span class="text-xs text-gray-500 dark:text-gray-400">
+                            {formatTime(message.send_at || message.created_at)}
+                        </span>
+
+                        {#if messageStatus}
+                            <div class="flex items-center space-x-1">
+                                {#if messageStatus.type === "read"}
+                                    <div class="flex items-center space-x-1">
+                                        <CheckOutline
+                                            class="w-3 h-3 text-blue-500"
+                                        />
+                                        <CheckOutline
+                                            class="w-3 h-3 text-blue-500 -ml-1"
+                                        />
+                                        {#if messageStatus.count && messageStatus?.count > 0}
+                                            <Dropdown placement="top">
+                                                <Button
+                                                    size="xs"
+                                                    color="light"
+                                                    class="p-1 text-xs"
+                                                >
+                                                    {messageStatus.count}
+                                                </Button>
+                                                <P
+                                                    class="text-xs font-medium mb-2"
+                                                    >Read by:</P
+                                                >
+                                                {#each messageStatus.viewers as viewer}
+                                                    <div
+                                                        class="flex items-center space-x-2 py-1"
+                                                    >
+                                                        <Avatar size="xs">
+                                                            <div
+                                                                class="w-6 h-6 bg-gradient-to-br from-primary-400 to-primary-600 rounded-full flex items-center justify-center text-white text-xs"
+                                                            >
+                                                                {getInitials(
+                                                                    viewer.fullname,
+                                                                )}
+                                                            </div>
+                                                        </Avatar>
+                                                        <P class="text-xs"
+                                                            >{viewer.fullname}</P
+                                                        >
+                                                    </div>
+                                                {/each}
+                                            </Dropdown>
+                                        {/if}
+                                    </div>
+                                {:else}
+                                    <CheckOutline
+                                        class="w-3 h-3 text-gray-400"
+                                    />
+                                {/if}
+                            </div>
+                        {/if}
+                    </div>
                 </div>
 
+                <!-- Sender Avatar (for sent messages) -->
                 {#if isMyMessage(message)}
-                    <Avatar size="sm" class="mb-auto" />
+                    <div class="flex-shrink-0 mb-1">
+                        <Avatar size="sm" class="shadow-sm">
+                            <div
+                                class="w-8 h-8 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center text-white text-xs font-semibold"
+                            >
+                                {getInitials(user.fullname || "You")}
+                            </div>
+                        </Avatar>
+                    </div>
                 {/if}
             </div>
         </div>
     {/each}
 </div>
 
-<!-- Message Input -->
+<!-- Professional Message Input Area -->
 <div
-    class="p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
+    class="mt-auto border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900"
 >
+    <!-- Reply Preview -->
     {#if replyTo}
-        <div
-            class="border-primary-500 dark:bg-green-900/20 p-4 mb-2 flex rounded-lg"
-        >
-            <div>
-                <P class="text-sm">
-                    Replying to <b>{replyTo.fullname}</b>: {replyTo.content}
-                </P>
+        <div class="px-4 pt-3">
+            <div
+                class="flex items-start space-x-3 p-3 bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-lg"
+            >
+                <div class="flex-shrink-0">
+                    <ReplyOutline
+                        class="w-4 h-4 text-primary-600 dark:text-primary-400 mt-0.5"
+                    />
+                </div>
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center space-x-2">
+                        <P
+                            class="text-xs font-medium text-primary-700 dark:text-primary-300"
+                        >
+                            Replying to {replyTo.fullname}
+                        </P>
+                    </div>
+                    <P
+                        class="text-sm text-gray-600 dark:text-gray-400 truncate mt-1"
+                    >
+                        {replyTo.content}
+                    </P>
+                </div>
+                <Button
+                    size="xs"
+                    color="light"
+                    class="p-1.5 flex-shrink-0"
+                    onclick={() => (replyTo = null)}
+                >
+                    <CloseOutline class="w-3 h-3" />
+                </Button>
             </div>
-            <Button
-                size="sm"
-                color="red"
-                class="p-1 ml-auto"
-                onclick={() => (replyTo = null)}
-            >
-                <TrashBinSolid class="w-4 h-4 text-white" />
-            </Button>
         </div>
     {/if}
+
+    <!-- File Preview -->
     {#if selectedFile}
-        <div
-            class=" border-primary-500 dark:bg-green-900/20 p-4 mb-2 flex rounded-lg"
-        >
-            <FileSolid
-                class="w-6 h-6 inline mr-2 text-green-600 dark:text-green-400"
-            />
-            <span class="text-green-800 dark:text-green-200 font-medium"
-                >{selectedFile.name}</span
+        <div class="px-4 {replyTo ? 'pt-2' : 'pt-3'}">
+            <div
+                class="flex items-center space-x-3 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg"
             >
-            <Button
-                size="sm"
-                color="red"
-                class="inline ml-auto p-1"
-                onclick={() => (selectedFile = null)}
-            >
-                <TrashBinSolid class="w-4 h-4 text-white" />
-            </Button>
+                <div class="flex-shrink-0">
+                    <div class="p-2 bg-green-100 dark:bg-green-800 rounded-lg">
+                        <FileSolid
+                            class="w-4 h-4 text-green-600 dark:text-green-400"
+                        />
+                    </div>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <P
+                        class="text-sm font-medium text-green-800 dark:text-green-200 truncate"
+                    >
+                        {selectedFile.name}
+                    </P>
+                    <P class="text-xs text-green-600 dark:text-green-400">
+                        {formatFileSize(selectedFile.size)} • Ready to send
+                    </P>
+                </div>
+                <Button
+                    size="xs"
+                    color="light"
+                    class="p-1.5 flex-shrink-0"
+                    onclick={() => (selectedFile = null)}
+                >
+                    <CloseOutline class="w-3 h-3" />
+                </Button>
+            </div>
         </div>
     {/if}
-    <ButtonGroup class="w-full">
+
+    <!-- Input Area -->
+    <ButtonGroup class="w-full p-2">
         <Button
-            size="sm"
-            class="p-3"
-            color="primary"
+            size="md"
+            color="light"
+            class="p-3 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800"
             onclick={() => {
                 const fileInput = document.getElementById(
                     "chatbox-file-input",
@@ -827,7 +1005,7 @@
                 if (fileInput) fileInput.click();
             }}
         >
-            <FileSolid class="w-5 h-5" />
+            <FileSolid class="w-5 h-5 text-gray-500 dark:text-gray-400" />
         </Button>
         <input
             id="chatbox-file-input"
@@ -836,28 +1014,37 @@
             onchange={handleFileSelect}
         />
 
+        <!-- Message Input -->
+
         <Input
             type="text"
             placeholder="Type your message..."
             bind:value={messageContent}
             onkeypress={handleKeyPress}
-            class="pr-12 border-gray-300 dark:border-gray-600 focus:ring-primary-500 focus:border-primary-500"
+            class="pr-12 py-3 text-sm border border-gray-300 dark:border-gray-600 "
         />
-
+        <!-- Send Button -->
         <Button
-            onclick={sendMessage}
-            disabled={!messageContent.trim()}
+            size="md"
             color="primary"
-            class="p-3 disabled:cursor-not-allowed"
+            disabled={!messageContent.trim() && !selectedFile}
+            onclick={sendMessage}
+            class="p-3 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 hover:shadow-md"
         >
-            <PaperPlaneSolid class="w-5 h-5 text-white" />
+            <PaperPlaneSolid class="w-5 h-5" />
         </Button>
     </ButtonGroup>
 
+    <!-- Input Help Text -->
     <div
-        class="flex justify-between items-center mt-2 text-xs text-gray-500 dark:text-gray-400"
+        class="flex justify-between items-center p-2 text-xs text-gray-500 dark:text-gray-400"
     >
-        <span>Press Enter to send, Shift + Enter for new line</span>
-        <span>{messageContent.length}/1000</span>
+        <span>Press Enter to send • Shift + Enter for new line</span>
+        {#if isTyping}
+            <div class="flex items-center space-x-1">
+                <Spinner size="4" />
+                <span>Typing...</span>
+            </div>
+        {/if}
     </div>
 </div>
