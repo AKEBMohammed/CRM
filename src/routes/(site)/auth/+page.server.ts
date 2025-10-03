@@ -49,7 +49,7 @@ async function signInWithEmail(email: string, password: string) {
 
     return {
         user_id: profile.user_id,
-        profile_id:profile.profile_id,
+        profile_id: profile.profile_id,
         fullname: profile.fullname,
         email: profile.email,
         phone: profile.phone,
@@ -118,10 +118,6 @@ export const actions = {
             if (!data) {
                 return fail(500, { error: 'Login error: No data returned from signInWithEmail.' })
             }
-
-            // Set cookie expiration based on "remember me" checkbox
-            const cookieOptions = remember ? { path: '/', maxAge: 60 * 60 * 24 * 30 } : { path: '/' }; // 30 days vs session
-            cookies.set('user', JSON.stringify(data), cookieOptions);
 
         } catch (error) {
             console.error('Error signing in:', error);
