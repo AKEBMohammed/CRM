@@ -79,27 +79,17 @@ async function getMessagesWithViewsByRoom(room_id: number) {
     return results;
 }
 
-
-
-export const load: PageServerLoad = async ({ params, cookies }) => {
-    const user = JSON.parse(cookies.get('user') || 'null');
-    if (!user) {
-        redirect(300, '/auth');
-    }
-
-    //Check if the user has access to this room
+async function checkUserAccess(params: { room_id: number; user: any }) {
     let query = `
         query {
             profiles_roomsCollection(
                 filter: {
                     profile_id: {
-                        eq: "${user?.profile_id}"
+                        eq: "${params.user?.profile_id}"
                     }
-
-                        room_id: {
-                            eq: "${params.room_id}"
-                        }
-                    
+                    room_id: {
+                        eq: "${params.room_id}"
+                    }
                 }
             ) {
                 edges {
@@ -107,6 +97,7 @@ export const load: PageServerLoad = async ({ params, cookies }) => {
                         rooms {
                             room_id
                             name
+                            created_by
                         }
                     }
                 }
@@ -120,6 +111,22 @@ export const load: PageServerLoad = async ({ params, cookies }) => {
     }
 
     let room = data.profiles_roomsCollection.edges[0].node.rooms;
+
+    if (!room) {
+        console.error('Room not found');
+        throw redirect(300, '/dashboard/rooms');
+    }
+
+    return room;
+}
+
+export const load: PageServerLoad = async ({ params, cookies }) => {
+    const user = JSON.parse(cookies.get('user') || 'null');
+    if (!user) {
+        redirect(300, '/auth');
+    }
+
+    let room = await checkUserAccess({ room_id: parseInt(params.room_id), user });
 
     if (!room) {
         console.error('Room not found');
