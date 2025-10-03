@@ -1,7 +1,7 @@
-import type { Actions } from './$types';
+import type { Actions, PageServerLoad } from './$types';
 import { PUBLIC_BASE_URL } from '$env/static/public';
 import { error, fail, redirect } from '@sveltejs/kit';
-import { supabase } from '$lib/supabase';
+import { getProfile, supabase } from '$lib/supabase';
 
 async function signUpNewUser(email: string, password: string) {
     // Dynamically set the redirect URL to the dashboard
@@ -100,6 +100,13 @@ async function completeProfile(fullname: string, email: string, phone: string, c
 
     return { profile_id: profileData?.profile_id ?? null, company_id: companyData?.company_id ?? null };
 }
+
+export const load: PageServerLoad = async () => {
+    let user = await getProfile();
+
+    if (user) redirect(308, '/dashboard')
+}
+
 
 export const actions = {
     login: async ({ cookies, request }) => {
