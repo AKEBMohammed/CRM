@@ -1,4 +1,4 @@
-import { redirect } from "@sveltejs/kit";
+import { fail, redirect } from "@sveltejs/kit";
 import type { Actions, PageServerLoad } from "./$types";
 import { gql } from "$lib/graphql";
 
@@ -141,22 +141,25 @@ export const load: PageServerLoad = async ({ params, cookies }) => {
 
 export const actions = {
     add: async ({ request, cookies, params }) => {
+        console.log('Adding profile to room');
+
         const user = JSON.parse(cookies.get('user') || 'null');
         if (!user) {
             throw redirect(302, '/auth');
         }
 
         const formData = await request.formData();
-        const profile_id = formData.get('profile_id') as string;
+        const profiles = formData.getAll('profile') as string[];
 
-        if (!profile_id) {
-            return { success: false, message: 'Profile ID is required' };
+        if (profiles.length === 0) {
+            return fail(400, 'Profile ID is required');
         }
 
         // Check if the user has access to the room
         await checkUserAccess({ room_id: parseInt(params.room_id), user });
 
-        const mutation = `
+        for (let profile_id of profiles) {
+            const mutation = `
             mutation {
                 insertIntoprofiles_roomsCollection(
                     objects: [{
@@ -172,11 +175,16 @@ export const actions = {
             }
         `;
 
-        let response = await gql(mutation);
+            let response = await gql(mutation);
+            if (!response?.insertIntoprofiles_roomsCollection?.records?.length) {
+                console.log('Failed to add profile to room', response);
 
-        if (!response?.insertIntoprofiles_roomsCollection?.records?.length) {
-            return { success: false, message: 'Failed to add profile to room' };
+                return fail(400, 'Failed to add profile to room');
+            }
+
         }
+
+
 
         return { success: true, message: 'Profile added to room successfully' };
     },
@@ -198,7 +206,10 @@ export const actions = {
                         room_id: { eq: ${params.room_id} }
                     }
                 ) {
-                    recordsDeleted
+                    records {
+                        room_id
+                        profile_id
+            }
                 }
             }
         `;
@@ -206,10 +217,10 @@ export const actions = {
         let response = await gql(mutation);
 
         if (response?.deleteFromprofiles_roomsCollection?.recordsDeleted === 0) {
-            return { success: false, message: 'Failed to leave room' };
+            return fail(400, 'Failed to leave room');
         }
 
-        return { success: true, message: 'Left room successfully' };
+        redirect(300, '/dashboard/rooms')
     },
 
     delete: async ({ request, cookies, params }) => {
@@ -221,8 +232,10 @@ export const actions = {
         // Check if the user has access to the room
         let room = await checkUserAccess({ room_id: parseInt(params.room_id), user });
 
-        if (room.created_by !== user.profile_id) {
-            return { success: false, message: 'Only the creator can delete the room' };
+        if (room.created_by != user.profile_id) {
+            console.log('Only the creator can delete the room');
+
+            return fail(403, 'Only the creator can delete the room');
         }
 
         const mutation = `
@@ -230,17 +243,20 @@ export const actions = {
                 deleteFromroomsCollection(
                     filter: { room_id: { eq: ${params.room_id} } }
                 ) {
-                    recordsDeleted
+                    records{
+                        room_id}
                 }
             }
         `;
 
         let response = await gql(mutation);
 
-        if (response?.deleteFromroomsCollection?.recordsDeleted === 0) {
-            return { success: false, message: 'Failed to delete room' };
+
+        if (response?.deleteFromroomsCollection?.records.length === 0) {
+
+            return fail(400, 'Failed to delete room');
         }
-        
-        return { success: true, message: 'Room deleted successfully' };
+
+        redirect(300, '/dashboard/rooms')
     }
 } satisfies Actions;
