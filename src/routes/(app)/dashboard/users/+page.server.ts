@@ -83,7 +83,7 @@ async function getProfilesByUser(user: { company_id: number, profile_id: number,
         phone: edge.node.phone,
         role: edge.node.role,
     }));
-
+    
     return profiles;
 }
 
@@ -99,6 +99,9 @@ export const load: PageServerLoad = async ({ params, cookies }) => {
     if (!profiles) {
         return fail(500, { error: 'Failed to fetch user profiles from database.' });
     }
+
+    console.log('Fetched profiles:', profiles);
+    
 
     return { profiles };
 

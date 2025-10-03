@@ -4,6 +4,44 @@ import { supabase } from '$lib/supabase';
 import { redirect } from '@sveltejs/kit';
 import type { LayoutServerLoad } from './$types';
 
+async function getProfilesByUser(user: { company_id: number, profile_id: number, role: string }) {
+
+    let query = `
+    query {
+        profilesCollection(
+            filter: {  company_id: { eq: "${user.company_id}" } }
+        ) {
+            edges {
+                node {
+                    profile_id
+                    fullname
+                    phone
+                    email
+                    role
+                }
+            }
+        }
+    }
+        `
+
+    let result = await gql(query)
+
+    if (!result) {
+        return false;
+    }
+
+    let profiles = result.profilesCollection.edges.map((edge: any) => ({
+        profile_id: edge.node.profile_id,
+        fullname: edge.node.fullname,
+        email: edge.node.email,
+        phone: edge.node.phone,
+        role: edge.node.role,
+    }));
+
+    return profiles;
+}
+
+
 export const load: LayoutServerLoad = async ({ cookies}) => {
     const user = JSON.parse(cookies.get('user') || 'null');
     if (!user) {
@@ -60,7 +98,13 @@ export const load: LayoutServerLoad = async ({ cookies}) => {
         }));
 
     
+        let profiles = await getProfilesByUser(user);
+        if (!profiles) {
+            throw redirect(302, '/dashboard');
+        }
+    
     return {
-        rooms
+        rooms,
+        profiles
     };
 };
