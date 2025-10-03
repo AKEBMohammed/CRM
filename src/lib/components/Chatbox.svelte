@@ -17,6 +17,7 @@
         Badge,
         Tooltip,
         Spinner,
+        DropdownHeader,
     } from "flowbite-svelte";
     import {
         CheckOutline,
@@ -850,26 +851,28 @@
                                 {#if messageStatus.type === "read"}
                                     <div class="flex items-center space-x-1">
                                         <CheckOutline
-                                            class="w-3 h-3 text-blue-500"
+                                            class="w-3 h-3 text-primary-500"
                                         />
                                         <CheckOutline
-                                            class="w-3 h-3 text-blue-500 -ml-1"
+                                            class="w-3 h-3 text-primary-500 -ml-3"
                                         />
                                         {#if messageStatus.count && messageStatus?.count > 0}
-                                            <Dropdown placement="top">
-                                                <Button
-                                                    size="xs"
-                                                    color="light"
-                                                    class="p-1 text-xs"
+                                            <Dropdown simple placement="top">
+                                                <DropdownHeader
+                                                    class="flex items-center space-x-2"
                                                 >
-                                                    {messageStatus.count}
-                                                </Button>
-                                                <P
-                                                    class="text-xs font-medium mb-2"
-                                                    >Read by:</P
-                                                >
+                                                    <P
+                                                        class="text-sm font-medium mb-2"
+                                                        >Read by {messageStatus.count}
+                                                        {messageStatus.count ===
+                                                        1
+                                                            ? "person"
+                                                            : "people"}:</P
+                                                    >
+                                                </DropdownHeader>
+
                                                 {#each messageStatus.viewers as viewer}
-                                                    <div
+                                                    <DropdownItem
                                                         class="flex items-center space-x-2 py-1"
                                                     >
                                                         <Avatar size="xs">
@@ -884,7 +887,7 @@
                                                         <P class="text-xs"
                                                             >{viewer.fullname}</P
                                                         >
-                                                    </div>
+                                                    </DropdownItem>
                                                 {/each}
                                             </Dropdown>
                                         {/if}
