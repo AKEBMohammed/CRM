@@ -1,5 +1,5 @@
 import { redirect } from "@sveltejs/kit";
-import type { PageServerLoad } from "./$types";
+import type { Actions, PageServerLoad } from "./$types";
 import { gql } from "$lib/graphql";
 
 async function getMessagesWithViewsByRoom(room_id: number) {
@@ -138,3 +138,109 @@ export const load: PageServerLoad = async ({ params, cookies }) => {
 
     return { room, messages };
 };
+
+export const actions = {
+    add: async ({ request, cookies, params }) => {
+        const user = JSON.parse(cookies.get('user') || 'null');
+        if (!user) {
+            throw redirect(302, '/auth');
+        }
+
+        const formData = await request.formData();
+        const profile_id = formData.get('profile_id') as string;
+
+        if (!profile_id) {
+            return { success: false, message: 'Profile ID is required' };
+        }
+
+        // Check if the user has access to the room
+        await checkUserAccess({ room_id: parseInt(params.room_id), user });
+
+        const mutation = `
+            mutation {
+                insertIntoprofiles_roomsCollection(
+                    objects: [{
+                        profile_id: ${profile_id},
+                        room_id: ${params.room_id}
+                    }]
+                ) {
+                    records {
+                        profile_id
+                        room_id
+                    }
+                }
+            }
+        `;
+
+        let response = await gql(mutation);
+
+        if (!response?.insertIntoprofiles_roomsCollection?.records?.length) {
+            return { success: false, message: 'Failed to add profile to room' };
+        }
+
+        return { success: true, message: 'Profile added to room successfully' };
+    },
+
+    leave: async ({ request, cookies, params }) => {
+        const user = JSON.parse(cookies.get('user') || 'null');
+        if (!user) {
+            throw redirect(302, '/auth');
+        }
+
+        // Check if the user has access to the room
+        await checkUserAccess({ room_id: parseInt(params.room_id), user });
+
+        const mutation = `
+            mutation {
+                deleteFromprofiles_roomsCollection(
+                    filter: {
+                        profile_id: { eq: ${user.profile_id} },
+                        room_id: { eq: ${params.room_id} }
+                    }
+                ) {
+                    recordsDeleted
+                }
+            }
+        `;
+
+        let response = await gql(mutation);
+
+        if (response?.deleteFromprofiles_roomsCollection?.recordsDeleted === 0) {
+            return { success: false, message: 'Failed to leave room' };
+        }
+
+        return { success: true, message: 'Left room successfully' };
+    },
+
+    delete: async ({ request, cookies, params }) => {
+        const user = JSON.parse(cookies.get('user') || 'null');
+        if (!user) {
+            throw redirect(302, '/auth');
+        }
+
+        // Check if the user has access to the room
+        let room = await checkUserAccess({ room_id: parseInt(params.room_id), user });
+
+        if (room.created_by !== user.profile_id) {
+            return { success: false, message: 'Only the creator can delete the room' };
+        }
+
+        const mutation = `
+            mutation {
+                deleteFromroomsCollection(
+                    filter: { room_id: { eq: ${params.room_id} } }
+                ) {
+                    recordsDeleted
+                }
+            }
+        `;
+
+        let response = await gql(mutation);
+
+        if (response?.deleteFromroomsCollection?.recordsDeleted === 0) {
+            return { success: false, message: 'Failed to delete room' };
+        }
+        
+        return { success: true, message: 'Room deleted successfully' };
+    }
+} satisfies Actions;
