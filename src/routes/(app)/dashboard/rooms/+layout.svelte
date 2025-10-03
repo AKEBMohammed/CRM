@@ -43,7 +43,7 @@
                 <PlusOutline class="w-4 h-4 mr-2" />
                 New Room
             </Button>
-            <Listgroup class="w-full h-120 overflow-y-scroll" rounded={false}>
+            <Listgroup class="w-full max-h-120 overflow-y-scroll">
                 {#each data.rooms as room}
                     <ListgroupItem
                         href={`/dashboard/rooms/${room.room_id}`}

@@ -42,6 +42,7 @@
         email: string;
         views: MessageView[];
         files: any;
+        reply_to?: number;
     }
 
     let {
@@ -60,6 +61,7 @@
     let viewCheckTimeout: any;
     let showSendFileModal = $state(false);
     let selectedFile: File | null = $state(null);
+    let replyTo: Message | null = $state(null);
 
     // Debounced function to check and mark viewed messages
     function scheduleViewCheck() {
@@ -96,96 +98,221 @@
             .on(
                 "postgres_changes",
                 {
-                    event: "INSERT",
+                    event: "*", // Listen to all changes: INSERT, UPDATE, DELETE
                     schema: "public",
                     table: "messages",
                     filter: `room_id=eq.${room.room_id}`,
                 },
                 async (payload) => {
-                    console.log("New message received via real-time:", payload);
+                    console.log(
+                        "Message change received via real-time:",
+                        payload,
+                    );
+                    console.log("Event type:", payload.eventType);
                     console.log("Current messages count:", messages.length);
 
-                    // Check if message is not already in the array (avoid duplicates)
-                    const messageExists = messages.some(
-                        (msg) => msg.message_id === payload.new.message_id,
-                    );
+                    if (payload.eventType === "INSERT") {
+                        // Handle new message insertion
+                        const messageExists = messages.some(
+                            (msg) => msg.message_id === payload.new.message_id,
+                        );
 
-                    if (!messageExists) {
-                        // Fetch the complete message with views and sender info
-                        const { data: completeMessage, error } = await supabase
-                            .from("messages")
-                            .select(
-                                `
-                                *,
-                                profiles!messages_sender_id_fkey (
-                                    fullname,
-                                    email
-                                ),
-                                views (
-                                    profile_id,
-                                    seen_at,
-                                    profiles (
+                        if (!messageExists) {
+                            // Fetch the complete message with views and sender info
+                            const { data: completeMessage, error } =
+                                await supabase
+                                    .from("messages")
+                                    .select(
+                                        `
+                                    *,
+                                    profiles!messages_sender_id_fkey (
                                         fullname,
                                         email
+                                    ),
+                                    files (
+                                        file_id,
+                                        v_name,
+                                        p_name
+                                    ),
+                                    reply_to:messages!messages_reply_id_fkey (
+                                        message_id,
+                                        content,
+                                        send_at,
+                                        sender_id,
+                                        profiles!messages_sender_id_fkey (
+                                            fullname,
+                                            email
+                                        )
+                                    ),
+                                    views (
+                                        profile_id,
+                                        seen_at,
+                                        profiles (
+                                            fullname,
+                                            email
+                                        )
                                     )
-                                )
-                            `,
-                            )
-                            .eq("message_id", payload.new.message_id)
-                            .single();
+                                `,
+                                    )
+                                    .eq("message_id", payload.new.message_id)
+                                    .single();
 
-                        if (!error && completeMessage) {
-                            // Transform the data to match our expected format
-                            const formattedMessage: Message = {
-                                message_id: completeMessage.message_id,
-                                content: completeMessage.content,
-                                send_at: completeMessage.send_at,
-                                sender_id: completeMessage.sender_id,
-                                fullname:
-                                    completeMessage.profiles?.fullname ||
-                                    "Unknown",
-                                email: completeMessage.profiles?.email || "",
-                                views:
-                                    completeMessage.views?.map(
-                                        (view: any): MessageView => ({
-                                            profile_id: view.profile_id,
-                                            fullname:
-                                                view.profiles?.fullname ||
-                                                "Unknown",
-                                            email: view.profiles?.email || "",
-                                            seen_at: view.seen_at,
-                                        }),
-                                    ) || [],
-                            };
+                            if (!error && completeMessage) {
+                                // Transform the data to match our expected format
+                                const formattedMessage: Message = {
+                                    message_id: completeMessage.message_id,
+                                    content: completeMessage.content,
+                                    send_at: completeMessage.send_at,
+                                    sender_id: completeMessage.sender_id,
+                                    fullname:
+                                        completeMessage.profiles?.fullname ||
+                                        "Unknown",
+                                    email:
+                                        completeMessage.profiles?.email || "",
+                                    files: completeMessage.files || null,
+                                    reply_to: completeMessage.reply_to || null,
 
-                            messages = [...messages, formattedMessage];
-                            console.log(
-                                "Message added. New count:",
-                                messages.length,
-                            );
-                            setTimeout(scrollToBottom, 100);
+                                    views:
+                                        completeMessage.views?.map(
+                                            (view: any): MessageView => ({
+                                                profile_id: view.profile_id,
+                                                fullname:
+                                                    view.profiles?.fullname ||
+                                                    "Unknown",
+                                                email:
+                                                    view.profiles?.email || "",
+                                                seen_at: view.seen_at,
+                                            }),
+                                        ) || [],
+                                };
+
+                                messages = [...messages, formattedMessage];
+                                console.log(
+                                    "Message added. New count:",
+                                    messages.length,
+                                );
+                                setTimeout(scrollToBottom, 100);
+                            } else {
+                                console.error(
+                                    "Error fetching complete message:",
+                                    error,
+                                );
+                                // Fallback to basic message data
+                                const fallbackMessage: Message = {
+                                    message_id: payload.new.message_id,
+                                    content: payload.new.content,
+                                    send_at: payload.new.send_at,
+                                    sender_id: payload.new.sender_id,
+                                    fullname: "Unknown",
+                                    email: "",
+                                    files: null,
+                                    reply_to: payload.new.reply_id || null,
+                                    views: [],
+                                };
+                                messages = [...messages, fallbackMessage];
+                                setTimeout(scrollToBottom, 100);
+                            }
                         } else {
-                            console.error(
-                                "Error fetching complete message:",
-                                error,
+                            console.log(
+                                "Message already exists, skipping duplicate",
                             );
-                            // Fallback to basic message data
-                            const fallbackMessage: Message = {
-                                message_id: payload.new.message_id,
-                                content: payload.new.content,
-                                send_at: payload.new.send_at,
-                                sender_id: payload.new.sender_id,
-                                fullname: "Unknown",
-                                email: "",
-                                views: [],
-                            };
-                            messages = [...messages, fallbackMessage];
-                            setTimeout(scrollToBottom, 100);
                         }
-                    } else {
-                        console.log(
-                            "Message already exists, skipping duplicate",
+                    } else if (payload.eventType === "UPDATE") {
+                        // Handle message updates (e.g., when file is attached)
+                        console.log("Message updated:", payload.new);
+
+                        // Find and update the existing message
+                        const messageIndex = messages.findIndex(
+                            (msg) => msg.message_id === payload.new.message_id,
                         );
+
+                        if (messageIndex !== -1) {
+                            // Fetch the updated complete message
+                            const { data: updatedMessage, error } =
+                                await supabase
+                                    .from("messages")
+                                    .select(
+                                        `
+                                    *,
+                                    profiles!messages_sender_id_fkey (
+                                        fullname,
+                                        email
+                                    ),
+                                    files (
+                                        file_id,
+                                        v_name,
+                                        p_name
+                                    ),
+                                    reply_to:messages!messages_reply_id_fkey (
+                                        message_id,
+                                        content,
+                                        send_at,
+                                        sender_id,
+                                        profiles!messages_sender_id_fkey (
+                                            fullname,
+                                            email
+                                        )
+                                    ),
+                                    views (
+                                        profile_id,
+                                        seen_at,
+                                        profiles (
+                                            fullname,
+                                            email
+                                        )
+                                    )
+                                `,
+                                    )
+                                    .eq("message_id", payload.new.message_id)
+                                    .single();
+
+                            if (!error && updatedMessage) {
+                                const formattedUpdatedMessage: Message = {
+                                    message_id: updatedMessage.message_id,
+                                    sender_id: updatedMessage.sender_id,
+                                    content: updatedMessage.content,
+                                    send_at: updatedMessage.send_at,
+                                    reply_to: updatedMessage.reply_to,
+                                    fullname:
+                                        updatedMessage.profiles?.fullname ||
+                                        "Unknown",
+                                    email: updatedMessage.profiles?.email || "",
+                                    files: updatedMessage.files || [],
+                                    views:
+                                        updatedMessage.views?.map(
+                                            (view: any): MessageView => ({
+                                                profile_id: view.profile_id,
+                                                fullname:
+                                                    view.profiles?.fullname ||
+                                                    "Unknown",
+                                                email:
+                                                    view.profiles?.email || "",
+
+                                                seen_at: view.seen_at,
+                                            }),
+                                        ) || [],
+                                };
+
+                                // Update the message in the array
+                                messages = messages.map((msg, index) =>
+                                    index === messageIndex
+                                        ? formattedUpdatedMessage
+                                        : msg,
+                                );
+
+                                console.log("Message updated successfully");
+                            }
+                        }
+                    } else if (payload.eventType === "DELETE") {
+                        // Handle message deletion
+                        console.log("Message deleted:", payload.old);
+
+                        // Remove the message from the array
+                        messages = messages.filter(
+                            (msg) => msg.message_id !== payload.old.message_id,
+                        );
+
+                        console.log("Message removed from UI");
                     }
                 },
             )
@@ -290,9 +417,11 @@
                         content: messageToSend,
                         room_id: room.room_id,
                         sender_id: user.profile_id,
+                        reply_to: replyTo ? replyTo.message_id : null,
                     },
                 ])
                 .select("*");
+            replyTo = null;
 
             if (error) {
                 console.error("Error sending message:", error);
@@ -406,7 +535,6 @@
                 const viewRecords = messageIds.map((messageId: number) => ({
                     message_id: messageId,
                     profile_id: user.profile_id,
-                    seen_at: new Date().toISOString(),
                 }));
 
                 const { error } = await supabase
@@ -414,7 +542,7 @@
                     .insert(viewRecords);
 
                 if (error) {
-                    console.error("Error marking messages as viewed:", error);
+                    console.log("Error marking messages as viewed:", error);
                 } else {
                     console.log(
                         `Marked ${viewRecords.length} messages as viewed`,
@@ -430,6 +558,26 @@
         const input = event.target as HTMLInputElement;
         if (input.files && input.files.length > 0) {
             selectedFile = input.files[0];
+        }
+    }
+
+    async function getFileDownloadUrl(
+        fileName: string,
+    ): Promise<string | null> {
+        try {
+            const { data, error } = await supabase.storage
+                .from("shared")
+                .createSignedUrl(fileName, 3600); // URL expires in 1 hour
+
+            if (error) {
+                console.error("Error creating download URL:", error);
+                return null;
+            }
+
+            return data.signedUrl;
+        } catch (error) {
+            console.error("Error in getFileDownloadUrl:", error);
+            return null;
         }
     }
 </script>
@@ -482,10 +630,44 @@
                         ? 'items-end'
                         : 'items-start'}"
                 >
-                    <div
+                    {#if message.reply_to}
+                        {@const repliedMessage = messages.find(
+                            (m) => m.message_id === message.reply_to,
+                        )}
+                        <button
+                            type="button"
+                            class="opacity-70 hover:opacity-100 px-4 py-2 rounded-2xl {isMyMessage(
+                                message,
+                            )
+                                ? 'bg-primary-500 text-white rounded-br-md'
+                                : 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-bl-md border border-gray-200 dark:border-gray-600'}"
+                            aria-label="Reply to message"
+                        >
+                            <Heading
+                                tag="h4"
+                                class="text-sm break-words whitespace-pre-wrap"
+                            >
+                                {repliedMessage?.fullname}
+                            </Heading>
+                            <P class="text-sm break-words">
+                                {repliedMessage?.content}
+                            </P>
+                        </button>
+                    
+                    {/if}
+                    <button
+                        type="button"
                         class="px-4 py-2 rounded-2xl {isMyMessage(message)
                             ? 'bg-primary-500 text-white rounded-br-md'
                             : 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-bl-md border border-gray-200 dark:border-gray-600'}"
+                        aria-label="Reply to message"
+                        onclick={() => (replyTo = message)}
+                        onkeydown={(event) => {
+                            if (event.key === "Enter" || event.key === " ") {
+                                event.preventDefault();
+                                replyTo = message;
+                            }
+                        }}
                     >
                         {#if !isMyMessage(message)}
                             <Heading
@@ -498,7 +680,7 @@
                         <P class="text-sm break-words">
                             {message.content}
                         </P>
-                    </div>
+                    </button>
                     <div class="flex flex-row-reverse items-center space-x-1">
                         <span
                             class="text-xs text-gray-500 dark:text-gray-400 mt-1"
@@ -554,8 +736,28 @@
                                 size="md"
                             />
                             <P>{message.files.v_name}</P>
+                            <Button
+                                color="alternative"
+                                size="xs"
+                                onclick={async () => {
+                                    const downloadUrl =
+                                        await getFileDownloadUrl(
+                                            message.files.p_name,
+                                        );
+                                    console.log(message.files.p_name);
 
-                            <Button color="alternative" size="xs">
+                                    console.log(downloadUrl);
+
+                                    if (downloadUrl) {
+                                        window.open(downloadUrl, "_blank");
+                                    } else {
+                                        alert(
+                                            "Failed to get download link. Please try again later.",
+                                        );
+                                    }
+                                }}
+                                class="ml-auto p-1"
+                            >
                                 <DownloadOutline class="w-5 h-5 text-white" />
                             </Button>
                         </div>
@@ -574,8 +776,29 @@
 <div
     class="p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
 >
+    {#if replyTo}
+        <div
+            class="border-primary-500 dark:bg-green-900/20 p-4 mb-2 flex rounded-lg"
+        >
+            <div>
+                <P class="text-sm">
+                    Replying to <b>{replyTo.fullname}</b>: {replyTo.content}
+                </P>
+            </div>
+            <Button
+                size="sm"
+                color="red"
+                class="p-1 ml-auto"
+                onclick={() => (replyTo = null)}
+            >
+                <TrashBinSolid class="w-4 h-4 text-white" />
+            </Button>
+        </div>
+    {/if}
     {#if selectedFile}
-        <div class="bg-green-50 dark:bg-green-900/20 p-4 mb-2 flex rounded-lg">
+        <div
+            class=" border-primary-500 dark:bg-green-900/20 p-4 mb-2 flex rounded-lg"
+        >
             <FileSolid
                 class="w-6 h-6 inline mr-2 text-green-600 dark:text-green-400"
             />

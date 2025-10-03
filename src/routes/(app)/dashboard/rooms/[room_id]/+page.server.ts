@@ -20,6 +20,7 @@ async function getMessagesWithViewsByRoom(room_id: number) {
                             content
                             send_at
                             sender_id
+                            reply_to
                             profiles {
                                 fullname
                                 email
@@ -55,13 +56,12 @@ async function getMessagesWithViewsByRoom(room_id: number) {
     }
 
     let results = data.messagesCollection.edges.map((edge: any) => {
-        console.log(edge.node.files);
-
         let message = {
             message_id: edge.node.message_id,
             content: edge.node.content,
             send_at: edge.node.send_at,
             sender_id: edge.node.sender_id,
+            reply_to: edge.node.reply_to,
             fullname: edge.node.profiles.fullname,
             email: edge.node.profiles.email,
             views: edge.node.viewsCollection.edges.map((viewEdge: any) => ({
