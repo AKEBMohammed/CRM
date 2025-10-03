@@ -452,9 +452,9 @@
         selectedFile = null;
     }
 
-        // Enhanced export function that can use either server-side or client-side
+    // Enhanced export function that can use either server-side or client-side
     function handleExportAction() {
-        if ( exportAction) {
+        if (exportAction) {
             // Use server-side export - will be handled by form submission
             // The filtered data will be passed via hidden form fields
             showExportModal = true;
@@ -706,25 +706,27 @@
                     />
                 </TableHeadCell>
                 {#each visibleColumns() as column}
-                    <TableHeadCell
-                        class="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 select-none"
-                        onclick={() => handleSort(column)}
-                    >
-                        <div class="flex items-center space-x-2">
-                            <span class="capitalize"
-                                >{column
-                                    .replace(/([A-Z])/g, " $1")
-                                    .trim()}</span
-                            >
-                            {#if sortColumn === column}
-                                {#if sortDirection === "asc"}
-                                    <ChevronUpOutline class="w-4 h-4" />
-                                {:else}
-                                    <ChevronDownOutline class="w-4 h-4" />
+                    {#if column != "id"}
+                        <TableHeadCell
+                            class="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 select-none"
+                            onclick={() => handleSort(column)}
+                        >
+                            <div class="flex items-center space-x-2">
+                                <span class="capitalize"
+                                    >{column
+                                        .replace(/([A-Z])/g, " $1")
+                                        .trim()}</span
+                                >
+                                {#if sortColumn === column}
+                                    {#if sortDirection === "asc"}
+                                        <ChevronUpOutline class="w-4 h-4" />
+                                    {:else}
+                                        <ChevronDownOutline class="w-4 h-4" />
+                                    {/if}
                                 {/if}
-                            {/if}
-                        </div>
-                    </TableHeadCell>
+                            </div>
+                        </TableHeadCell>
+                    {/if}
                 {/each}
                 <TableHeadCell>Actions</TableHeadCell>
             </TableHead>
@@ -745,24 +747,30 @@
                             />
                         </TableBodyCell>
                         {#each visibleColumns() as column}
-                            <TableBodyCell
-                                class="max-w-xs truncate"
-                                title={String(item[column])}
-                            >
-                                {#if typeof item[column] === "boolean"}
-                                    <Badge
-                                        color={item[column] ? "green" : "red"}
-                                    >
-                                        {item[column] ? "Yes" : "No"}
-                                    </Badge>
-                                {:else if typeof item[column] === "number"}
-                                    <span class="font-mono"
-                                        >{item[column].toLocaleString()}</span
-                                    >
-                                {:else}
-                                    {item[column]}
-                                {/if}
-                            </TableBodyCell>
+                            {#if column != "id"}
+                                <TableBodyCell
+                                    class="max-w-xs truncate"
+                                    title={String(item[column])}
+                                >
+                                    {#if typeof item[column] === "boolean"}
+                                        <Badge
+                                            color={item[column]
+                                                ? "green"
+                                                : "red"}
+                                        >
+                                            {item[column] ? "Yes" : "No"}
+                                        </Badge>
+                                    {:else if typeof item[column] === "number"}
+                                        <span class="font-mono"
+                                            >{item[
+                                                column
+                                            ].toLocaleString()}</span
+                                        >
+                                    {:else}
+                                        {item[column]}
+                                    {/if}
+                                </TableBodyCell>
+                            {/if}
                         {/each}
                         <TableBodyCell>
                             <ButtonGroup>
@@ -1483,11 +1491,23 @@
             >
                 <!-- Hidden fields to pass current filters and search to server -->
                 <input type="hidden" name="searchQuery" value={searchQuery} />
-                <input type="hidden" name="columnFilters" value={JSON.stringify(columnFilters)} />
+                <input
+                    type="hidden"
+                    name="columnFilters"
+                    value={JSON.stringify(columnFilters)}
+                />
                 <input type="hidden" name="sortColumn" value={sortColumn} />
-                <input type="hidden" name="sortDirection" value={sortDirection} />
-                <input type="hidden" name="filteredData" value={JSON.stringify(filteredData)} />
-                
+                <input
+                    type="hidden"
+                    name="sortDirection"
+                    value={sortDirection}
+                />
+                <input
+                    type="hidden"
+                    name="filteredData"
+                    value={JSON.stringify(filteredData)}
+                />
+
                 <div>
                     <Label class="mb-2">Export Format</Label>
                     <Select
@@ -1516,7 +1536,8 @@
                                 <li>• Total records: {stats.total}</li>
                                 <li>• Filtered records: {stats.filtered}</li>
                                 <li>
-                                    • Will export {stats.filtered} filtered records (current view)
+                                    • Will export {stats.filtered} filtered records
+                                    (current view)
                                 </li>
                                 <li>
                                     • Search and column filters will be applied
@@ -1548,14 +1569,20 @@
                             ></path>
                         </svg>
                         <div class="text-sm">
-                            <p class="font-medium">
-                                Filtered Data Export:
-                            </p>
+                            <p class="font-medium">Filtered Data Export:</p>
                             <ul class="text-xs space-y-1 mt-1">
-                                <li>• Only exports currently visible/filtered data</li>
-                                <li>• Respects all search and column filters</li>
+                                <li>
+                                    • Only exports currently visible/filtered
+                                    data
+                                </li>
+                                <li>
+                                    • Respects all search and column filters
+                                </li>
                                 <li>• Maintains current sort order</li>
-                                <li>• Includes server-side filtering and permissions</li>
+                                <li>
+                                    • Includes server-side filtering and
+                                    permissions
+                                </li>
                             </ul>
                         </div>
                     </div>
