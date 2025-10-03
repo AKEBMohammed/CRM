@@ -66,9 +66,11 @@
             <DropdownItem onclick={() => (showLeaveRoomModal = true)}
                 >Leave Room</DropdownItem
             >
-            <DropdownItem onclick={() => (showDeleteRoomModal = true)}
-                >Delete Room</DropdownItem
-            >
+            {#if data.room.created_by == data.user.profile_id}
+                <DropdownItem onclick={() => (showDeleteRoomModal = true)}
+                    >Delete Room</DropdownItem
+                >
+            {/if}
         </Dropdown>
     </div>
 
@@ -86,24 +88,25 @@
         <Listgroup class="h-50 overflow-scroll">
             {#each data.profiles as profile}
                 {#if profile.profile_id != data.user.profile_id}
-                    
-                <ListgroupItem class="flex items-center mb-2">
-                    <input
-                        type="checkbox"
-                        name="profile"
-                        value={profile.profile_id}
-                        checked={profile.profile_id == data.user.profile_id
-                            ? true
-                            : false}
-                        class="mr-2"
-                    />
-                    <Avatar
-                        size="sm"
-                        class="ring-2 ring-primary-100 dark:ring-primary-900 mr-2"
-                    />
-                    <span><b>{profile.fullname}</b> <br /> {profile.email}</span
-                    >
-                </ListgroupItem>
+                    <ListgroupItem class="flex items-center mb-2">
+                        <input
+                            type="checkbox"
+                            name="profile"
+                            value={profile.profile_id}
+                            checked={profile.profile_id == data.user.profile_id
+                                ? true
+                                : false}
+                            class="mr-2"
+                        />
+                        <Avatar
+                            size="sm"
+                            class="ring-2 ring-primary-100 dark:ring-primary-900 mr-2"
+                        />
+                        <span
+                            ><b>{profile.fullname}</b> <br />
+                            {profile.email}</span
+                        >
+                    </ListgroupItem>
                 {/if}
             {/each}
         </Listgroup>
