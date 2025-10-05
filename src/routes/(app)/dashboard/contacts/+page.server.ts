@@ -1,7 +1,7 @@
 import { fail } from '@sveltejs/kit';
 import { gql } from '$lib/graphql';
 import type { Actions, PageServerLoad } from './$types';
-import { supabase } from '$lib/supabase';
+import { getProfile, supabase } from '$lib/supabase';
 
 
 async function addContact(contact: { fullname: string; email: string; phone: string; address: string; created_by: number }): Promise<boolean> {
@@ -260,7 +260,7 @@ export const actions = {
 
         // Generate filename with timestamp and company ID for security policies
         const timestamp = new Date().toISOString().replace(/[:.]/g, '-').replace('-', '');
-        const filename = `contacts-export-${user.user_id}-${user.company}-${timestamp}.${format}`;
+        const filename = `contacts-export-${user.user_id}-${user.company_id}-${timestamp}.${format}`;
         const bucketName = 'exports'; // You'll need to create this bucket in Supabase
 
         let fileContent: string;
