@@ -6,6 +6,7 @@
         CogSolid,
         ReactSolid,
         HomeSolid,
+        BarcodeOutline,
     } from "flowbite-svelte-icons";
     import { page } from "$app/stores";
 
@@ -24,6 +25,11 @@
             name: "Contacts",
             icon: AddressBookSolid,
             href: "/dashboard/contacts",
+        },
+        {
+            name: "Products",
+            icon: BarcodeOutline,
+            href: "/dashboard/products",
         },
         {
             name: "Interactions",
