@@ -936,135 +936,146 @@
         >
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {#each Object.entries(addFormData) as [key, value]}
-                    <div
-                        class={typeof value === "string" && value.length > 100
-                            ? "md:col-span-2"
-                            : ""}
-                    >
-                        <Label for="add-{key}" class="mb-2 capitalize">
-                            {key
-                                .replace(/([A-Z])/g, " $1")
-                                .replace(/^./, (str) => str.toUpperCase())}
-                        </Label>
+                    {#if key !== "id" && key !== "created_at" && key !== "updated_at" && key !== "deleted_at" && key !== "timestamp" && key !== "created_by" && key !== "date_updated"}
+                        <div
+                            class={typeof value === "string" &&
+                            value.length > 100
+                                ? "md:col-span-2"
+                                : ""}
+                        >
+                            <Label for="add-{key}" class="mb-2 capitalize">
+                                {key
+                                    .replace(/([A-Z])/g, " $1")
+                                    .replace(/^./, (str) => str.toUpperCase())}
+                            </Label>
 
-                        {#if key === "role" || key === "status" || key === "type"}
-                            <!-- Dropdown for role/status/type fields -->
-                            <Select
-                                id="add-{key}"
-                                name={key}
-                                bind:value={addFormData[key]}
-                                required
-                            >
-                                <option value="">Select {key}</option>
-                                {#if key === "role"}
-                                    <option value="admin">Admin</option>
-                                    <option value="user">User</option>
-                                {:else if key === "status"}
-                                    <option value="active">Active</option>
-                                    <option value="inactive">Inactive</option>
-                                    <option value="pending">Pending</option>
-                                    <option value="suspended">Suspended</option>
-                                {:else if key === "type"}
-                                    <option value="premium">Premium</option>
-                                    <option value="standard">Standard</option>
-                                    <option value="basic">Basic</option>
-                                    <option value="trial">Trial</option>
-                                {/if}
-                            </Select>
-                        {:else if typeof value === "boolean"}
-                            <!-- Toggle for boolean fields -->
-                            <div class="flex items-center space-x-2">
-                                <Toggle
-                                    bind:checked={addFormData[key]}
-                                    name={key}
+                            {#if key === "role" || key === "status" || key === "type"}
+                                <!-- Dropdown for role/status/type fields -->
+                                <Select
                                     id="add-{key}"
-                                />
-                                <span
-                                    class="text-sm text-gray-600 dark:text-gray-400"
+                                    name={key}
+                                    bind:value={addFormData[key]}
+                                    required
                                 >
-                                    {addFormData[key] ? "Enabled" : "Disabled"}
-                                </span>
-                            </div>
-                        {:else if typeof value === "number"}
-                            <!-- Number input -->
-                            <Input
-                                type="number"
-                                id="add-{key}"
-                                name={key}
-                                bind:value={addFormData[key]}
-                                placeholder="Enter {key}..."
-                                required
-                            />
-                        {:else if key.toLowerCase().includes("email")}
-                            <!-- Email input -->
-                            <Input
-                                type="email"
-                                id="add-{key}"
-                                name={key}
-                                bind:value={addFormData[key]}
-                                placeholder="Enter email address..."
-                                required
-                            />
-                        {:else if key.toLowerCase().includes("phone")}
-                            <!-- Phone input -->
-                            <Input
-                                type="tel"
-                                id="add-{key}"
-                                name={key}
-                                bind:value={addFormData[key]}
-                                placeholder="Enter phone number..."
-                            />
-                        {:else if key.toLowerCase().includes("password")}
-                            <!-- Password input -->
-                            <Input
-                                type="password"
-                                id="add-{key}"
-                                name={key}
-                                bind:value={addFormData[key]}
-                                placeholder="Enter password..."
-                                required
-                            />
-                        {:else if key.toLowerCase().includes("url") || key
-                                .toLowerCase()
-                                .includes("website")}
-                            <!-- URL input -->
-                            <Input
-                                type="url"
-                                id="add-{key}"
-                                name={key}
-                                bind:value={addFormData[key]}
-                                placeholder="Enter URL..."
-                            />
-                        {:else if key.toLowerCase().includes("date")}
-                            <!-- Date input -->
-                            <Input
-                                type="date"
-                                id="add-{key}"
-                                name={key}
-                                bind:value={addFormData[key]}
-                            />
-                        {:else if typeof value === "string" && value.length > 100}
-                            <!-- Textarea for long text -->
-                            <Textarea
-                                id="add-{key}"
-                                name={key}
-                                bind:value={addFormData[key]}
-                                placeholder="Enter {key}..."
-                            />
-                        {:else}
-                            <!-- Default text input -->
-                            <Input
-                                type="text"
-                                id="add-{key}"
-                                name={key}
-                                bind:value={addFormData[key]}
-                                placeholder="Enter {key}..."
-                                required={key === "fullname" ||
-                                    key === "name" ||
-                                    key === "title"}
-                            />
-                        {/if}
-                    </div>
+                                    <option value="">Select {key}</option>
+                                    {#if key === "role"}
+                                        <option value="admin">Admin</option>
+                                        <option value="user">User</option>
+                                    {:else if key === "status"}
+                                        <option value="active">Active</option>
+                                        <option value="inactive"
+                                            >Inactive</option
+                                        >
+                                        <option value="pending">Pending</option>
+                                        <option value="suspended"
+                                            >Suspended</option
+                                        >
+                                    {:else if key === "type"}
+                                        <option value="premium">Premium</option>
+                                        <option value="standard"
+                                            >Standard</option
+                                        >
+                                        <option value="basic">Basic</option>
+                                        <option value="trial">Trial</option>
+                                    {/if}
+                                </Select>
+                            {:else if typeof value === "boolean"}
+                                <!-- Toggle for boolean fields -->
+                                <div class="flex items-center space-x-2">
+                                    <Toggle
+                                        bind:checked={addFormData[key]}
+                                        name={key}
+                                        id="add-{key}"
+                                    />
+                                    <span
+                                        class="text-sm text-gray-600 dark:text-gray-400"
+                                    >
+                                        {addFormData[key]
+                                            ? "Enabled"
+                                            : "Disabled"}
+                                    </span>
+                                </div>
+                            {:else if typeof value === "number"}
+                                <!-- Number input -->
+                                <Input
+                                    type="number"
+                                    id="add-{key}"
+                                    name={key}
+                                    bind:value={addFormData[key]}
+                                    placeholder="Enter {key}..."
+                                    required
+                                />
+                            {:else if key.toLowerCase().includes("email")}
+                                <!-- Email input -->
+                                <Input
+                                    type="email"
+                                    id="add-{key}"
+                                    name={key}
+                                    bind:value={addFormData[key]}
+                                    placeholder="Enter email address..."
+                                    required
+                                />
+                            {:else if key.toLowerCase().includes("phone")}
+                                <!-- Phone input -->
+                                <Input
+                                    type="tel"
+                                    id="add-{key}"
+                                    name={key}
+                                    bind:value={addFormData[key]}
+                                    placeholder="Enter phone number..."
+                                />
+                            {:else if key.toLowerCase().includes("password")}
+                                <!-- Password input -->
+                                <Input
+                                    type="password"
+                                    id="add-{key}"
+                                    name={key}
+                                    bind:value={addFormData[key]}
+                                    placeholder="Enter password..."
+                                    required
+                                />
+                            {:else if key.toLowerCase().includes("url") || key
+                                    .toLowerCase()
+                                    .includes("website")}
+                                <!-- URL input -->
+                                <Input
+                                    type="url"
+                                    id="add-{key}"
+                                    name={key}
+                                    bind:value={addFormData[key]}
+                                    placeholder="Enter URL..."
+                                />
+                            {:else if key.toLowerCase().includes("date")}
+                                <!-- Date input -->
+                                <Input
+                                    type="date"
+                                    id="add-{key}"
+                                    name={key}
+                                    bind:value={addFormData[key]}
+                                />
+                            {:else if typeof value === "string" && value.length > 100}
+                                <!-- Textarea for long text -->
+                                <Textarea
+                                    id="add-{key}"
+                                    name={key}
+                                    bind:value={addFormData[key]}
+                                    placeholder="Enter {key}..."
+                                />
+                            {:else}
+                                <!-- Default text input -->
+                                <Input
+                                    type="text"
+                                    id="add-{key}"
+                                    name={key}
+                                    bind:value={addFormData[key]}
+                                    placeholder="Enter {key}..."
+                                    required={key === "fullname" ||
+                                        key === "name" ||
+                                        key === "title"}
+                                />
+                            {/if}
+                        </div>
+                    {/if}
                 {/each}
             </div>
 
@@ -1127,12 +1138,12 @@
             <input
                 type="hidden"
                 name="id"
-                value={selectedData.id || selectedDataIndex}
+                value={selectedData.id }
             />
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {#each Object.entries(editFormData) as [key, value]}
-                    {#if key !== "id"}
+                    {#if key !== "id" && key !== "created_at" && key !== "updated_at" && key !== "deleted_at" && key !== "timestamp" && key !== "created_by" && key !== "date_updated"}
                         <div
                             class={typeof value === "string" &&
                             value.length > 100
@@ -1341,6 +1352,9 @@
                 name="fullname"
                 value={selectedData.fullname}
             />
+
+            <input type="hidden" name="name" value={selectedData.name} />
+            
             <input type="hidden" name="email" value={selectedData.email} />
 
             <Button
