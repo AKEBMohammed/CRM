@@ -99,10 +99,7 @@ export const load: PageServerLoad = async ({ params, cookies }) => {
     let profiles = await getProfilesByUser(user);
     if (!profiles) {
         return fail(500, { error: 'Failed to fetch user profiles from database.' });
-    }
-
-    console.log('Fetched profiles:', profiles);
-    
+    }    
 
     return { profiles };
 

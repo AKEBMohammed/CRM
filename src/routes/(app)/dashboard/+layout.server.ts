@@ -6,7 +6,7 @@ import type { LayoutServerLoad } from './$types';
 export const load: LayoutServerLoad = async ({ cookies }) => {
     const user = await getProfile();
     if (!user) {
-        throw redirect(303, '/auth');
+        redirect(303, '/auth');
     }
 
 
