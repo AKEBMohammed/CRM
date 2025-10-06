@@ -13,7 +13,6 @@
         Tooltip,
     } from "flowbite-svelte";
     import favicon from "$lib/assets/favicon.png";
-    import avatar from "$lib/assets/user.png";
     import { page } from "$app/stores";
     import {
         ArrowRightOutline,
@@ -22,7 +21,6 @@
         CogOutline,
         ExclamationCircleOutline,
         MessagesSolid,
-        UserCircleSolid,
     } from "flowbite-svelte-icons";
     import { supabase } from "$lib/supabase";
     import { goto } from "$app/navigation";
