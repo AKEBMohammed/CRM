@@ -1,6 +1,5 @@
 import { gql } from '$lib/graphql';
 import { getProfile, supabase } from '$lib/supabase';
-import { getProfile, supabase } from '$lib/supabase';
 import { redirect } from '@sveltejs/kit';
 import type { LayoutServerLoad } from './$types';
 
