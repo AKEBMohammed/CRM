@@ -56,7 +56,6 @@ export const load: LayoutServerLoad = async ({ cookies}) => {
     
     return {
         user,
-        user,
         rooms
     };
 };
