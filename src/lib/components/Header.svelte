@@ -106,7 +106,10 @@
                     >
                 </DropdownHeader>
                 <DropdownGroup>
-                    <DropdownItem class="flex items-center">
+                    <DropdownItem
+                        href="/dashboard/settings"
+                        class="flex items-center"
+                    >
                         <CogOutline class="w-5 h-5 me-2" />
                         Settings
                     </DropdownItem>
