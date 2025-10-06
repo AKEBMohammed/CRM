@@ -1,5 +1,6 @@
 import { gql } from '$lib/graphql';
 import { getProfile, supabase } from '$lib/supabase';
+import { getProfile, supabase } from '$lib/supabase';
 import { redirect } from '@sveltejs/kit';
 import type { LayoutServerLoad } from './$types';
 
@@ -15,6 +16,7 @@ export const load: LayoutServerLoad = async ({ cookies}) => {
             profiles_roomsCollection(
                 filter: {
                     profile_id: {
+                        eq: "${user.profile_id}"
                         eq: "${user.profile_id}"
                     }
                 }
@@ -54,6 +56,7 @@ export const load: LayoutServerLoad = async ({ cookies}) => {
         }));
     
     return {
+        user,
         user,
         rooms
     };
