@@ -123,10 +123,7 @@
                         <ExclamationCircleOutline class="w-5 h-5 me-2" />
                         Sign out
                     </DropdownItem>
-                    <DropdownItem class="flex items-center">
-                        <ExclamationCircleOutline class="w-5 h-5 me-2" />
-                        Report an issue
-                    </DropdownItem>
+                    
                 </DropdownGroup>
             </Dropdown>
         {/if}
