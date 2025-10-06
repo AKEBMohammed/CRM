@@ -3,19 +3,18 @@ import { getProfile, supabase } from '$lib/supabase';
 import { redirect } from '@sveltejs/kit';
 import type { LayoutServerLoad } from './$types';
 
-export const load: LayoutServerLoad = async ({ cookies}) => {
+export const load: LayoutServerLoad = async ({ cookies }) => {
     const user = await getProfile();
     if (!user) {
         throw redirect(303, '/auth');
     }
-    
+
 
     let query = `
         query {
             profiles_roomsCollection(
                 filter: {
                     profile_id: {
-                        eq: "${user.profile_id}"
                         eq: "${user.profile_id}"
                     }
                 }
@@ -53,7 +52,7 @@ export const load: LayoutServerLoad = async ({ cookies}) => {
             name: room.name,
             last_message: room.messagesCollection.edges[0]?.node.content || null
         }));
-    
+
     return {
         user,
         rooms
