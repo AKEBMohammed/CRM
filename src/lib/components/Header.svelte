@@ -107,7 +107,6 @@
                         class="flex items-center"
                         onclick={async () => {
                             await supabase.auth.signOut();
-                            cookieStore.set("user","")
                             goto("/auth");
                         }}
                     >
