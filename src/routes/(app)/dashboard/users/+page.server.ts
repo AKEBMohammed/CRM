@@ -90,7 +90,8 @@ async function getProfilesByUser(user: { company_id: number, profile_id: number,
 
 
 export const load: PageServerLoad = async ({ params, cookies }) => {
-    let user = JSON.parse(cookies.get('user') || 'null');
+    const user = await getProfile()
+
     if (!user || user.role !== 'admin') {
         return fail(401, { error: 'Unauthorized access. Please log in again.' });
     }
