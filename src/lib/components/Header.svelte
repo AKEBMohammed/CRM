@@ -11,6 +11,7 @@
         DropdownItem,
         Heading,
         Tooltip,
+        Indicator,
     } from "flowbite-svelte";
     import favicon from "$lib/assets/favicon.png";
     import { page } from "$app/stores";
@@ -45,7 +46,15 @@
                 <BrainSolid />
             </Button>
             <Tooltip>AI Assistant</Tooltip>
-            <Button color="dark" id="chats-drop"><MessagesSolid /></Button>
+            <Button color="dark" id="chats-drop" class="relative"
+                ><MessagesSolid />
+                <Indicator
+                    color="red"
+                    size="xl"
+                    placement="top-right"
+                    class="text-xs font-bold">20</Indicator
+                >
+            </Button>
             <Tooltip>Messages</Tooltip>
             <Dropdown triggeredBy="#chats-drop" class="w-50">
                 <DropdownHeader class="flex gap-4">
