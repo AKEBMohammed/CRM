@@ -31,6 +31,30 @@ export const load: LayoutServerLoad = async ({ cookies }) => {
                                 edges {
                                     node {
                                         content
+                                        profiles {
+                                            fullname
+                                        }
+                                    }
+                                }
+                            }
+                            allMessages: messagesCollection {
+                                edges {
+                                    node {
+                                        message_id
+                                        sender_id
+                                        viewsCollection(
+                                            filter: {
+                                                profile_id: {
+                                                    eq: "${user.profile_id}"
+                                                }
+                                            }
+                                        ) {
+                                            edges {
+                                                node {
+                                                    view_id
+                                                }
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -39,7 +63,6 @@ export const load: LayoutServerLoad = async ({ cookies }) => {
                 }
             }
         }
-    
     `
     let data = await gql(query);
 
@@ -47,11 +70,27 @@ export const load: LayoutServerLoad = async ({ cookies }) => {
         .profiles_roomsCollection
         .edges
         .map((edge: any) => edge.node.rooms)
-        .map((room: any) => ({
-            room_id: room.room_id,
-            name: room.name,
-            last_message: room.messagesCollection.edges[0]?.node.content || null
-        }));
+        .map((room: any) => {
+            // Calculate unread messages count
+            const unreadCount = room.allMessages.edges.filter((messageEdge: any) => {
+                const message = messageEdge.node;
+                // Don't count own messages as unread
+                if (message.sender_id === user.profile_id) return false;
+                // Check if user has viewed this message
+                return message.viewsCollection.edges.length === 0;
+            }).length;
+
+            return {
+                room_id: room.room_id,
+                name: room.name,
+                fullname: room.messagesCollection.edges[0]?.node.profiles.fullname || null,
+                message: room.messagesCollection.edges[0]?.node.content || null,
+                unreadCount
+            };
+        });
+
+        console.log('Rooms with unread counts:', rooms);
+        
 
     return {
         user,
