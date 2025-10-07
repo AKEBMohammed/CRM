@@ -7,6 +7,7 @@
         ReactSolid,
         HomeSolid,
         BarcodeOutline,
+        ChartPieSolid,
     } from "flowbite-svelte-icons";
     import { page } from "$app/stores";
 
@@ -37,6 +38,11 @@
             href: "/dashboard/interactions",
         },
         {
+            name: "Analytics",
+            icon: ChartPieSolid,
+            href: "/dashboard/analytics",
+        },
+        {
             name: "Settings",
             icon: CogSolid,
             href: "/dashboard/settings",
@@ -51,20 +57,21 @@
 </script>
 
 <div
-    class="w-15 h-full border-r border-gray-200 dark:border-gray-700 p-2 last:mt-auto flex flex-col items-center gap-4 bg-white shadow dark:bg-gray-800 row-start-2"
+    class="w-15 h-full border-r border-gray-200 dark:border-gray-700 p-2 flex flex-col items-center gap-4 bg-white shadow dark:bg-gray-800 row-start-2"
 >
-    {#each list as { name, icon: Icon, href }}
+    {#each list as { name, icon: Icon, href }, i}
         {#if !(name === "Users" && user.role === "user")}
-        
-            <Button
-                color={currentRoute === href ? "primary" : "dark"}
-                {href}
-                class="flex items-center justify-center w-12 h-12 rounded-lg transition last:mt-auto"
-                aria-label={name}
-            >
-                <Icon class="w-6 h-6 text-gray-900 dark:text-white" />
-            </Button>
-            <Tooltip placement="right">{name}</Tooltip>
+            <div class={i === list.length - 1 ? "mt-auto flex flex-col items-center" : ""}>
+                <Button
+                    color={currentRoute === href ? "primary" : "dark"}
+                    {href}
+                    class="flex items-center justify-center w-12 h-12 rounded-lg transition "
+                    aria-label={name}
+                >
+                    <Icon class="w-6 h-6 text-gray-900 dark:text-white" />
+                </Button>
+                <Tooltip placement="right">{name}</Tooltip>
+            </div>
         {/if}
     {/each}
 </div>
