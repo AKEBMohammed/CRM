@@ -3,44 +3,21 @@
         Card,
         Heading,
         P,
-        Button,
         Badge,
         Avatar,
-        Progressbar,
-        Alert,
-        Dropdown,
-        DropdownItem,
-        Timeline,
-        TimelineItem,
-        ActivityItem,
-        Spinner,
-        tags,
         Listgroup,
         ListgroupItem,
     } from "flowbite-svelte";
     import {
         UserSolid,
-        CommandOutline,
-        PlusOutline,
-        ArrowUpOutline,
-        ClockSolid,
-        EyeSolid,
-        CogSolid,
         ChartPieSolid,
         UsersGroupSolid,
         MessageCaptionSolid,
-        FileLinesOutline,
-        BellSolid,
         ChartLineUpOutline,
         CalendarMonthOutline,
         PhoneSolid,
-        EnvelopeSolid,
         BuildingOutline,
         CartOutline,
-        StarSolid,
-        ExclamationCircleOutline,
-        CheckCircleSolid,
-        ArrowRightOutline,
         FireSolid,
         LightbulbOutline,
     } from "flowbite-svelte-icons";
@@ -128,67 +105,6 @@
             href: "/dashboard/analytics",
         },
     ];
-
-    // Simulated data for CRM features (based on your DB schema)
-    const todayTasks = [
-        {
-            title: "Follow up with Acme Corp",
-            type: "call",
-            priority: "high",
-            time: "10:00 AM",
-        },
-        {
-            title: "Demo for TechFlow Solutions",
-            type: "meeting",
-            priority: "medium",
-            time: "2:00 PM",
-        },
-        {
-            title: "Send proposal to Digital Dynamics",
-            type: "email",
-            priority: "high",
-            time: "4:00 PM",
-        },
-    ];
-
-    const recentActivities = [
-        {
-            type: "interaction",
-            title: "Called Global Systems",
-            user: "Sarah Johnson",
-            time: "2 hours ago",
-            status: "completed",
-        },
-        {
-            type: "contact",
-            title: "Added new contact: Mike Chen",
-            user: "Alex Rodriguez",
-            time: "4 hours ago",
-            status: "new",
-        },
-        {
-            type: "deal",
-            title: "Updated deal status to 'Negotiation'",
-            user: "Emily Davis",
-            time: "6 hours ago",
-            status: "updated",
-        },
-    ];
-
-    const notifications = [
-        {
-            type: "urgent",
-            title: "3 overdue follow-ups",
-            description: "Contact customers waiting for response",
-            time: "1 hour ago",
-        },
-        {
-            type: "info",
-            title: "Weekly report ready",
-            description: "Sales performance summary available",
-            time: "3 hours ago",
-        },
-    ];
 </script>
 
 <div
@@ -251,7 +167,7 @@
                     tag="h3"
                     class="text-2xl text-center font-bold text-orange-600 dark:text-orange-400"
                 >
-                    {todayTasks.length}
+                    {0}
                 </Heading>
                 <P class="text-sm text-gray-600 dark:text-gray-400">
                     Today's Tasks
@@ -262,7 +178,7 @@
                     tag="h3"
                     class="text-2xl text-center font-bold text-purple-600 dark:text-purple-400"
                 >
-                    {recentActivities.length}
+                    {0}
                 </Heading>
                 <P class="text-sm text-gray-600 dark:text-gray-400">
                     Recent Activities
@@ -412,7 +328,4 @@
             {/each}
         </Listgroup>
     </div>
-
-
-    
 </div>
