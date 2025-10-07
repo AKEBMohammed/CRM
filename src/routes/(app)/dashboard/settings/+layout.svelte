@@ -1,4 +1,6 @@
-
+<script lang="ts">
+  import { Settings } from 'lucide-svelte'; 
+</script>
 
 <div class="flex min-h-screen bg-[#0f172a] text-gray-200">
   <!-- Sidebar -->
@@ -7,15 +9,17 @@
     <nav class="flex flex-col space-y-2">
       <a
         href="/dashboard/settings"
-        class="px-3 py-2 rounded-lg bg-[#334155] hover:bg-[#475569] transition"
+        class="flex items-center gap-2 px-3 py-2 rounded-lg bg-[#334155] hover:bg-[#475569] transition"
       >
-        General Settings
+        <Settings size={18} />
+        <span>General Settings</span>
       </a>
+
       <a
         href="/dashboard/settings/subscription"
         class="px-3 py-2 rounded-lg hover:bg-[#475569] transition"
       >
-        Subscription
+        Notifications
       </a>
     </nav>
   </aside>
