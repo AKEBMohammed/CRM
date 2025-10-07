@@ -74,10 +74,18 @@ export const load: LayoutServerLoad = async ({ cookies }) => {
             // Calculate unread messages count
             const unreadCount = room.allMessages.edges.filter((messageEdge: any) => {
                 const message = messageEdge.node;
-                // Don't count own messages as unread
+                // Only count messages sent by OTHER users (not current user)
                 if (message.sender_id === user.profile_id) return false;
-                // Check if user has viewed this message
-                return message.viewsCollection.edges.length === 0;
+                // Check if current user has NOT viewed this message
+                const hasViewed = message.viewsCollection.edges.length > 0;
+                const isUnread = !hasViewed;
+                
+                // Debug logging
+                if (isUnread) {
+                    console.log(`Unread message ${message.message_id} from user ${message.sender_id} in room ${room.room_id}`);
+                }
+                
+                return isUnread;
             }).length;
 
             return {
