@@ -57,7 +57,7 @@
                         placement="top-right"
                         class="text-xs font-bold"
                         >{rooms.reduce(
-                            (acc, room) => acc + room.unreadCount,
+                            (acc: number, room: any) => acc + room.unreadCount,
                             0,
                         )}</Indicator
                     >
