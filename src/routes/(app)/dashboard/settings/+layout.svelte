@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Settings } from 'lucide-svelte'; 
+  import { Settings, Bell } from 'lucide-svelte';
 </script>
 
 <div class="flex min-h-screen bg-[#0f172a] text-gray-200">
@@ -16,11 +16,13 @@
       </a>
 
       <a
-        href="/dashboard/settings/subscription"
-        class="px-3 py-2 rounded-lg hover:bg-[#475569] transition"
-      >
-        Notifications
-      </a>
+      href="/dashboard/settings/notifications"
+      class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-[#475569] transition"
+    >
+      <Bell size={18} />
+      <span>Notifications</span>
+    </a>
+
     </nav>
   </aside>
 
