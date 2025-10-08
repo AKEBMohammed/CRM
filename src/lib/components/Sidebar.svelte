@@ -8,6 +8,7 @@
         HomeSolid,
         BarcodeOutline,
         ChartPieSolid,
+        RectangleListOutline,
     } from "flowbite-svelte-icons";
     import { page } from "$app/stores";
 
@@ -31,6 +32,11 @@
             name: "Products",
             icon: BarcodeOutline,
             href: "/dashboard/products",
+        },
+        {
+            name: "Tasks",
+            icon: RectangleListOutline,
+            href: "/dashboard/tasks",
         },
         {
             name: "Interactions",
