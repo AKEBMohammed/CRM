@@ -4,12 +4,11 @@
 </script>
 
 
-<main class="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+<main class="flex-grow container mx-auto p-2">
 
+    <h2 class="text-2xl font-bold tracking-tight mb-2">Account Settings</h2>
 
-    <h2 class="text-3xl font-bold tracking-tight mb-8">Account Settings</h2>
-
-    <div class="space-y-12">
+    <div class="space-y-7">
 
         <section>
 
@@ -84,7 +83,7 @@
     </div>
 
     
-    <div class="mt-12 pt-8 border-t border-border-dark flex justify-end gap-4">
+    <div class="mt-8 pt-8 border-t border-border-dark flex justify-end gap-4">
 
         <Button class="inline-flex items-center justify-center whitespace-nowrap rounded-lg text-sm font-medium h-10 px-4 py-2 bg-transparent text-muted-dark hover:bg-subtle-dark focus:outline-none focus:ring-2 focus:ring-primary/50">
           Cancel
