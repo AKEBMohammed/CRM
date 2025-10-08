@@ -1,7 +1,6 @@
 <script lang="ts">
-  export let data;
-  let name = data.userSettings?.name ?? '';
-  let email = data.userSettings?.email ?? '';
+  let {data} = $props();
+ 
 </script>
 
 <div class="max-w-md ml-10 space-y-6">
@@ -12,7 +11,7 @@
       <label class="block text-sm text-gray-400 mb-1">Nom</label>
       <input
         type="text"
-        bind:value={name}
+        bind:value={data.user.fullname}
         placeholder="Nom d'affichage"
         class="w-full px-3 py-2 rounded-lg bg-[#334155] border border-gray-600 focus:outline-none"
       />
@@ -22,7 +21,7 @@
       <label class="block text-sm text-gray-400 mb-1">Email</label>
       <input
         type="text"
-        bind:value={email}
+        bind:value={data.user.email}
         disabled
         class="w-full px-3 py-2 rounded-lg bg-[#1e293b] border border-gray-600 text-gray-400 cursor-not-allowed"
       />
