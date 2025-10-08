@@ -29,6 +29,7 @@
 	"dependencies": {
 		"@supabase/supabase-js": "^2.58.0",
 		"@types/pg": "^8.15.5",
+		"lucide-svelte": "^0.545.0",
 		"pg": "^8.16.3"
 	}
 }

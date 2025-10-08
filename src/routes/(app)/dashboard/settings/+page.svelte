@@ -4,15 +4,15 @@
 </script>
 
 
-<main class="flex-grow container mx-auto py-1.3 px-2 overflow-y-auto max-h-[calc(100vh-80px)]">
+<main class="flex-grow container mx-auto py-1.3 px-2  overflow-y-visible">
 
-    <h2 class="text-2xl font-bold tracking-tight mb-2">Account Settings</h2>
+   
 
     <div class="space-y-7">
 
         <section>
 
-          <h3 class="text-lg font-bold mb-4 border-b border-border-dark pb-2">Profile Photo</h3>
+          <h3 class="text-lg font-bold mb-4 border-b border-border-dark pb-2">My Profile</h3>
 
           <div class="flex items-center gap-6">
 
