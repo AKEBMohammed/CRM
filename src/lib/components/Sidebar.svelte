@@ -9,6 +9,7 @@
         BarcodeOutline,
         ChartPieSolid,
         RectangleListOutline,
+        ChampagneGlassesSolid,
     } from "flowbite-svelte-icons";
     import { page } from "$app/stores";
 
@@ -40,7 +41,7 @@
         },
         {
             name: "Interactions",
-            icon: ReactSolid,
+            icon:  ChampagneGlassesSolid,
             href: "/dashboard/interactions",
         },
         {
