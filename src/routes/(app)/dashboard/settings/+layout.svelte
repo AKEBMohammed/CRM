@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Settings, Bell } from 'lucide-svelte';
+  import { CogOutline, BellOutline } from 'flowbite-svelte-icons';
   import { page } from '$app/stores'
   $: currentPath = $page.url.pathname;
 </script>
@@ -16,7 +16,7 @@
           }`
         }
       >
-        <Settings size={18} />
+        <CogOutline/>
         <span>General Settings</span>
       </a>
 
@@ -27,7 +27,7 @@
           }`
         }
     >
-      <Bell size={18} />
+      <BellOutline/>
       <span>Notifications</span>
     </a>
 
