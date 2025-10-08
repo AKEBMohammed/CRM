@@ -108,10 +108,10 @@
 </script>
 
 <div
-    class="h-full w-full p-2 grid grid-rows-[auto,auto,auto] grid-cols-4 gap-2 bg-gradient-to-br from-gray-50 via-blue-50/30 to-purple-50/20 dark:from-gray-900 dark:via-blue-900/10 dark:to-purple-900/10"
+    class="h-full w-full p-2 grid grid-rows-[auto,1fr] grid-cols-[1fr,2fr,1fr] gap-2 bg-gradient-to-br from-gray-50 via-blue-50/30 to-purple-50/20 dark:from-gray-900 dark:via-blue-900/10 dark:to-purple-900/10"
 >
     <div
-        class="h-fit col-start-1 col-span-4 row-start-1 flex items-center border-b border-gray-200 dark:border-gray-700 p-2 space-x-6"
+        class="h-fit col-start-1 col-span-3 row-start-1 flex items-center border-b border-gray-200 dark:border-gray-700 p-2 space-x-6"
     >
         <Avatar
             size="md"
@@ -201,7 +201,7 @@
     </div>
 
     <!-- CRM Performance Cards -->
-    <div class="h-fit col-start-2 col-span-3 row-start-2 flex gap-4 p-2">
+    <div class="h-fit col-start-2 col-span-2 row-start-2 flex gap-4 p-2">
         <!-- Contacts Card -->
         <Card
             class="p-4 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border-0 shadow-lg bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 grid grid-rows-3 grid-cols-[2fr,1fr]"
@@ -290,7 +290,7 @@
         </Card>
     </div>
 
-    <div class="col-start-1 col-span-2 xl:col-span-1 space-y-6">
+    <div class="col-start-1 space-y-6">
         <!-- CRM Quick Actions -->
         <Listgroup title="Quick Actions">
             <ListgroupItem>
