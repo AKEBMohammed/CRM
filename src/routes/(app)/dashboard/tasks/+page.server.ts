@@ -1,6 +1,6 @@
 import { gql } from "$lib/graphql";
 import { getProfile } from "$lib/supabase";
-import { redirect } from "@sveltejs/kit";
+import { error, fail, redirect } from "@sveltejs/kit";
 
 async function getProfilesByUser(user: { company_id: number, profile_id: number, role: string }) {
 
@@ -51,20 +51,32 @@ async function getTasks(user: { profile_id: string }) {
                         title
                         description
                         priority
+                        type
+                        status
                     }
                 }
             }
         }
     `;
 
-    let tasks = await gql(query, { profile_id: user.profile_id });
-    console.log('tasks:', tasks);
+    let result = await gql(query, { profile_id: user.profile_id });
 
-    if (tasks?.data?.tasksCollection?.edges && tasks.data.tasksCollection.edges.length > 0) {
-        return tasks.data.tasksCollection.edges.map((edge: { node: any }) => edge.node);
-    } else {
-        return [];
+
+    if (!result?.tasksCollection?.edges) {
+        return false;
     }
+
+    let tasks = result.tasksCollection.edges.map((edge: any) => ({
+        task_id: edge.node.task_id,
+        title: edge.node.title,
+        description: edge.node.description,
+        priority: edge.node.priority,
+        type: edge.node.type,
+        status: edge.node.status
+    }));
+
+    return tasks;
+
 
 }
 
@@ -82,6 +94,69 @@ export const load = async () => {
 
     let tasks = await getTasks(user)
 
+    if (!tasks) {
+        return fail(500, { error: "failed to load tasks" })
+    }
+
 
     return { users, tasks };
 }
+
+export const actions = {
+    add: async ({ request }) => {
+        const formData = await request.formData();
+        const title = formData.get('title') as string;
+        const description = formData.get('description') as string;
+        const priority = formData.get('priority') as string;
+        const status = formData.get('status') as string;
+        const type = formData.get('type') as string;
+        const assigned_to = formData.get('assigned_to') as string;
+
+        const user = await getProfile();
+        if (!user) {
+            redirect(303, '/auth');
+        }
+
+        let mutation = `
+            mutation($title: String!, $description: String!, $priority: String!, $status: String!, $type: String!, $assigned_to: uuid!, $created_by: uuid!) {
+                insertIntotasksCollection(
+                    objects: [{
+                        title: $title,
+                        description: $description,
+                        priority: $priority,
+                        status: $status,
+                        type: $type,
+                        assigned_to: $assigned_to,
+                        created_by: $created_by
+                    }]
+                ) {
+                    records {
+                        task_id
+                        title
+                        description
+                        priority
+                        type
+                        status
+                        assigned_to
+                    }
+                }
+            }
+        `;
+
+        let result = await gql(mutation, {
+            title,
+            description,
+            priority,
+            status,
+            type,
+            assigned_to,
+            created_by: user.profile_id
+        });
+        
+        if (result?.data?.createTask?.task) {
+            return { success: true, task: result.data.createTask.task };
+        } else {
+            return fail(400, { error: 'Failed to create task' });
+        }
+    }
+};
