@@ -4,7 +4,7 @@
 </script>
 
 
-<main class="flex-grow container mx-auto p-2">
+<main class="flex-grow container mx-auto py-1.3 px-2 overflow-y-auto max-h-[calc(100vh-80px)]">
 
     <h2 class="text-2xl font-bold tracking-tight mb-2">Account Settings</h2>
 
@@ -30,11 +30,11 @@
 
                       <div class="flex flex-col sm:flex-row sm:items-center gap-3">
 
-                      <Button class="inline-flex items-center justify-center whitespace-nowrap rounded-lg text-sm font-medium h-10 px-4 py-2 bg-primary text-white shadow-sm hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary/50">
+                      <Button color="primary" class="inline-flex items-center justify-center whitespace-nowrap rounded-lg text-sm font-medium h-10 px-4 py-2 bg-primary text-white shadow-sm hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary/50">
                           Update Photo
                       </Button>
 
-                      <Button class="inline-flex items-center justify-center whitespace-nowrap rounded-lg text-sm font-medium h-10 px-4 py-2 bg-subtle-dark text-foreground-dark hover:bg-subtle-dark/80 focus:outline-none focus:ring-2 focus:ring-primary/50">
+                      <Button color="blue" class="inline-flex items-center justify-center whitespace-nowrap rounded-lg text-sm font-medium h-10 px-4 py-2 bg-subtle-dark text-foreground-dark hover:bg-subtle-dark/80 focus:outline-none focus:ring-2 focus:ring-primary/50">
                           Delete Photo
                       </Button>
 
@@ -85,11 +85,11 @@
     
     <div class="mt-8 pt-8 border-t border-border-dark flex justify-end gap-4">
 
-        <Button class="inline-flex items-center justify-center whitespace-nowrap rounded-lg text-sm font-medium h-10 px-4 py-2 bg-transparent text-muted-dark hover:bg-subtle-dark focus:outline-none focus:ring-2 focus:ring-primary/50">
+        <Button color="red" class="inline-flex items-center justify-center whitespace-nowrap rounded-lg text-sm font-medium h-10 px-4 py-2 bg-transparent text-muted-dark hover:bg-subtle-dark focus:outline-none focus:ring-2 focus:ring-primary/50">
           Cancel
         </Button>
 
-        <Button class="inline-flex items-center justify-center whitespace-nowrap rounded-lg text-sm font-medium h-10 px-4 py-2 bg-primary text-background-dark font-semibold shadow-sm hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary/50">
+        <Button color="primary" class="inline-flex items-center justify-center whitespace-nowrap rounded-lg text-sm font-medium h-10 px-4 py-2 bg-primary text-background-dark font-semibold shadow-sm hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary/50">
           Save Changes
         </Button>
 
