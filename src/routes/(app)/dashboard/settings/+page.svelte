@@ -1,30 +1,100 @@
 <script lang="ts">
-  let {data} = $props();
- 
+  import {Button, Input, Label} from 'flowbite-svelte';
+  let {data}= $props();
 </script>
 
-<div class="max-w-md ml-10 space-y-6">
-  <h1 class="text-2xl font-semibold text-gray-100">General Settings</h1>
 
-  <div class="bg-[#071028] p-6 rounded-2xl border border-gray-700 space-y-4">
-    <div>
-      <label class="block text-sm text-gray-400 mb-1">Nom</label>
-      <input
-        type="text"
-        bind:value={data.user.fullname}
-        placeholder="Nom d'affichage"
-        class="w-full px-3 py-2 rounded-lg bg-[#334155] border border-gray-600 focus:outline-none"
-      />
+<main class="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+
+    <h2 class="text-3xl font-bold tracking-tight mb-8">Account Settings</h2>
+
+    <div class="space-y-12">
+
+        <section>
+
+          <h3 class="text-lg font-bold mb-4 border-b border-border-dark pb-2">Profile Photo</h3>
+
+          <div class="flex items-center gap-6">
+
+              <div class="relative">
+
+                  <div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-20" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuC7JdpPWffMWb_ngjqoqY37UU19ZUY89pGOwGhJe7gk0sC1mGgtDJNdcY338llfFLXlTb6NotEuzj5QfjLteMg9J7I9BtM8_TOgyIeAv-n8YCOEwaxgY7jAebq_BU76QjGahx-hxKLmnDWrU6JTbux1Iz8ETccl-GCjhVdUQKokJiDc452Lf8lqrPLKGlr5D0Un1HWFJqUpag0kN2WJUkyd-oO9NEMnDAX3QtDnEJp5OWiew4hJJ-Wc7FiWM8ZCvZVoXDjkSWM0EAU");'>
+                  
+                  </div>
+
+                    
+
+              </div>
+
+              <div class="flex-grow">
+
+                      <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+
+                      <Button class="inline-flex items-center justify-center whitespace-nowrap rounded-lg text-sm font-medium h-10 px-4 py-2 bg-primary text-white shadow-sm hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary/50">
+                          Update Photo
+                      </Button>
+
+                      <Button class="inline-flex items-center justify-center whitespace-nowrap rounded-lg text-sm font-medium h-10 px-4 py-2 bg-subtle-dark text-foreground-dark hover:bg-subtle-dark/80 focus:outline-none focus:ring-2 focus:ring-primary/50">
+                          Delete Photo
+                      </Button>
+
+                      </div>
+
+              </div>
+
+          </div>
+
+        </section>
+
+        <section>
+
+            <h3 class="text-lg font-bold mb-4 border-b border-border-dark pb-2">User Information</h3>
+
+            <form class="space-y-6">
+
+            <div>
+
+                <Label class="block text-sm font-medium mb-2" for="fullName">Full Name</Label>
+
+                <Input class="form-input block w-full rounded-lg border-border-dark bg-subtle-dark focus:border-primary focus:ring-primary text-foreground-dark placeholder:text-muted-dark" id="fullName" name="fullName" type="text" value={data.user.fullname}/>
+
+            </div>
+
+            <div>
+
+                <Label class="block text-sm font-medium mb-2" for="email">Email Address</Label>
+
+                <Input class="form-input block w-full rounded-lg border-border-dark bg-subtle-dark focus:border-primary focus:ring-primary text-foreground-dark placeholder:text-muted-dark" id="email" name="email" type="email" value={data.user.email}/>
+
+            </div>
+
+            <div>
+
+                <Label class="block text-sm font-medium mb-2" for="phone">Phone Number</Label>
+
+                <Input class="form-input block w-full rounded-lg border-border-dark bg-subtle-dark focus:border-primary focus:ring-primary text-foreground-dark placeholder:text-muted-dark" id="phone" name="phone" type="tel" value={data.user.phone}/>
+
+            </div>
+
+            </form>
+
+        </section>
+
     </div>
 
-    <div>
-      <label class="block text-sm text-gray-400 mb-1">Email</label>
-      <input
-        type="text"
-        bind:value={data.user.email}
-        disabled
-        class="w-full px-3 py-2 rounded-lg bg-[#1e293b] border border-gray-600 text-gray-400 cursor-not-allowed"
-      />
+    
+    <div class="mt-12 pt-8 border-t border-border-dark flex justify-end gap-4">
+
+        <Button class="inline-flex items-center justify-center whitespace-nowrap rounded-lg text-sm font-medium h-10 px-4 py-2 bg-transparent text-muted-dark hover:bg-subtle-dark focus:outline-none focus:ring-2 focus:ring-primary/50">
+          Cancel
+        </Button>
+
+        <Button class="inline-flex items-center justify-center whitespace-nowrap rounded-lg text-sm font-medium h-10 px-4 py-2 bg-primary text-background-dark font-semibold shadow-sm hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary/50">
+          Save Changes
+        </Button>
+
     </div>
-  </div>
-</div>
+
+
+</main>
