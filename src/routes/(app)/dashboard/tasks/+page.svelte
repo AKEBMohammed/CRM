@@ -1,8 +1,10 @@
 <script>
     import { enhance } from "$app/forms";
     import {
+        Badge,
         Button,
         Card,
+        Datepicker,
         Heading,
         Input,
         Label,
@@ -21,10 +23,10 @@
     let openCreateTaskModal = $state(false);
 </script>
 
-<div class="flex flex-col gap-4 p-2">
-    <div class="grid grid-cols-2 grid-rows-2 space-y-2">
+<div class="h-full flex flex-col gap-2 p-2">
+    <div class="w-full grid grid-cols-2 grid-rows-2 gap-2 gap-y-0">
         <Heading tag="h1" class="text-2xl font-bold">Tasks</Heading>
-        <P class="text-gray-600">Manage your tasks here.</P>
+        <P class="text-gray-500 dark:text-gray-400">Manage your tasks here.</P>
         <Button
             class="w-fit col-start-2 row-start-1 col-span-2 p-2 "
             color="primary"
@@ -32,21 +34,56 @@
             ><PlusOutline class="mr-2" />Add New Task</Button
         >
     </div>
-    <div class="grid grid-cols-4 gap-2">
+    <div class="h-full grid grid-cols-4 gap-4">
         {#if data.tasks.length === 0}
             <P class="text-gray-600"
                 >No tasks available. Please add a new task.</P
             >
         {:else}
-            {#each data.tasks as task}
-                <Card class="p-2" title={task.title}>
-                    <Heading tag="h2" class="text-lg font-semibold"
-                        >{task.title}</Heading
+            {#each ["pending", "in_progress", "completed", "canceled"] as status}
+                <Card class="h-full overflow-y-scroll p-2 flex flex-col gap-2">
+                    <Heading tag="h4"
+                        >{status
+                            .replace("_", " ")
+                            .split(" ")
+                            .map(
+                                (word) =>
+                                    word.charAt(0).toUpperCase() +
+                                    word.slice(1).toLowerCase(),
+                            )
+                            .join(" ")}</Heading
                     >
-                    <P class="text-gray-600">{task.description}</P>
-                    {task.type}
-                    {task.priority}
-                    {task.status}
+                    {#each data.tasks.filter((task) => task.status === status) as task}
+                        <Card class="p-2 flex flex-col gap-2">
+                            <Heading tag="h5">{task.title}</Heading>
+                            <P>{task.description}</P>
+                            <P>Due {task.due_date}</P>
+                            <div class="flex gap-2">
+                                <Badge
+                                    class="ml-auto p-1"
+                                    color={task.priority == "low"
+                                        ? "green"
+                                        : task.priority == "medium"
+                                          ? "yellow"
+                                          : "red"}>{task.priority}</Badge
+                                >
+                                <Badge class="p-1" color="gray"
+                                    >{task.type}</Badge
+                                >
+                            </div>
+                            <div>
+                                {#if task.status == "pending"}
+                                    <Button color="secondary">Next stage</Button>
+                                {:else if task.status == "in_progress"}
+
+                                    <Button color="primary">Complete Task</Button>
+                                    <Button color="gray">Cancel Task</Button>
+                                {:else}
+                                    <Button color="gray">Reopen</Button>
+                                {/if}
+                            </div>
+                        </Card>
+                    {/each}
                 </Card>
             {/each}
         {/if}
@@ -121,6 +158,14 @@
                 value={data.user.profile_id}
             />
         {/if}
+        <Label>Due Date:</Label>
+        <Input
+            type="date"
+            name="due_date"
+            value={new Date(Date.now() + 24 * 60 * 60 * 1000)
+                .toISOString()
+                .split("T")[0]}
+        />
         <Button type="submit" color="primary">Create Task</Button>
     </form>
 </Modal>

@@ -53,6 +53,7 @@ async function getTasks(user: { profile_id: string }) {
                         priority
                         type
                         status
+                        due_date
                     }
                 }
             }
@@ -111,6 +112,7 @@ export const actions = {
         const status = formData.get('status') as string;
         const type = formData.get('type') as string;
         const assigned_to = formData.get('assigned_to') as string;
+        const due_date = formData.get('due_date') as string;
 
         const user = await getProfile();
         if (!user) {
@@ -118,7 +120,7 @@ export const actions = {
         }
 
         let mutation = `
-            mutation($title: String!, $description: String!, $priority: String!, $status: String!, $type: String!, $assigned_to: uuid!, $created_by: uuid!) {
+            mutation($title: String!, $description: String!, $priority: String!, $status: String!, $type: String!, $due_date: date!, $assigned_to: uuid!, $created_by: uuid!) {
                 insertIntotasksCollection(
                     objects: [{
                         title: $title,
@@ -126,6 +128,7 @@ export const actions = {
                         priority: $priority,
                         status: $status,
                         type: $type,
+                        due_date: $due_date,
                         assigned_to: $assigned_to,
                         created_by: $created_by
                     }]
@@ -137,6 +140,7 @@ export const actions = {
                         priority
                         type
                         status
+                        due_date
                         assigned_to
                     }
                 }
@@ -149,6 +153,7 @@ export const actions = {
             priority,
             status,
             type,
+            due_date,
             assigned_to,
             created_by: user.profile_id
         });
