@@ -11,9 +11,11 @@
         DropdownItem,
         Heading,
         Tooltip,
+        Indicator,
+        DropdownDivider,
+        Badge,
     } from "flowbite-svelte";
     import favicon from "$lib/assets/favicon.png";
-    import avatar from "$lib/assets/user.png";
     import { page } from "$app/stores";
     import {
         ArrowRightOutline,
@@ -22,7 +24,6 @@
         CogOutline,
         ExclamationCircleOutline,
         MessagesSolid,
-        UserCircleSolid,
     } from "flowbite-svelte-icons";
     import { supabase } from "$lib/supabase";
     import { goto } from "$app/navigation";
@@ -47,7 +48,21 @@
                 <BrainSolid />
             </Button>
             <Tooltip>AI Assistant</Tooltip>
-            <Button color="dark" id="chats-drop"><MessagesSolid /></Button>
+            <Button color="dark" id="chats-drop" class="relative"
+                ><MessagesSolid />
+                {#if rooms[0].unreadCount > 0}
+                    <Indicator
+                        color="red"
+                        size="xl"
+                        placement="top-right"
+                        class="text-xs font-bold"
+                        >{rooms.reduce(
+                            (acc: number, room: any) => acc + room.unreadCount,
+                            0,
+                        )}</Indicator
+                    >
+                {/if}
+            </Button>
             <Tooltip>Messages</Tooltip>
             <Dropdown triggeredBy="#chats-drop" class="w-50">
                 <DropdownHeader class="flex gap-4">
@@ -67,9 +82,17 @@
                                 class="flex flex-col"
                                 href={`/dashboard/rooms/${room.room_id}`}
                             >
-                                <span class="font-medium">{room.name}</span>
+                                <span class="flex font-medium"
+                                    >{room.name}
+
+                                    {#if room.unreadCount > 0}
+                                        <Badge color="red" class="ml-auto"
+                                            >{room.unreadCount}</Badge
+                                        >
+                                    {/if}
+                                </span>
                                 <span class="text-sm text-gray-500 truncate"
-                                    >{room.last_message ||
+                                    >{room.fullname + ": " + room.message ||
                                         "No messages yet"}</span
                                 >
                             </DropdownItem>
@@ -81,7 +104,12 @@
             <Tooltip>Notifications</Tooltip>
 
             {#if user?.avatar_url}
-                <Avatar size="sm" alt="User settings" id="user-drop">
+                <Avatar
+                    size="sm"
+                    alt="User settings"
+                    id="user-drop"
+                    class="ring-2 ring-primary-100 dark:ring-primary-900 mx-2"
+                >
                     <img
                         class="rounded-full"
                         src={user.avatar_url}
@@ -89,7 +117,12 @@
                     />
                 </Avatar>
             {:else}
-                <Avatar size="sm" alt="User settings" id="user-drop" />
+                <Avatar
+                    size="sm"
+                    alt="User settings"
+                    id="user-drop"
+                    class="ring-2 ring-primary-100 dark:ring-primary-900 mx-2"
+                />
             {/if}
             <Dropdown triggeredBy="#user-drop">
                 <DropdownHeader>
@@ -99,7 +132,10 @@
                     >
                 </DropdownHeader>
                 <DropdownGroup>
-                    <DropdownItem class="flex items-center">
+                    <DropdownItem
+                        href="/dashboard/settings"
+                        class="flex items-center"
+                    >
                         <CogOutline class="w-5 h-5 me-2" />
                         Settings
                     </DropdownItem>
@@ -107,16 +143,11 @@
                         class="flex items-center"
                         onclick={async () => {
                             await supabase.auth.signOut();
-                            cookieStore.set("user","")
                             goto("/auth");
                         }}
                     >
                         <ExclamationCircleOutline class="w-5 h-5 me-2" />
                         Sign out
-                    </DropdownItem>
-                    <DropdownItem class="flex items-center">
-                        <ExclamationCircleOutline class="w-5 h-5 me-2" />
-                        Report an issue
                     </DropdownItem>
                 </DropdownGroup>
             </Dropdown>

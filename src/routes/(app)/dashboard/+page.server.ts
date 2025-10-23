@@ -1,9 +1,10 @@
 import type { PageServerLoad } from './$types';
 import { gql } from '$lib/graphql';
 import { redirect } from '@sveltejs/kit';
+import { getProfile } from '$lib/supabase';
 
 export const load: PageServerLoad = async ({ cookies }) => {
-    const user = JSON.parse(cookies.get('user') || 'null');
+    const user = await getProfile()
     if (!user) {
         throw redirect(302, '/auth');
     }

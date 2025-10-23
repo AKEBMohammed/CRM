@@ -73,7 +73,7 @@
     {/if}
 
     <DataTable
-        data={data.profiles.map((profile) => ({
+        data={data.profiles.map((profile:any) => ({
             id: profile.profile_id,
             fullname: profile.fullname,
             email: profile.email,

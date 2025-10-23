@@ -1,7 +1,7 @@
 import { error, fail } from '@sveltejs/kit';
 import { gql } from '$lib/graphql';
 import type { Actions, PageServerLoad } from './$types';
-import { supabase } from '$lib/supabase';
+import { getProfile, supabase } from '$lib/supabase';
 import { PUBLIC_BASE_URL } from '$env/static/public';
 
 async function addProfile(user_id: string, fullname: string, email: string, phone: string, company_id: number, role: string, added_by: number) {
@@ -83,14 +83,15 @@ async function getProfilesByUser(user: { company_id: number, profile_id: number,
         phone: edge.node.phone,
         role: edge.node.role,
     }));
-
+    
     return profiles;
 }
 
 
 
 export const load: PageServerLoad = async ({ params, cookies }) => {
-    let user = JSON.parse(cookies.get('user') || 'null');
+    const user = await getProfile()
+
     if (!user || user.role !== 'admin') {
         return fail(401, { error: 'Unauthorized access. Please log in again.' });
     }
@@ -98,7 +99,7 @@ export const load: PageServerLoad = async ({ params, cookies }) => {
     let profiles = await getProfilesByUser(user);
     if (!profiles) {
         return fail(500, { error: 'Failed to fetch user profiles from database.' });
-    }
+    }    
 
     return { profiles };
 
@@ -116,7 +117,7 @@ export const actions = {
         console.log('Add user action triggered with data:', { fullname, role, email, phone, password });
         
 
-        const user = JSON.parse(cookies.get('user') || 'null');
+        const user = await getProfile()
 
         if (!user || user.role !== 'admin') {
             return fail(401, { error: 'Unauthorized access. Please log in again.' });
@@ -157,7 +158,7 @@ export const actions = {
     import: async ({ request, cookies }) => {
         const formData = await request.formData();
         const file = formData.get('file');
-        const user = JSON.parse(cookies.get('user') || 'null');
+        const user = await getProfile()
 
         if (!user) {
             return fail(401, { error: 'Unauthorized access. Please log in again.' });
@@ -372,7 +373,7 @@ export const actions = {
 
     // Edit user action
     edit: async ({ request, cookies }) => {
-        const user = JSON.parse(cookies.get('user') || 'null');
+        const user = await getProfile()
 
         if (!user || user.role !== 'admin') {
             return fail(401, { error: 'Unauthorized access. Please log in again.' });
@@ -436,7 +437,7 @@ export const actions = {
 
     // Delete user action
     delete: async ({ request, cookies }) => {
-        const user = JSON.parse(cookies.get('user') || 'null');
+        const user = await getProfile()
 
         if (!user || user.role !== 'admin') {
             return fail(401, { error: 'Unauthorized access. Please log in again.' });
