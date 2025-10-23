@@ -81,6 +81,9 @@ export const load: PageServerLoad = async ({ params, cookies }) => {
     let chats = data.chatsCollection.edges.map((edge: any) => edge.node)
     console.log(chats);
 
-    return { discussion_id: params.discussion_id, chats };
+    return { discussion: {
+        discussion_id: discussion.discussion_id,
+        name: discussion.name
+    }, chats };
 };
 

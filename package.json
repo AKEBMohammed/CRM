@@ -27,8 +27,11 @@
 		"vite": "^7.0.4"
 	},
 	"dependencies": {
+		"@google/genai": "^1.26.0",
 		"@supabase/supabase-js": "^2.57.4",
 		"@types/pg": "^8.15.5",
+		"highlight.js": "^11.11.1",
+		"marked": "^16.4.1",
 		"pg": "^8.16.3"
 	}
 }
