@@ -24,6 +24,7 @@ export const actions = {
         `
 
         let data = await gql(query);
-        let discussion_id = data.insertIntodiscussionsCollection.discussion.discussion_id;
+        let discussion_id = data.insertIntodiscussionsCollection.records[0].discussion_id;
+        throw redirect(300, `/dashboard/assistant/${discussion_id}`);
     }
 } satisfies Actions;

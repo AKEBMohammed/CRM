@@ -1,6 +1,14 @@
 <script lang="ts">
     import { enhance } from "$app/forms";
-    import { Button, Card, Heading, P, Search } from "flowbite-svelte";
+    import {
+        Button,
+        Card,
+        Heading,
+        Listgroup,
+        ListgroupItem,
+        P,
+        Search,
+    } from "flowbite-svelte";
     import { PlusOutline } from "flowbite-svelte-icons";
 
     let { children, data } = $props();
@@ -16,27 +24,26 @@
             >AI Discussions</Heading
         >
         <Search placeholder="Search discussions..." size="md" class="mb-2" />
-        <form use:enhance action="./assistant?/create" method="post">
-            <Button type="submit" color="light" size="sm" class="mb-4 w-full">
+        <form use:enhance action="?/create" method="post">
+            <Button type="submit" color="primary" size="sm" class="mb-4 w-full">
                 <PlusOutline class="w-5 h-5 mr-2" />
                 New Discussion
             </Button>
         </form>
 
-        {#each data.discussions as discussion}
-            <Card
-                size="md"
-                href={`/dashboard/assistant/${discussion.discussion_id}`}
-                class="w-full p-2 mb-1 bg-gray-100 dark:bg-gray-700 rounded-lg cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-600"
-            >
-                <Heading
-                    tag="h6"
-                    class="font-bold text-gray-900 dark:text-white"
+        <Listgroup>
+            {#each data.discussions as discussion}
+                
+                <ListgroupItem
+                    href={`/dashboard/assistant/${discussion.discussion_id}`}
+                    class="flex flex-col justify-start items-start"
                 >
-                    {discussion.name}
-                </Heading>
-            </Card>
-        {/each}
+                    <Heading tag="h5" class="text-gray-900 dark:text-white">
+                        {discussion.name}
+                    </Heading>
+                </ListgroupItem>
+            {/each}
+        </Listgroup>
     </aside>
     {@render children()}
 </main>

@@ -172,6 +172,7 @@
             }
         } catch (error) {
             console.error("Error calling assistant API:", error);
+            isTyping = false;
         } finally {
             isLoading = false;
             scrollToBottom();
@@ -227,7 +228,7 @@
 </script>
 
 <!-- Modern AI Chat Interface -->
-<div class="flex flex-col h-full bg-gray-50 dark:bg-gray-900">
+<div class="flex flex-col w-full h-full bg-gray-50 dark:bg-gray-900">
     <!-- Header -->
     <div
         class="flex p-2 border-b border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm"
@@ -246,15 +247,15 @@
 
     <!-- Messages Container -->
     <div class="flex-1 overflow-y-auto">
-        <div class="max-w-4xl mx-auto">
+        <div class="w-full">
             {#if chats.length === 0}
                 <!-- Welcome Screen -->
                 <div
-                    class="flex items-center justify-center min-h-full px-4 py-16"
+                    class="flex items-center justify-center w-full min-h-full px-4 py-16"
                 >
                     <div class="text-center max-w-md">
                         <div
-                            class="w-16 h-16 bg-gradient-to-br from-purple-500 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-xl"
+                            class="w-16 h-16 bg-gradient-to-br from-primary-700 to-primary-400 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-xl"
                         >
                             <WandMagicSparklesOutline
                                 class="w-8 h-8 text-white"
@@ -327,61 +328,53 @@
                             </div>
                         {/if}
 
-                        <div class="message-container">
-                            {#if chat.is_ai}
-                                <!-- AI Message -->
-                                <div class="flex items-start space-x-4 group">
-                                    <Avatar
-                                        size="md"
-                                        class="flex-shrink-0 flex items-center justify-center shadow-lg"
-                                    >
-                                        <WandMagicSparklesOutline
-                                            class="w-4 h-4 text-primary-600"
-                                        />
-                                    </Avatar>
-                                    <div class="flex-1 min-w-0">
-                                        <div
-                                            class=" text-gray-800 dark:text-white"
-                                        >
-                                            {@html renderMarkdown(chat.content)}
-                                        </div>
+                        {#if chat.is_ai}
+                            <!-- AI Message -->
+                            <div class="flex items-start space-x-4 group">
+                                <Avatar
+                                    size="md"
+                                    class="flex-shrink-0 flex items-center justify-center shadow-lg"
+                                >
+                                    <WandMagicSparklesOutline
+                                        class="w-4 h-4 text-primary-600"
+                                    />
+                                </Avatar>
+                                <div class="flex-1 min-w-0">
+                                    <div class=" text-gray-800 dark:text-white">
+                                        {@html renderMarkdown(chat.content)}
+                                    </div>
 
-                                        <!-- Message Actions -->
-                                        <div
-                                            class="flex items-center space-x-2 mt-3 opacity-0 group-hover:opacity-100 transition-opacity"
-                                        >
-                                            <Button
-                                                size="xs"
-                                                color="light"
-                                                class="p-2"
-                                                onclick={() =>
-                                                    copyToClipboard(
-                                                        chat.content,
-                                                    )}
-                                            >
-                                                <ClipboardListSolid />
-                                                <Tooltip>Copy</Tooltip>
-                                            </Button>
-                                        </div>
-                                    </div>
-                                </div>
-                            {:else}
-                                <div class="w-full flex gap-2">
-                                    <Avatar
-                                        size="md"
-                                        class="flex-shrink-0 rounded-full border border-gray-300 dark:border-gray-600 flex items-center justify-center shadow-lg"
-                                        ><UserSolid
-                                            class="text-gray-600 dark:text-gray-300"
-                                        /></Avatar
-                                    >
+                                    <!-- Message Actions -->
                                     <div
-                                        class="w-fit p-2 bg-gray-600 rounded-2xl"
+                                        class="flex items-center space-x-2 mt-3 opacity-0 group-hover:opacity-100 transition-opacity"
                                     >
-                                        <P>{chat.content}</P>
+                                        <Button
+                                            size="xs"
+                                            color="light"
+                                            class="p-2"
+                                            onclick={() =>
+                                                copyToClipboard(chat.content)}
+                                        >
+                                            <ClipboardListSolid />
+                                            <Tooltip>Copy</Tooltip>
+                                        </Button>
                                     </div>
                                 </div>
-                            {/if}
-                        </div>
+                            </div>
+                        {:else}
+                            <div class="w-full flex gap-2">
+                                <Avatar
+                                    size="md"
+                                    class="flex-shrink-0 rounded-full border border-gray-300 dark:border-gray-600 flex items-center justify-center shadow-lg"
+                                    ><UserSolid
+                                        class="text-gray-600 dark:text-gray-300"
+                                    /></Avatar
+                                >
+                                <div class="w-fit p-2 bg-gray-600 rounded-2xl">
+                                    <P>{chat.content}</P>
+                                </div>
+                            </div>
+                        {/if}
                     {/each}
 
                     <!-- AI Typing Indicator -->
