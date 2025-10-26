@@ -10,6 +10,7 @@
         ChartPieSolid,
         RectangleListOutline,
         ChampagneGlassesSolid,
+        BriefcaseSolid,
     } from "flowbite-svelte-icons";
     import { page } from "$app/stores";
 
@@ -40,9 +41,9 @@
             href: "/dashboard/tasks",
         },
         {
-            name: "Interactions",
-            icon:  ChampagneGlassesSolid,
-            href: "/dashboard/interactions",
+            name: "Deals",
+            icon: BriefcaseSolid,
+            href: "/dashboard/deals",
         },
         {
             name: "Analytics",
