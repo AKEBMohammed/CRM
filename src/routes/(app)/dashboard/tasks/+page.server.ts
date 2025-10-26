@@ -73,7 +73,8 @@ async function getTasks(user: { profile_id: string }) {
         description: edge.node.description,
         priority: edge.node.priority,
         type: edge.node.type,
-        status: edge.node.status
+        status: edge.node.status,
+        due_date: edge.node.due_date,
     }));
 
     return tasks;
@@ -157,11 +158,138 @@ export const actions = {
             assigned_to,
             created_by: user.profile_id
         });
-        
+
         if (result?.data?.createTask?.task) {
             return { success: true, task: result.data.createTask.task };
         } else {
             return fail(400, { error: 'Failed to create task' });
+        }
+    },
+    next_stage: async ({ request }) => {
+        const formData = await request.formData();
+        const task_id = formData.get('task_id') as string;
+
+        const user = await getProfile();
+        if (!user) {
+            redirect(303, '/auth');
+        }
+
+        let mutation = `
+            mutation($task_id: uuid!) {
+                updatetasksCollection(
+                    filter: { task_id: { eq: $task_id }, status: { eq: "pending" } },
+                    set: { status: "in_progress" }
+                ) {
+                    records {
+                        task_id
+                        status
+                    }
+                }
+            }
+        `;
+
+        let result = await gql(mutation, { task_id });
+
+        if (result?.updatetasksCollection?.records) {
+            return { success: true, message: 'Task updated successfully' };
+        } else {
+            return fail(400, { error: 'Failed to update task' });
+        }
+    },
+    complete: async ({ request }) => {
+        const formData = await request.formData();
+        const task_id = formData.get('task_id') as string;
+
+        const user = await getProfile();
+        if (!user) {
+            redirect(303, '/auth');
+        }
+
+        let mutation = `
+            mutation($task_id: uuid!) {
+                updatetasksCollection(
+                    filter: { task_id: { eq: $task_id }, status: { eq: "in_progress" } },
+                    set: { status: "completed" }
+                ) {
+                    records {
+                        task_id
+                        status
+                    }
+                }
+            }
+        `;
+
+        let result = await gql(mutation, { task_id });
+
+        if (result?.updatetasksCollection?.records) {
+            return { success: true, message: 'Task completed successfully' };
+        } else {
+            return fail(400, { error: 'Failed to complete task' });
+        }
+    },
+    cancel: async ({ request }) => {
+        const formData = await request.formData();
+        const task_id = formData.get('task_id') as string;
+
+        const user = await getProfile();
+        if (!user) {
+            redirect(303, '/auth');
+        }
+
+        let mutation = `
+            mutation($task_id: uuid!) {
+                updatetasksCollection(
+                    filter: { task_id: { eq: $task_id }, status: { eq: "in_progress" } },
+                    set: { status: "canceled" }
+                ) {
+                    records {
+                        task_id
+                        status
+                    }
+                }
+            }
+        `;
+
+        let result = await gql(mutation, { task_id });
+
+        if (result?.updatetasksCollection?.records) {
+            return { success: true, message: 'Task canceled successfully' };
+        } else {
+            return fail(400, { error: 'Failed to cancel task' });
+        }
+    },
+    reopen: async ({ request }) => {
+        const formData = await request.formData();
+        const task_id = formData.get('task_id') as string;
+
+        const user = await getProfile();
+        if (!user) {
+            redirect(303, '/auth');
+        }
+
+        let mutation = `
+            mutation($task_id: uuid!) {
+            updatetasksCollection(
+                filter: { 
+                task_id: { eq: $task_id }, 
+                status: { in: ["completed", "canceled"] } 
+                },
+                set: { status: "pending" }
+            ) {
+                records {
+                task_id
+                status
+                }
+            }
+            }
+        `;
+
+        let result = await gql(mutation, { task_id });        
+
+        if (result?.updatetasksCollection?.records) {
+            return { success: true, message: 'Task reopened successfully' };
+        } else {
+            return fail(400, { error: 'Failed to reopen task' });
         }
     }
 };

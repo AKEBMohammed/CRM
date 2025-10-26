@@ -1,7 +1,8 @@
-<script>
+<script lang="ts">
     import { enhance } from "$app/forms";
     import {
         Badge,
+        Banner,
         Button,
         Card,
         Datepicker,
@@ -14,25 +15,49 @@
         P,
         Radio,
         Select,
+        Table,
+        TableHead,
         Textarea,
     } from "flowbite-svelte";
-    import { PlusOutline } from "flowbite-svelte-icons";
+    import {
+        DownloadOutline,
+        EyeOutline,
+        PlusOutline,
+        PrinterOutline,
+        RefreshOutline,
+    } from "flowbite-svelte-icons";
 
-    let { data } = $props();
+    let { data, form } = $props();
 
     let openCreateTaskModal = $state(false);
 </script>
 
+{#if form?.error}
+    <Banner color="red" class="mb-4">
+        <P class="font-medium text-red-800">{form.error}</P>
+    </Banner>
+{/if}
+
+{#if form?.success}
+    <Banner color="green" class="mb-4">
+        <P class="font-medium text-green-800">{form.message}</P>
+    </Banner>
+{/if}
+
 <div class="h-full flex flex-col gap-2 p-2">
-    <div class="w-full grid grid-cols-2 grid-rows-2 gap-2 gap-y-0">
-        <Heading tag="h1" class="text-2xl font-bold">Tasks</Heading>
-        <P class="text-gray-500 dark:text-gray-400">Manage your tasks here.</P>
-        <Button
-            class="w-fit col-start-2 row-start-1 col-span-2 p-2 "
-            color="primary"
-            onclick={() => (openCreateTaskModal = true)}
-            ><PlusOutline class="mr-2" />Add New Task</Button
-        >
+    <div class="flex items-center justify-between mb-2">
+        <div>
+            <Heading tag="h1" class="text-2xl font-bold">Tasks</Heading>
+            <P class="text-gray-500 dark:text-gray-400"
+                >Manage your tasks here.</P
+            >
+        </div>
+
+        <div class="flex items-center space-x-2">
+            <Button color="primary" size="sm">
+                <PlusOutline class="mr-2" />Add New Task
+            </Button>
+        </div>
     </div>
     <div class="h-full grid grid-cols-4 gap-4">
         {#if data.tasks.length === 0}
@@ -41,8 +66,8 @@
             >
         {:else}
             {#each ["pending", "in_progress", "completed", "canceled"] as status}
-                <Card class="h-full overflow-y-scroll p-2 flex flex-col gap-2">
-                    <Heading tag="h4"
+                <Card class="h-auto overflow-y-scroll p-2 flex flex-col gap-2">
+                    <Heading tag="h4" class="text-lg font-semibold text-center"
                         >{status
                             .replace("_", " ")
                             .split(" ")
@@ -53,7 +78,7 @@
                             )
                             .join(" ")}</Heading
                     >
-                    {#each data.tasks.filter((task) => task.status === status) as task}
+                    {#each data.tasks.filter((task: { status: string }) => task.status === status) as task}
                         <Card class="p-2 flex flex-col gap-2">
                             <Heading tag="h5">{task.title}</Heading>
                             <P>{task.description}</P>
@@ -71,17 +96,37 @@
                                     >{task.type}</Badge
                                 >
                             </div>
-                            <div>
+                            <form method="POST">
+                                <Input
+                                    type="hidden"
+                                    name="task_id"
+                                    value={task.task_id}
+                                />
                                 {#if task.status == "pending"}
-                                    <Button color="secondary">Next stage</Button>
+                                    <Button
+                                        type="submit"
+                                        formaction="?/next_stage"
+                                        color="secondary">Next stage</Button
+                                    >
                                 {:else if task.status == "in_progress"}
-
-                                    <Button color="primary">Complete Task</Button>
-                                    <Button color="gray">Cancel Task</Button>
+                                    <Button
+                                        type="submit"
+                                        formaction="?/complete"
+                                        color="primary">Complete Task</Button
+                                    >
+                                    <Button
+                                        type="submit"
+                                        formaction="?/cancel"
+                                        color="gray">Cancel Task</Button
+                                    >
                                 {:else}
-                                    <Button color="gray">Reopen</Button>
+                                    <Button
+                                        type="submit"
+                                        formaction="?/reopen"
+                                        color="gray">Reopen</Button
+                                    >
                                 {/if}
-                            </div>
+                            </form>
                         </Card>
                     {/each}
                 </Card>
