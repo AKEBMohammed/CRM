@@ -79,54 +79,94 @@
                             .join(" ")}</Heading
                     >
                     {#each data.tasks.filter((task: { status: string }) => task.status === status) as task}
-                        <Card class="p-2 flex flex-col gap-2">
-                            <Heading tag="h5">{task.title}</Heading>
-                            <P>{task.description}</P>
-                            <P>Due {task.due_date}</P>
-                            <div class="flex gap-2">
-                                <Badge
-                                    class="ml-auto p-1"
-                                    color={task.priority == "low"
-                                        ? "green"
-                                        : task.priority == "medium"
-                                          ? "yellow"
-                                          : "red"}>{task.priority}</Badge
-                                >
-                                <Badge class="p-1" color="gray"
-                                    >{task.type}</Badge
-                                >
+                        <Card class="p-4 border-l-4 border-l-blue-500 hover:shadow-lg transition-shadow duration-200">
+                            <div class="flex justify-between items-start mb-3">
+                                <Heading tag="h5" class="text-lg font-semibold text-gray-800 dark:text-white">{task.title}</Heading>
+                                <div class="flex gap-2">
+                                    <Badge
+                                        class="px-2 py-1 text-xs font-medium"
+                                        color={task.priority == "low"
+                                            ? "green"
+                                            : task.priority == "medium"
+                                              ? "yellow"
+                                              : "red"}
+                                    >
+                                        {task.priority.toUpperCase()}
+                                    </Badge>
+                                    <Badge class="px-2 py-1 text-xs font-medium" color="blue">
+                                        {task.type.replace("_", " ").toUpperCase()}
+                                    </Badge>
+                                </div>
                             </div>
-                            <form method="POST">
-                                <Input
-                                    type="hidden"
-                                    name="task_id"
-                                    value={task.task_id}
-                                />
-                                {#if task.status == "pending"}
-                                    <Button
-                                        type="submit"
-                                        formaction="?/next_stage"
-                                        color="secondary">Next stage</Button
-                                    >
-                                {:else if task.status == "in_progress"}
-                                    <Button
-                                        type="submit"
-                                        formaction="?/complete"
-                                        color="primary">Complete Task</Button
-                                    >
-                                    <Button
-                                        type="submit"
-                                        formaction="?/cancel"
-                                        color="gray">Cancel Task</Button
-                                    >
-                                {:else}
-                                    <Button
-                                        type="submit"
-                                        formaction="?/reopen"
-                                        color="gray">Reopen</Button
-                                    >
-                                {/if}
-                            </form>
+                            
+                            <P class="text-gray-600 dark:text-gray-300 text-sm mb-3 line-clamp-3">{task.description}</P>
+                            
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="flex items-center gap-2 text-sm text-gray-500">
+                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd" />
+                                    </svg>
+                                    <span>Due {new Date(task.due_date).toLocaleDateString()}</span>
+                                </div>
+                                
+                                <div class="flex items-center gap-1">
+                                    <Button size="xs" color="light" class="p-1">
+                                        <EyeOutline class="w-3 h-3" />
+                                    </Button>
+                                </div>
+                            </div>
+                            
+                            <div class="border-t pt-3">
+                                <form method="POST" class="space-y-2">
+                                    <Input
+                                        type="hidden"
+                                        name="task_id"
+                                        value={task.task_id}
+                                    />
+                                    {#if task.status == "pending"}
+                                        <Button
+                                            type="submit"
+                                            formaction="?/next_stage"
+                                            color="blue"
+                                            class="w-full"
+                                            size="sm"
+                                        >
+                                            Start Task
+                                        </Button>
+                                    {:else if task.status == "in_progress"}
+                                        <div class="flex gap-2">
+                                            <Button
+                                                type="submit"
+                                                formaction="?/complete"
+                                                color="green"
+                                                class="flex-1"
+                                                size="sm"
+                                            >
+                                                Complete
+                                            </Button>
+                                            <Button
+                                                type="submit"
+                                                formaction="?/cancel"
+                                                color="red"
+                                                class="flex-1"
+                                                size="sm"
+                                            >
+                                                Cancel
+                                            </Button>
+                                        </div>
+                                    {:else}
+                                        <Button
+                                            type="submit"
+                                            formaction="?/reopen"
+                                            color="gray"
+                                            class="w-full"
+                                            size="sm"
+                                        >
+                                            Reopen Task
+                                        </Button>
+                                    {/if}
+                                </form>
+                            </div>
                         </Card>
                     {/each}
                 </Card>
