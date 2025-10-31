@@ -714,7 +714,8 @@
                             <div class="flex items-center space-x-2">
                                 <span class="capitalize"
                                     >{column
-                                        .replace(/([A-Z])/g, " $1")
+                                        .replace(/([A-Z]*)/g, " $1")
+                                        .replace(/_+/g, " ")
                                         .trim()}</span
                                 >
                                 {#if sortColumn === column}
