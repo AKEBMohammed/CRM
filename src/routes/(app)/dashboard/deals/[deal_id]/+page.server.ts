@@ -226,5 +226,58 @@ export const actions = {
         }
 
         return { success: 'Interaction created successfully.' };
+    },
+    edit: async ({ request }) => {
+        const formData = await request.formData();
+        
+        const deal_id = Number(formData.get('deal_id'));
+        const title = formData.get('title');
+        const value = formData.get('value');
+        const stage = formData.get('stage');
+        const probability = formData.get('probability');
+
+        if (!deal_id || !title || !value || !stage || !probability) {
+            console.log('All fields are required for editing deal.');
+            return fail(400, { error: 'All fields are required.' });
+        }
+
+        let mutation = `
+            mutation ($deal_id: BigInt!, $title: String!, $value: Float!, $stage: String!, $probability: Float!) {
+                updatedealsCollection(
+                    filter: { deal_id: { eq: $deal_id } },
+                    set: {
+                        title: $title,
+                        value: $value,
+                        stage: $stage,
+                        probability: $probability
+                    }
+                ) {
+                    records {
+                        deal_id
+                        title
+                        value
+                        stage
+                        probability
+                    }
+                }
+            }
+        `;
+
+        const result = await gql(mutation, {
+            deal_id,
+            title: title.toString(),
+            value: Number(value),
+            stage: stage.toString(),
+            probability: Number(probability)
+        });
+
+        if (!result) {
+            console.log('Failed to update deal in database.');
+            return fail(500, { error: 'Failed to update deal in database.' });
+        }
+
+        return { success: 'Deal updated successfully.' };
+
+
     }
 } satisfies Actions;

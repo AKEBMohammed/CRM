@@ -6,6 +6,7 @@
         Button,
         Card,
         Heading,
+        Input,
         Label,
         Modal,
         P,
@@ -14,6 +15,7 @@
     } from "flowbite-svelte";
     import {
         EnvelopeSolid,
+        PenSolid,
         PhoneSolid,
         PlusOutline,
         UserSolid,
@@ -23,11 +25,23 @@
     let { data, form } = $props();
 
     let openCreateInteractionModal = $state(false);
+    let openEditDealModal = $state(false);
+    let deal_probability_value = $state(data.deal.probability);
 </script>
 
 <article class="w-full h-full flex gap-4">
     <aside class="w-1/3 border-r border-gray-500 p-2">
-        <Heading tag="h4">Deal Details</Heading>
+        <div class="w-full flex">
+            <Heading tag="h4">Deal Details</Heading>
+            <Button
+                size="sm"
+                class="ml-auto rounded-full"
+                onclick={() => (openEditDealModal = true)}
+            >
+                <PenSolid class="w-6 h-6" />
+            </Button>
+        </div>
+
         <div class="mt-4 space-y-4">
             <Card class="p-4 rounded-lg border">
                 <div class="grid grid-cols-2 gap-4">
@@ -162,69 +176,105 @@
 
         <div class="mt-6">
             {#if data.interactions?.length > 0}
-            <div class="grid grid-cols-3 gap-2">
-                {#each data.interactions as interaction}
-                <Card class="p-4 border rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200">
-                    <div class="flex items-start justify-between gap-4">
-                    <div class="flex items-start gap-4">
-                        <!-- Interaction Type Icon -->
-                        <div class="flex-shrink-0">
-                        {#if interaction.type === 'call'}
-                            <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                            <PhoneSolid class="w-5 h-5 text-green-600" />
+                <div class="grid grid-cols-3 gap-2">
+                    {#each data.interactions as interaction}
+                        <Card
+                            class="p-4 border rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200"
+                        >
+                            <div class="flex items-start justify-between gap-4">
+                                <div class="flex items-start gap-4">
+                                    <!-- Interaction Type Icon -->
+                                    <div class="flex-shrink-0">
+                                        {#if interaction.type === "call"}
+                                            <div
+                                                class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center"
+                                            >
+                                                <PhoneSolid
+                                                    class="w-5 h-5 text-green-600"
+                                                />
+                                            </div>
+                                        {:else if interaction.type === "email"}
+                                            <div
+                                                class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center"
+                                            >
+                                                <EnvelopeSolid
+                                                    class="w-5 h-5 text-blue-600"
+                                                />
+                                            </div>
+                                        {:else if interaction.type === "meeting"}
+                                            <div
+                                                class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center"
+                                            >
+                                                <UsersSolid
+                                                    class="w-5 h-5 text-purple-600"
+                                                />
+                                            </div>
+                                        {:else}
+                                            <div
+                                                class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center"
+                                            >
+                                                <PlusOutline
+                                                    class="w-5 h-5 text-gray-600"
+                                                />
+                                            </div>
+                                        {/if}
+                                    </div>
+
+                                    <!-- Interaction Content -->
+                                    <div class="flex-1 min-w-0">
+                                        <div
+                                            class="flex items-center gap-3 mb-2"
+                                        >
+                                            <span
+                                                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize
+                            {interaction.type === 'call'
+                                                    ? 'bg-green-100 text-green-800'
+                                                    : interaction.type ===
+                                                        'email'
+                                                      ? 'bg-blue-100 text-blue-800'
+                                                      : interaction.type ===
+                                                          'meeting'
+                                                        ? 'bg-purple-100 text-purple-800'
+                                                        : 'bg-gray-100 text-gray-800'}"
+                                            >
+                                                {interaction.type}
+                                            </span>
+                                            <P class="text-sm text-gray-500">
+                                                {new Date(
+                                                    interaction.created_at,
+                                                ).toLocaleDateString("en-US", {
+                                                    year: "numeric",
+                                                    month: "short",
+                                                    day: "numeric",
+                                                    hour: "2-digit",
+                                                    minute: "2-digit",
+                                                })}
+                                            </P>
+                                        </div>
+                                        <P
+                                            class="text-gray-700 leading-relaxed"
+                                        >
+                                            {interaction.note}
+                                        </P>
+                                    </div>
+                                </div>
                             </div>
-                        {:else if interaction.type === 'email'}
-                            <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                            <EnvelopeSolid class="w-5 h-5 text-blue-600" />
-                            </div>
-                        {:else if interaction.type === 'meeting'}
-                            <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
-                            <UsersSolid class="w-5 h-5 text-purple-600" />
-                            </div>
-                        {:else}
-                            <div class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
-                            <PlusOutline class="w-5 h-5 text-gray-600" />
-                            </div>
-                        {/if}
-                        </div>
-                        
-                        <!-- Interaction Content -->
-                        <div class="flex-1 min-w-0">
-                        <div class="flex items-center gap-3 mb-2">
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize
-                            {interaction.type === 'call' ? 'bg-green-100 text-green-800' : 
-                             interaction.type === 'email' ? 'bg-blue-100 text-blue-800' :
-                             interaction.type === 'meeting' ? 'bg-purple-100 text-purple-800' :
-                             'bg-gray-100 text-gray-800'}">
-                            {interaction.type}
-                            </span>
-                            <P class="text-sm text-gray-500">
-                            {new Date(interaction.created_at).toLocaleDateString('en-US', {
-                                year: 'numeric',
-                                month: 'short',
-                                day: 'numeric',
-                                hour: '2-digit',
-                                minute: '2-digit'
-                            })}
-                            </P>
-                        </div>
-                        <P class="text-gray-700 leading-relaxed">
-                            {interaction.note}
-                        </P>
-                        </div>
-                    </div>
-                    </div>
-                </Card>
-                {/each}
-            </div>
-            {:else}
-            <div class="text-center py-12">
-                <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <PlusOutline class="w-8 h-8 text-gray-400" />
+                        </Card>
+                    {/each}
                 </div>
-                <P class="text-gray-500 text-lg mb-2">No interactions yet</P>
-                <P class="text-gray-400 text-sm">Start by adding your first interaction with this deal</P>
-            </div>
+            {:else}
+                <div class="text-center py-12 flex flex-col items-center">
+                    <div
+                        class="w-16 h-16 border-2 border-dashed border-gray-300 rounded-full flex items-center justify-center mx-auto mb-4"
+                    >
+                        <PlusOutline class="w-8 h-8 text-primary-400" />
+                    </div>
+                    <P class="text-gray-500 text-lg mb-2">No interactions yet</P
+                    >
+                    <P class="text-gray-400 text-sm"
+                        >Start by adding your first interaction with this deal</P
+                    >
+                </div>
             {/if}
         </div>
     </section>
@@ -247,7 +297,49 @@
             <option value="other">Other</option>
         </Select>
         <Label>Note</Label>
-        <Textarea class="w-full" name="note" id="note" rows={3} required></Textarea>
+        <Textarea class="w-full" name="note" id="note" rows={3} required
+        ></Textarea>
         <Button type="submit" color="primary">Create Interaction</Button>
+    </form>
+</Modal>
+
+<Modal title="Edit Deal" size="md" bind:open={openEditDealModal} autoclose>
+    <form use:enhance method="POST" action="?/edit" class="flex flex-col gap-4">
+        <Input type="hidden" name="deal_id" value={data.deal.deal_id} />
+        <Label for="title" class="block text-sm font-medium text-gray-700"
+            >Title</Label
+        >
+        <Input
+            type="text"
+            id="title"
+            name="title"
+            class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+            value={data.deal.title}
+            required
+        />
+        <Label>Value :</Label>
+        <Input type="number" id="value" name="value" value={data.deal.value} required />
+
+        <Label>Stage :</Label>
+        <Select value={data.deal.stage} name="stage">
+            <option value="lead">Lead</option>
+            <option value="qualified">Qualified</option>
+            <option value="proposal">Proposal</option>
+            <option value="negotiation">Negotiation</option>
+            <option value="closed_won">Closed Won</option>
+            <option value="closed_lost">Closed Lost</option>
+        </Select>
+        <Label>Probability (%): {deal_probability_value}%</Label>
+        <Input
+            type="range"
+            min="0"
+            max="100"
+            step="10"
+            bind:value={deal_probability_value}
+            id="probability"
+            name="probability"
+            required
+        />
+        <Button type="submit" color="primary">Update Deal</Button>
     </form>
 </Modal>
