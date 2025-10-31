@@ -52,6 +52,7 @@ async function getProductsByUser(user: { profile_id: number, fullname: string, r
                     product_id
                     name
                     description
+                    unit_price
                     profiles {
                         fullname
                         email
@@ -79,6 +80,7 @@ async function getProductsByUser(user: { profile_id: number, fullname: string, r
                 product_id: edge.node.product_id,
                 name: edge.node.name,
                 description: edge.node.description,
+                unit_price: edge.node.unit_price,
                 fullname: edge.node.profiles.fullname,
                 email: edge.node.profiles.email,
             };

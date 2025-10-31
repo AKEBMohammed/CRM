@@ -59,6 +59,7 @@
             id: product.product_id,
             name: product.name,
             description: product.description,
+            unit_price: product.unit_price,
             created_by: product.fullname + " (" + product.email + ")",
         })) || []}
         title="Products"
