@@ -80,7 +80,7 @@ async function getContactsByUser(user: { profile_id: number, fullname: string, r
         .map((edge: any) => {
             return {
                 contact_id: edge.node.contact_id,
-                fullname: edge.node.full_name,
+                fullname: edge.node.fullname,
                 email: edge.node.email,
                 phone: edge.node.phone,
                 address: edge.node.address,
