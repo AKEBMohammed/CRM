@@ -53,57 +53,102 @@
             </Button>
         </div>
     </div>
-    <div>
+    <div class="grid grid-cols-4 gap-2">
         {#if data.deals.length === 0}
             <P class="text-gray-500 dark:text-gray-400">
                 No deals found. Click "Add New Deal" to create one.
             </P>
         {:else}
             {#each data.deals as deal}
-                <Card class="p-6 hover:shadow-lg transition-shadow duration-200">
+                <Card
+                    class="p-6 hover:shadow-lg transition-shadow duration-200"
+                    href="/dashboard/deals/{deal.deal_id}"
+                >
                     <div class="flex justify-between items-start">
                         <div class="flex-1">
                             <div class="flex items-center gap-3 mb-3">
-                                <Heading tag="h3" class="text-lg font-semibold text-gray-900 dark:text-white">
+                                <Heading
+                                    tag="h3"
+                                    class="text-lg font-semibold text-gray-900 dark:text-white"
+                                >
                                     {deal.title}
                                 </Heading>
-                                <span class="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                                <span
+                                    class="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+                                >
                                     {deal.stage}
                                 </span>
                             </div>
-                            
+
                             <div class="grid grid-cols-2 gap-4 mb-4">
                                 <div>
-                                    <P class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Value</P>
-                                    <P class="text-lg font-bold text-green-600 dark:text-green-400">${deal.value}</P>
+                                    <P
+                                        class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide"
+                                        >Value</P
+                                    >
+                                    <P
+                                        class="text-lg font-bold text-green-600 dark:text-green-400"
+                                        >${deal.value}</P
+                                    >
                                 </div>
                                 <div>
-                                    <P class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Probability</P>
-                                    <P class="text-sm font-medium">{deal.probability}%</P>
+                                    <P
+                                        class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide"
+                                        >Probability</P
+                                    >
+                                    <P class="text-sm font-medium"
+                                        >{deal.probability}%</P
+                                    >
                                 </div>
                             </div>
-                            
+
                             <div class="space-y-2">
                                 <div class="flex items-center gap-2">
-                                    <span class="w-2 h-2 bg-blue-500 rounded-full"></span>
-                                    <P class="text-sm text-gray-600 dark:text-gray-300">
-                                        <span class="font-medium">Contact:</span> {data.contacts?.find(c => c.contact_id === deal.contact_id)?.fullname || 'N/A'}
+                                    <span
+                                        class="w-2 h-2 bg-blue-500 rounded-full"
+                                    ></span>
+                                    <P
+                                        class="text-sm text-gray-600 dark:text-gray-300"
+                                    >
+                                        <span class="font-medium">Contact:</span
+                                        >
+                                        {data.contacts?.find(
+                                            (c) =>
+                                                c.contact_id ===
+                                                deal.contact_id,
+                                        )?.fullname || "N/A"}
                                     </P>
                                 </div>
                                 <div class="flex items-center gap-2">
-                                    <span class="w-2 h-2 bg-purple-500 rounded-full"></span>
-                                    <P class="text-sm text-gray-600 dark:text-gray-300">
-                                        <span class="font-medium">Product:</span> {data.products?.find(p => p.product_id === deal.product_id)?.name || 'N/A'}
+                                    <span
+                                        class="w-2 h-2 bg-purple-500 rounded-full"
+                                    ></span>
+                                    <P
+                                        class="text-sm text-gray-600 dark:text-gray-300"
+                                    >
+                                        <span class="font-medium">Product:</span
+                                        >
+                                        {data.products?.find(
+                                            (p) =>
+                                                p.product_id ===
+                                                deal.product_id,
+                                        )?.name || "N/A"}
                                     </P>
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div class="flex flex-col items-end gap-2">
-                            <div class="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-                                <P class="text-white font-bold text-sm">{deal.probability}%</P>
+                            <div
+                                class="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center"
+                            >
+                                <P class="text-white font-bold text-sm"
+                                    >{deal.probability}%</P
+                                >
                             </div>
-                            <P class="text-xs text-gray-500 dark:text-gray-400">Success Rate</P>
+                            <P class="text-xs text-gray-500 dark:text-gray-400"
+                                >Success Rate</P
+                            >
                         </div>
                     </div>
                 </Card>
