@@ -70,13 +70,6 @@
             highlight: true,
         },
         {
-            title: "Log Interaction",
-            description: "Record customer interaction",
-            icon: PhoneSolid,
-            color: "green",
-            href: "/dashboard/interactions",
-        },
-        {
             title: "Team Chat",
             description: "Collaborate with your team",
             icon: MessageCaptionSolid,
@@ -95,7 +88,7 @@
             description: "Get AI-powered recommendations",
             icon: LightbulbOutline,
             color: "yellow",
-            href: "/dashboard/ai",
+            href: "/dashboard/assistant",
         },
         {
             title: "Analytics",
@@ -167,7 +160,7 @@
                     tag="h3"
                     class="text-2xl text-center font-bold text-orange-600 dark:text-orange-400"
                 >
-                    {0}
+                    {data.stats?.todaysTasks || 0}
                 </Heading>
                 <P class="text-sm text-gray-600 dark:text-gray-400">
                     Today's Tasks
@@ -178,7 +171,7 @@
                     tag="h3"
                     class="text-2xl text-center font-bold text-purple-600 dark:text-purple-400"
                 >
-                    {0}
+                    {data.stats?.recentActivities || 0}
                 </Heading>
                 <P class="text-sm text-gray-600 dark:text-gray-400">
                     Recent Activities
@@ -215,14 +208,14 @@
                 tag="h3"
                 class=" col-span-2 text-3xl font-bold text-blue-900 dark:text-blue-100"
             >
-                0
+                {data.stats?.totalContacts || 0}
             </Heading>
             <span
                 class="text-sm text-green-600 dark:text-green-400 font-medium"
             >
                 <ChartLineUpOutline class="w-4 h-4 text-green-500" />
 
-                +0 this month
+                +{data.stats?.contactsThisMonth || 0} this month
             </span>
             <div
                 class="w-14 h-14 grid place-content-center bg-blue-500 rounded-2xl shadow-lg col-start-3 row-start-1 row-span-3 self-center"
@@ -244,14 +237,14 @@
                 tag="h3"
                 class="col-span-2 text-3xl font-bold text-green-900 dark:text-green-100"
             >
-                0
+                {data.stats?.totalInteractions || 0}
             </Heading>
             <span
                 class="col-span-2 text-md text-blue-600 dark:text-blue-400 font-medium"
             >
                 <CalendarMonthOutline class="w-4 h-4 text-blue-500" />
 
-                0 this week
+                {data.stats?.interactionsThisWeek || 0} this week
             </span>
             <div
                 class="w-14 h-14 grid place-content-center bg-green-500 rounded-2xl shadow-lg col-start-3 row-start-1 row-span-3 self-center"
@@ -273,7 +266,7 @@
                 tag="h3"
                 class="col-span-2 text-3xl font-bold text-orange-900 dark:text-orange-100"
             >
-                {data.recentMessages?.length || 0}
+                {data.stats?.totalMessages || 0}
             </Heading>
             <span
                 class="col-span-2 text-sm text-blue-600 dark:text-blue-400 font-medium"
@@ -288,9 +281,37 @@
                 <MessageCaptionSolid class="w-8 h-8 text-white" />
             </div>
         </Card>
+
+        <!-- Deals Card -->
+        <Card
+            class="p-6 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border-0 shadow-lg bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 grid grid-rows-3 grid-cols-[2fr,1fr]"
+        >
+            <P
+                class="col-span-2 text-md font-medium text-purple-600 dark:text-purple-400 uppercase tracking-wide"
+            >
+                Sales Pipeline
+            </P>
+            <Heading
+                tag="h3"
+                class="col-span-2 text-3xl font-bold text-purple-900 dark:text-purple-100"
+            >
+                {data.stats?.totalDeals || 0}
+            </Heading>
+            <span
+                class="col-span-2 text-sm text-green-600 dark:text-green-400 font-medium"
+            >
+                <ChartLineUpOutline class="w-4 h-4 text-green-500" />
+                ${(data.stats?.totalDealsValue || 0).toLocaleString()} value
+            </span>
+            <div
+                class="w-14 h-14 grid place-content-center bg-purple-500 rounded-2xl shadow-lg col-start-3 row-start-1 row-span-3 self-center"
+            >
+                <CartOutline class="w-8 h-8 text-white" />
+            </div>
+        </Card>
     </div>
 
-    <div class="col-start-1 space-y-6">
+    <div class="col-start-1 justify-start items-start place-content-start">
         <!-- CRM Quick Actions -->
         <Listgroup title="Quick Actions">
             <ListgroupItem>

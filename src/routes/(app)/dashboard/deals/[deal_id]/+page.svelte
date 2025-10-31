@@ -175,7 +175,7 @@
         </div>
 
         <div class="mt-6">
-            {#if data.interactions?.length > 0}
+            {#if data.interactions && data.interactions.length > 0}
                 <div class="grid grid-cols-3 gap-2">
                     {#each data.interactions as interaction}
                         <Card
