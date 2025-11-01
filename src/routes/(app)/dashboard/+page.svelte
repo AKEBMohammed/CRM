@@ -130,24 +130,26 @@
         <div
             class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-2 border border-gray-200 dark:border-gray-700 flex gap-2"
         >
-            <div>
-                <Heading
-                    tag="h3"
-                    class="text-2xl text-center font-bold text-primary-600 dark:text-primary-400"
-                >
-                    {data.stats?.totalUsers || 0}
-                </Heading>
-                <P class="text-sm text-gray-600 dark:text-gray-400">
-                    Team Members
-                </P>
-            </div>
+            {#if data.user && data.user.role == "admin"}
+                <div>
+                    <Heading
+                        tag="h3"
+                        class="text-2xl text-center font-bold text-primary-600 dark:text-primary-400"
+                    >
+                        {data.users.reduce((acc: number) => acc + 1, 0)}
+                    </Heading>
+                    <P class="text-sm text-gray-600 dark:text-gray-400">
+                        Team Members
+                    </P>
+                </div>
+            {/if}
 
             <div>
                 <Heading
                     tag="h3"
                     class="text-2xl text-center font-bold text-blue-600 dark:text-blue-400"
                 >
-                    {data.stats?.totalRooms || 0}
+                    {data.rooms ? data.rooms.length : 0}
                 </Heading>
                 <P class="text-sm text-gray-600 dark:text-gray-400">
                     Active Rooms
@@ -159,7 +161,7 @@
                     tag="h3"
                     class="text-2xl text-center font-bold text-orange-600 dark:text-orange-400"
                 >
-                    {data.stats?.todaysTasks || 0}
+                    {data.tasks ? data.tasks.length : 0}
                 </Heading>
                 <P class="text-sm text-gray-600 dark:text-gray-400">
                     Today's Tasks
@@ -170,10 +172,10 @@
                     tag="h3"
                     class="text-2xl text-center font-bold text-purple-600 dark:text-purple-400"
                 >
-                    {data.stats?.recentActivities || 0}
+                    {data.deals ? data.deals.length : 0}
                 </Heading>
                 <P class="text-sm text-gray-600 dark:text-gray-400">
-                    Recent Activities
+                    Open Deals
                 </P>
             </div>
         </div>
@@ -207,7 +209,7 @@
                 tag="h3"
                 class=" col-span-2 text-3xl font-bold text-blue-900 dark:text-blue-100"
             >
-                {data.stats?.totalContacts || 0}
+                {data.contacts.length || 0}
             </Heading>
             <span
                 class="text-sm text-green-600 dark:text-green-400 font-medium"
@@ -310,7 +312,9 @@
         </Card>
     </div>
 
-    <div class="col-start-1 justify-start items-start place-content-start">
+    <div
+        class="col-start-1 row-span-2 justify-start items-start place-content-start"
+    >
         <!-- CRM Quick Actions -->
         <Listgroup title="Quick Actions">
             <ListgroupItem>
@@ -331,10 +335,7 @@
                     <div
                         class="p-3 bg-gradient-to-br from-{action.color}-400 to-{action.color}-600 rounded-xl shadow-lg flex-shrink-0"
                     >
-                        <svelte:component
-                            this={action.icon}
-                            class="w-5 h-5 text-white"
-                        />
+                        <action.icon class="w-5 h-5 text-white" />
                     </div>
                     <div class="text-left flex-1">
                         <P class="font-semibold text-gray-900 dark:text-white">
@@ -347,5 +348,225 @@
                 </ListgroupItem>
             {/each}
         </Listgroup>
+    </div>
+    <div class="col-start-2 h-fit">
+        <Card
+            class="p-2 border-0 shadow-lg bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900/20 dark:to-slate-800/20"
+        >
+            <div class="flex items-center justify-between mb-4">
+                <Heading
+                    tag="h4"
+                    class="text-xl font-semibold text-slate-900 dark:text-white flex items-center"
+                >
+                    <CalendarMonthOutline class="w-5 h-5 mr-2 text-blue-500" />
+                    Today's Tasks
+                </Heading>
+                <Badge color="blue" class="px-3 py-1 text-sm">
+                    {data.tasks?.length || 0} tasks
+                </Badge>
+            </div>
+
+            <Listgroup class="max-h-70 overflow-y-auto">
+                {#each data.tasks || [] as task, index}
+                    <ListgroupItem
+                        class="border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:shadow-md transition-all duration-200 p-2 hover:border-blue-300 dark:hover:border-blue-600"
+                    >
+                        <div class="flex items-start space-x-3 w-full">
+                            <div class="flex-1 min-w-0">
+                                <P
+                                    class="font-semibold text-gray-900 dark:text-white truncate mb-1"
+                                >
+                                    {task.title}
+                                </P>
+                                <P
+                                    class="text-sm text-gray-600 dark:text-gray-400 line-clamp-2"
+                                >
+                                    {task.description}
+                                </P>
+                                <div
+                                    class="flex items-center mt-2 text-xs text-gray-500 dark:text-gray-400"
+                                >
+                                    <CalendarMonthOutline
+                                        class="w-3 h-3 mr-1"
+                                    />
+                                    Due: {new Date(
+                                        task.due_date,
+                                    ).toLocaleDateString()}
+                                </div>
+                            </div>
+                            <div class="flex-shrink-0">
+                                <Badge
+                                    color="secondary"
+                                    class="text-xs px-2 py-1 mb-2"
+                                >
+                                    {task.status || "pending"}
+                                </Badge>
+                                <Badge
+                                    color={task.priority === "high"
+                                        ? "red"
+                                        : task.priority === "medium"
+                                          ? "yellow"
+                                          : "green"}
+                                    class="text-xs px-2 py-1"
+                                >
+                                    {task.priority || "low"}
+                                </Badge>
+                            </div>
+                        </div>
+                    </ListgroupItem>
+                {:else}
+                    <div
+                        class="w-full min-w-70 flex flex-col items-center text-center py-8"
+                    >
+                        <CalendarMonthOutline
+                            class="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600 mb-3"
+                        />
+                        <P class="text-gray-500 dark:text-gray-400"
+                            >No tasks for today</P
+                        >
+                        <P class="text-sm text-gray-400 dark:text-gray-500"
+                            >You're all caught up!</P
+                        >
+                    </div>
+                {/each}
+            </Listgroup>
+        </Card>
+    </div>
+    <div class="col-start-3 h-fit">
+        <Card class="p-4 border-0 shadow-lg ">
+            <div class="flex items-center justify-between mb-6">
+                <Heading
+                    tag="h4"
+                    class="text-xl font-semibold text-emerald-900 dark:text-white flex items-center"
+                >
+                    <CartOutline class="w-5 h-5 mr-2 text-emerald-600" />
+                    Open Deals
+                </Heading>
+                <Badge color="green" class="px-3 py-1 text-sm font-medium">
+                    {data.deals?.length || 0} deals
+                </Badge>
+            </div>
+
+            <Listgroup class="max-h-80 overflow-y-auto">
+                {#each data.deals || [] as deal, index}
+                    <ListgroupItem
+                        class="border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:shadow-lg transition-all duration-300 p-2 hover:border-emerald-300 dark:hover:border-emerald-600 hover:-translate-y-0.5"
+                    >
+                        <div class="flex items-start space-x-4 w-full">
+                            <!-- Deal Value Circle -->
+                            <div class="flex-shrink-0">
+                                <div
+                                    class="w-12 h-12 bg-gradient-to-br from-emerald-400 to-teal-600 rounded-full flex items-center justify-center shadow-lg"
+                                >
+                                    <span class="text-white font-bold text-sm">
+                                        ${(deal.value / 1000).toFixed(1)}K
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="flex flex-col grow-1">
+                                <div class="flex-1 min-w-0">
+                                    <P
+                                        class="font-semibold text-gray-900 dark:text-white truncate"
+                                    >
+                                        {deal.title}
+                                    </P>
+                                </div>
+
+                                <P
+                                    class="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mb-3"
+                                >
+                                    {deal.description}
+                                </P>
+
+                                <!-- Deal Progress Bar -->
+                                <div class="mb-3">
+                                    <div
+                                        class="flex justify-between items-center mb-1"
+                                    >
+                                        Probability:
+                                        <span
+                                            class="text-xs font-medium text-emerald-600 dark:text-emerald-400"
+                                        >
+                                            {deal.probability || 25}%
+                                        </span>
+                                    </div>
+                                    <div
+                                        class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2"
+                                    >
+                                        <div
+                                            class="bg-gradient-to-r from-emerald-400 to-teal-500 h-2 rounded-full transition-all duration-300"
+                                            style="width: {deal.probability ||
+                                                25}%"
+                                        ></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div
+                                class="flex-shrink-0 flex flex-col items-end space-y-2"
+                            >
+                                <Badge
+                                    color={deal.status === "won"
+                                        ? "green"
+                                        : deal.status === "lost"
+                                          ? "red"
+                                          : deal.status === "negotiation"
+                                            ? "yellow"
+                                            : "blue"}
+                                    class="text-xs px-2 py-1 font-medium capitalize"
+                                >
+                                    {deal.status || "open"}
+                                </Badge>
+
+                                <Badge
+                                    color={deal.priority === "high"
+                                        ? "red"
+                                        : deal.priority === "medium"
+                                          ? "yellow"
+                                          : "green"}
+                                    class="text-xs px-2 py-1"
+                                >
+                                    {deal.priority || "low"} priority
+                                </Badge>
+
+                                <!-- Deal Value -->
+                                <div class="text-right">
+                                    <P
+                                        class="text-sm font-bold text-emerald-600 dark:text-emerald-400"
+                                    >
+                                        ${(deal.value || 0).toLocaleString()}
+                                    </P>
+                                </div>
+                            </div>
+                        </div>
+                    </ListgroupItem>
+                {:else}
+                    <div
+                        class="w-full min-w-70 flex flex-col items-center text-center py-12"
+                    >
+                        <div
+                            class="w-16 h-16 bg-gradient-to-br from-emerald-100 to-teal-200 dark:from-emerald-900/40 dark:to-teal-800/40 rounded-full flex items-center justify-center mb-4"
+                        >
+                            <CartOutline
+                                class="w-8 h-8 text-emerald-500 dark:text-emerald-400"
+                            />
+                        </div>
+                        <P
+                            class="text-gray-500 dark:text-gray-400 font-medium mb-1"
+                        >
+                            No open deals
+                        </P>
+                        <P class="text-sm text-gray-400 dark:text-gray-500">
+                            Start building your sales pipeline!
+                        </P>
+                        <button
+                            class="mt-4 px-4 py-2 bg-emerald-500 text-white rounded-lg text-sm hover:bg-emerald-600 transition-colors"
+                        >
+                            Create Deal
+                        </button>
+                    </div>
+                {/each}
+            </Listgroup>
+        </Card>
     </div>
 </div>

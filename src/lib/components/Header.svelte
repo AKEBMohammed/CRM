@@ -140,9 +140,8 @@
                         Settings
                     </DropdownItem>
                     <DropdownItem
-                        formaction="?/signout"
+                        href="/auth/signout"
                         class="flex items-center"
-                        type="submit"
                     >
                         <ExclamationCircleOutline class="w-5 h-5 me-2" />
                         Sign out

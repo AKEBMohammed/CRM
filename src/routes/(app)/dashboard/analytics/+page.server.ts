@@ -1,112 +1,75 @@
 import { redirect } from "@sveltejs/kit";
 import type { PageServerLoad } from "./$types";
-import { supabase } from "$lib/supabase";
+import { 
+    companiesService, 
+    contactsService, 
+    dealsService, 
+    interactionsService, 
+    productsService, 
+    tasksService, 
+    profilesService, 
+    messagesService 
+} from "$lib/services";
+import { getProfile } from "$lib/supabase";
 
 export const load: PageServerLoad = async ({ cookies }) => {
-    const user = JSON.parse(cookies.get('user') || 'null');
+    const user = await getProfile();
     if (!user) {
         redirect(300, '/auth');
     }
 
-    try {
-        console.log('Fetching analytics for user:', user);
+    console.log('✅ User authenticated:', user);
+    console.log('🏢 Company ID:', user.company_id);
+    console.log('👤 Profile ID:', user.profile_id);
 
-        // Fetch all data using Supabase REST API
+    try {
+        // Use services to fetch all data
         const [
-            { data: company },
-            { data: contacts },
-            { data: deals },
-            { data: interactions },
-            { data: products },
-            { data: tasks },
-            { data: team },
-            { data: messages }
+            company,
+            contacts,
+            deals,
+            interactions,
+            products,
+            tasks,
+            team
         ] = await Promise.all([
             // Company data
-            supabase
-                .from('companies')
-                .select('*')
-                .eq('company_id', user.company_id)
-                .single(),
+            companiesService.getById(user.company_id),
 
             // Contacts data
-            supabase
-                .from('contacts')
-                .select('*')
-                .eq('company_id', user.company_id),
+            contactsService.getAll(user.company_id),
 
-            // Deals data with relationships
-            supabase
-                .from('deals')
-                .select(`
-                    *,
-                    contacts(fullname, email),
-                    products(name, unit_price),
-                    profiles(fullname, role)
-                `)
-                .eq('company_id', user.company_id),
+            // Deals data
+            dealsService.getAll(user.company_id),
 
             // Interactions data
-            supabase
-                .from('interactions')
-                .select(`
-                    *,
-                    deals(title, value, stage),
-                    profiles(fullname, role)
-                `)
-                .eq('company_id', user.company_id)
-                .order('created_at', { ascending: false }),
+            interactionsService.getAll(user.company_id),
 
             // Products data
-            supabase
-                .from('products')
-                .select(`
-                    *,
-                    profiles(fullname)
-                `)
-                .eq('company_id', user.company_id),
+            productsService.getAll(user.company_id),
 
             // Tasks data
-            supabase
-                .from('tasks')
-                .select(`
-                    *,
-                    deals(title, value, stage),
-                    contacts(fullname, email)
-                `)
-                .or(`created_by.eq.${user.profile_id},assigned_to.eq.${user.profile_id}`),
+            tasksService.getAll(user.profile_id, user.company_id),
 
             // Team data
-            supabase
-                .from('profiles')
-                .select('*')
-                .eq('company_id', user.company_id),
-
-            // Messages data
-            supabase
-                .from('messages')
-                .select(`
-                    *,
-                    profiles(fullname, role),
-                    rooms(name)
-                `)
-                .eq('company_id', user.company_id)
-                .order('send_at', { ascending: false })
-                .limit(50)
+            profilesService.getAll(user.company_id)
         ]);
 
+        // Get messages data using company's room_id
+        const messages = await messagesService.getUnreadCount(company?.room_id || 21, user.profile_id);
+
         console.log('Raw data fetched:', {
-            company: company || 'null',
+            company: company ? 'found' : 'null',
             contacts: contacts?.length || 0,
             deals: deals?.length || 0,
             interactions: interactions?.length || 0,
             products: products?.length || 0,
             tasks: tasks?.length || 0,
             team: team?.length || 0,
-            messages: messages?.length || 0
+            messages: messages || 0
         });
 
-        // Process and enhance the data for analytics
+        // Process and enhance the data for analytics using services data
         const analytics = {
             company: company || null,
 
@@ -118,67 +81,38 @@ export const load: PageServerLoad = async ({ cookies }) => {
                 byCreator: processContactsByCreator(contacts || [])
             },
 
-            // Deals metrics
-            deals: {
-                total: deals?.length || 0,
-                totalValue: calculateTotalDealsValue(deals || []),
-                pipeline: processDealsPipeline(deals || []),
-                byStage: processDealsByStage(deals || []),
-                recentWins: getRecentWins(deals || []),
-                topDeals: getTopDeals(deals || [])
-            },
+            // Deals metrics - get detailed deals with relationships
+            deals: await dealsService.getAnalytics(user.company_id),
 
-            // Interactions metrics
-            interactions: {
-                total: interactions?.length || 0,
-                recent: interactions?.slice(0, 10) || [],
-                byType: processInteractionsByType(interactions || []),
-                byMonth: processInteractionsByMonth(interactions || [])
-            },
+            // Interactions metrics - get detailed interactions with relationships
+            interactions: await interactionsService.getAnalytics(user.company_id),
 
-            // Products metrics
-            products: {
-                total: products?.length || 0,
-                totalValue: calculateProductsValue(products || []),
-                list: products || [],
-                topPerforming: getTopPerformingProducts(deals || [])
-            },
+            // Products metrics - get detailed products with analytics
+            products: await productsService.getAnalytics(user.company_id),
 
-            // Tasks metrics
-            tasks: {
-                total: tasks?.length || 0,
-                pending: tasks?.filter(task => 
-                    task.status === 'pending' || task.status === 'in_progress').length || 0,
-                overdue: getOverdueTasks(tasks || []),
-                byStatus: processTasksByStatus(tasks || []),
-                byPriority: processTasksByPriority(tasks || []),
-                upcoming: getUpcomingTasks(tasks || [])
-            },
+            // Tasks metrics - get detailed tasks with relationships
+            tasks: await tasksService.getAnalytics(user.profile_id, user.company_id),
 
             // Team performance
             team: {
                 total: team?.length || 0,
-                members: team?.map(member => ({
-                    ...member,
-                    dealsCount: deals?.filter(deal => deal.profile_id === member.profile_id).length || 0,
-                    dealsValue: deals?.filter(deal => deal.profile_id === member.profile_id)
-                        .reduce((sum, deal) => sum + (deal.value || 0), 0) || 0
-                })) || [],
+                active: team?.filter(t => t.is_active)?.length || 0,
+                members: team || [],
+                byRole: processTeamByRole(team || []),
                 topPerformers: getTopPerformers(team || [], deals || [])
             },
 
-            // Communication metrics
-            communication: {
-                recentMessages: messages?.slice(0, 20) || [],
-                messageActivity: processMessageActivity(messages || [])
+            // Messages metrics
+            messages: {
+                unreadCount: messages || 0,
+                totalToday: 0 // Could be enhanced later
             }
         };
 
         console.log('Processed analytics:', {
             contacts: analytics.contacts.total,
-            deals: analytics.deals.total,
-            dealsValue: analytics.deals.totalValue,
-            tasks: analytics.tasks.total,
+            deals: analytics.deals?.total || 0,
+            tasks: analytics.tasks?.total || 0,
             team: analytics.team.total
         });
 
@@ -187,17 +121,31 @@ export const load: PageServerLoad = async ({ cookies }) => {
     } catch (error) {
         console.error('Error fetching analytics:', error);
 
-        // Return empty analytics in case of error
         return {
             analytics: {
                 company: null,
                 contacts: { total: 0, recent: [], byMonth: [], byCreator: [] },
                 deals: { total: 0, totalValue: 0, pipeline: [], byStage: [], recentWins: [], topDeals: [] },
                 interactions: { total: 0, recent: [], byType: [], byMonth: [] },
-                products: { total: 0, totalValue: 0, list: [], topPerforming: [] },
-                tasks: { total: 0, pending: 0, overdue: [], byStatus: [], byPriority: [], upcoming: [] },
-                team: { total: 0, members: [], topPerformers: [] },
-                communication: { recentMessages: [], messageActivity: [] }
+                products: { total: 0, totalValue: 0, recent: [], list: [], topPerforming: [] },
+                tasks: { 
+                    total: 0, 
+                    completed: 0,
+                    pending: 0, 
+                    overdue: [], 
+                    upcoming: [],
+                    byStatus: [],
+                    byPriority: [],
+                    completionRate: "0%"
+                },
+                team: { 
+                    total: 0, 
+                    active: 0,
+                    members: [],
+                    byRole: [],
+                    topPerformers: []
+                },
+                messages: { unreadCount: 0, totalToday: 0 }
             },
             user
         };
@@ -370,4 +318,13 @@ function processMessageActivity(messages: any[]) {
     return Object.entries(days)
         .map(([day, count]) => ({ day, count }))
         .slice(-7); // Last 7 days
+}
+
+function processTeamByRole(team: any[]) {
+    const roles: { [key: string]: number } = {};
+    team.forEach(member => {
+        const role = member.role || 'user';
+        roles[role] = (roles[role] || 0) + 1;
+    });
+    return Object.entries(roles).map(([role, count]) => ({ role, count }));
 }

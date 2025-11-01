@@ -1,9 +1,7 @@
 import { redirect } from "@sveltejs/kit";
 import type { Actions, PageServerLoad } from "./$types";
-import { gql } from "$lib/graphql";
-import { getProfile, supabase } from "$lib/supabase";
-
-
+import { discussionsService, chatsService } from '$lib/services';
+import { getProfile } from "$lib/supabase";
 
 export const load: PageServerLoad = async ({ params, cookies }) => {
     const user = await getProfile();
@@ -11,79 +9,36 @@ export const load: PageServerLoad = async ({ params, cookies }) => {
         redirect(300, '/auth');
     }
 
-    //Check if the user has access to this discussion
-    let query = `
-        query {
-            discussionsCollection(
-                filter: {
-                    profile_id: {
-                        eq: "${user?.profile_id}"
-                    }
-
-                    discussion_id: {
-                        eq: "${params.discussion_id}"
-                    }
-                    
-                }
-            ) {
-                edges {
-                    node {
-                            discussion_id
-                            name
-                            
-                    }
-                }
-            }
-        }
-    `
-    let data = await gql(query);
-    if (data.discussionsCollection.edges.length === 0) {
-        console.error('User does not have access to this discussion');
-        throw redirect(300, '/dashboard/rooms');
-    }
-
-    let discussion = data.discussionsCollection.edges[0].node;
-
-    if (!discussion) {
-        console.error('Discussion not found');
-        throw redirect(300, '/dashboard/discussions');
-    }
-
-
-    query = `
-        query {
-                chatsCollection(
-                filter: {
-                    discussion_id: {
-                        eq: "${params.discussion_id}"
-                    }
-                },
-                orderBy: [{ created_at: AscNullsLast }]) {
-                    edges {
-                        node {
-                            chat_id
-                            content
-                            is_ai
-                            created_at
-                        }
-                    }
-                }
-            }
+    try {
+        // Get the discussion and verify access
+        const discussion = await discussionsService.getById(parseInt(params.discussion_id));
         
-    `
-    data = await gql(query);
+        if (!discussion) {
+            console.error('Discussion not found');
+            throw redirect(300, '/dashboard/assistant');
+        }
 
-    if (!data.chatsCollection) {
+        // Check if the user has access to this discussion
+        if (discussion.profile_id !== user.profile_id) {
+            console.error('User does not have access to this discussion');
+            throw redirect(300, '/dashboard/assistant');
+        }
+
+        // Get chats for this discussion
+        const chats = await chatsService.getAll(parseInt(params.discussion_id));
+
+        return { 
+            discussion: {
+                discussion_id: discussion.discussion_id,
+                name: discussion.name
+            }, 
+            chats: chats || [],
+            user
+        };
+
+    } catch (error) {
+        console.error('Error loading discussion:', error);
         throw redirect(300, '/dashboard/assistant');
     }
-
-
-    let chats = data.chatsCollection.edges.map((edge: any) => edge.node)
-    console.log(chats);
-
-    return { discussion: {
-        discussion_id: discussion.discussion_id,
-        name: discussion.name
-    }, chats };
 };
 

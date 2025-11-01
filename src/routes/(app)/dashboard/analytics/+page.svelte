@@ -15,6 +15,8 @@
         TableHeadCell,
         Tabs,
         TabItem,
+        Listgroup,
+        ListgroupItem,
     } from "flowbite-svelte";
     import {
         ChartOutline,
@@ -123,8 +125,54 @@
         return colors[stage] || "gray";
     }
 
-    function getPriorityColor(priority: string): "primary" | "secondary" | "gray" | "red" | "orange" | "amber" | "yellow" | "lime" | "green" | "emerald" | "teal" | "cyan" | "sky" | "blue" | "indigo" | "violet" | "purple" | "fuchsia" | "pink" | "rose" | undefined {
-        const colors: { [key: string]: "primary" | "secondary" | "gray" | "red" | "orange" | "amber" | "yellow" | "lime" | "green" | "emerald" | "teal" | "cyan" | "sky" | "blue" | "indigo" | "violet" | "purple" | "fuchsia" | "pink" | "rose" | undefined } = {
+    function getPriorityColor(
+        priority: string,
+    ):
+        | "primary"
+        | "secondary"
+        | "gray"
+        | "red"
+        | "orange"
+        | "amber"
+        | "yellow"
+        | "lime"
+        | "green"
+        | "emerald"
+        | "teal"
+        | "cyan"
+        | "sky"
+        | "blue"
+        | "indigo"
+        | "violet"
+        | "purple"
+        | "fuchsia"
+        | "pink"
+        | "rose"
+        | undefined {
+        const colors: {
+            [key: string]:
+                | "primary"
+                | "secondary"
+                | "gray"
+                | "red"
+                | "orange"
+                | "amber"
+                | "yellow"
+                | "lime"
+                | "green"
+                | "emerald"
+                | "teal"
+                | "cyan"
+                | "sky"
+                | "blue"
+                | "indigo"
+                | "violet"
+                | "purple"
+                | "fuchsia"
+                | "pink"
+                | "rose"
+                | undefined;
+        } = {
             high: "red",
             medium: "yellow",
             low: "green",
@@ -132,8 +180,54 @@
         return colors[priority] || "gray";
     }
 
-    function getStatusColor(status: string): "primary" | "secondary" | "gray" | "red" | "orange" | "amber" | "yellow" | "lime" | "green" | "emerald" | "teal" | "cyan" | "sky" | "blue" | "indigo" | "violet" | "purple" | "fuchsia" | "pink" | "rose" | undefined {
-        const colors: { [key: string]: "primary" | "secondary" | "gray" | "red" | "orange" | "amber" | "yellow" | "lime" | "green" | "emerald" | "teal" | "cyan" | "sky" | "blue" | "indigo" | "violet" | "purple" | "fuchsia" | "pink" | "rose" | undefined } = {
+    function getStatusColor(
+        status: string,
+    ):
+        | "primary"
+        | "secondary"
+        | "gray"
+        | "red"
+        | "orange"
+        | "amber"
+        | "yellow"
+        | "lime"
+        | "green"
+        | "emerald"
+        | "teal"
+        | "cyan"
+        | "sky"
+        | "blue"
+        | "indigo"
+        | "violet"
+        | "purple"
+        | "fuchsia"
+        | "pink"
+        | "rose"
+        | undefined {
+        const colors: {
+            [key: string]:
+                | "primary"
+                | "secondary"
+                | "gray"
+                | "red"
+                | "orange"
+                | "amber"
+                | "yellow"
+                | "lime"
+                | "green"
+                | "emerald"
+                | "teal"
+                | "cyan"
+                | "sky"
+                | "blue"
+                | "indigo"
+                | "violet"
+                | "purple"
+                | "fuchsia"
+                | "pink"
+                | "rose"
+                | undefined;
+        } = {
             completed: "green",
             in_progress: "blue",
             pending: "yellow",
@@ -191,7 +285,7 @@
     </div>
 
     <!-- Key Performance Indicators -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
         <!-- Total Revenue -->
         <Card class="border-0 shadow-lg hover:shadow-xl transition-shadow p-2">
             <div class="flex items-center justify-between">
@@ -333,12 +427,12 @@
     </div>
 
     <!-- Main Analytics Content -->
-    <Tabs style="underline" class="">
+    <Tabs tabStyle="full">
         <!-- Sales Analytics -->
         <TabItem open title="Sales Analytics" class="">
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-2">
                 <!-- Deal Pipeline -->
-                <Card class="p-6 border-0 shadow-lg">
+                <Card class="p-2 border-1 shadow-lg">
                     <Heading
                         tag="h4"
                         class="text-xl font-semibold text-gray-900 dark:text-white mb-6 flex items-center"
@@ -348,10 +442,10 @@
                         />
                         Sales Pipeline
                     </Heading>
-                    <div class="space-y-4">
+                    <Listgroup>
                         {#each analytics.deals.pipeline as stage}
-                            <div
-                                class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg"
+                            <ListgroupItem
+                                class="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800"
                             >
                                 <div class="flex items-center space-x-3">
                                     <Badge
@@ -371,22 +465,24 @@
                                 >
                                     {formatCurrency(stage.value)}
                                 </span>
-                            </div>
+                            </ListgroupItem>
                         {/each}
-                    </div>
+                    </Listgroup>
                 </Card>
 
                 <!-- Sales Metrics -->
-                <Card class="p-6 border-0 shadow-lg">
+                <Card class="p-2 border-1 shadow-lg">
                     <Heading
                         tag="h4"
                         class="text-xl font-semibold text-gray-900 dark:text-white mb-6"
                     >
                         Key Sales Metrics
                     </Heading>
-                    <div >
+                    <div class="flex flex-col gap-2">
                         <div>
-                            <div class="flex justify-between items-center mb-2">
+                            <div
+                                class="flex justify-between items-center gap-2 mb-2"
+                            >
                                 <span
                                     class="text-sm font-medium text-gray-700 dark:text-gray-300"
                                     >Conversion Rate</span
@@ -471,79 +567,82 @@
                         {/if}
                     </div>
                 </Card>
-            </div>
 
-            <!-- Top Deals Table -->
-            {#if analytics.deals.topDeals.length > 0}
-                <Card class="p-6 border-0 shadow-lg">
-                    <div class="flex items-center justify-between mb-6">
-                        <Heading
-                            tag="h4"
-                            class="text-xl font-semibold text-gray-900 dark:text-white"
-                        >
-                            Top Active Deals
-                        </Heading>
-                        <Button
-                            href="/dashboard/deals"
-                            size="sm"
-                            color="primary"
-                        >
-                            View All Deals
-                            <ArrowRightOutline class="w-4 h-4 ml-2" />
-                        </Button>
-                    </div>
-                    <Table hoverable>
-                        <TableHead>
-                            <TableHeadCell>Deal</TableHeadCell>
-                            <TableHeadCell>Contact</TableHeadCell>
-                            <TableHeadCell>Value</TableHeadCell>
-                            <TableHeadCell>Stage</TableHeadCell>
-                            <TableHeadCell>Probability</TableHeadCell>
-                            <TableHeadCell>Owner</TableHeadCell>
-                        </TableHead>
-                        <TableBody>
-                            {#each analytics.deals.topDeals.slice(0, 10) as deal}
-                                <TableBodyRow>
-                                    <TableBodyCell class="font-medium"
-                                        >{deal.title}</TableBodyCell
-                                    >
-                                    <TableBodyCell
-                                        >{deal.contacts?.fullname ||
-                                            "N/A"}</TableBodyCell
-                                    >
-                                    <TableBodyCell class="font-semibold"
-                                        >{formatCurrency(
-                                            deal.value,
-                                        )}</TableBodyCell
-                                    >
-                                    <TableBodyCell>
-                                        <Badge
-                                            color={getStageColor(deal.stage)}
-                                            class="capitalize"
+                <!-- Top Deals Table -->
+                {#if analytics.deals.topDeals.length > 0}
+                    <Card class="p-2 border-1 shadow-lg">
+                        <div class="flex items-center justify-between mb-6">
+                            <Heading
+                                tag="h4"
+                                class="text-xl font-semibold text-gray-900 dark:text-white"
+                            >
+                                Top Active Deals
+                            </Heading>
+                            <Button
+                                href="/dashboard/deals"
+                                size="sm"
+                                color="primary"
+                            >
+                                View All Deals
+                                <ArrowRightOutline class="w-4 h-4 ml-2" />
+                            </Button>
+                        </div>
+                        <Table hoverable>
+                            <TableHead>
+                                <TableHeadCell>Deal</TableHeadCell>
+                                <TableHeadCell>Contact</TableHeadCell>
+                                <TableHeadCell>Value</TableHeadCell>
+                                <TableHeadCell>Stage</TableHeadCell>
+                                <TableHeadCell>Probability</TableHeadCell>
+                                <TableHeadCell>Owner</TableHeadCell>
+                            </TableHead>
+                            <TableBody>
+                                {#each analytics.deals.topDeals.slice(0, 10) as deal}
+                                    <TableBodyRow>
+                                        <TableBodyCell class="font-medium"
+                                            >{deal.title}</TableBodyCell
                                         >
-                                            {deal.stage.replace("_", " ")}
-                                        </Badge>
-                                    </TableBodyCell>
-                                    <TableBodyCell
-                                        >{deal.probability || 0}%</TableBodyCell
-                                    >
-                                    <TableBodyCell
-                                        >{deal.profiles?.fullname ||
-                                            "Unassigned"}</TableBodyCell
-                                    >
-                                </TableBodyRow>
-                            {/each}
-                        </TableBody>
-                    </Table>
-                </Card>
-            {/if}
+                                        <TableBodyCell
+                                            >{deal.contacts?.fullname ||
+                                                "N/A"}</TableBodyCell
+                                        >
+                                        <TableBodyCell class="font-semibold"
+                                            >{formatCurrency(
+                                                deal.value,
+                                            )}</TableBodyCell
+                                        >
+                                        <TableBodyCell>
+                                            <Badge
+                                                color={getStageColor(
+                                                    deal.stage,
+                                                )}
+                                                class="capitalize"
+                                            >
+                                                {deal.stage.replace("_", " ")}
+                                            </Badge>
+                                        </TableBodyCell>
+                                        <TableBodyCell
+                                            >{deal.probability ||
+                                                0}%</TableBodyCell
+                                        >
+                                        <TableBodyCell
+                                            >{deal.profiles?.fullname ||
+                                                "Unassigned"}</TableBodyCell
+                                        >
+                                    </TableBodyRow>
+                                {/each}
+                            </TableBody>
+                        </Table>
+                    </Card>
+                {/if}
+            </div>
         </TabItem>
 
         <!-- Customer Analytics -->
-        <TabItem title="Customer Analytics" >
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <TabItem title="Customer Analytics">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
                 <!-- Contact Growth -->
-                <Card class="p-6 border-0 shadow-lg">
+                <Card class="p-2 border-1 shadow-lg">
                     <Heading
                         tag="h4"
                         class="text-xl font-semibold text-gray-900 dark:text-white mb-6 flex items-center"
@@ -552,10 +651,10 @@
                         Contact Growth
                     </Heading>
                     {#if analytics.contacts.byMonth.length > 0}
-                        <div class="space-y-3">
+                        <Listgroup>
                             {#each analytics.contacts.byMonth.slice(-6) as month}
-                                <div
-                                    class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"
+                                <ListgroupItem
+                                    class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800"
                                 >
                                     <span
                                         class="font-medium text-gray-900 dark:text-white"
@@ -578,9 +677,9 @@
                                             >{month.count}</span
                                         >
                                     </div>
-                                </div>
+                                </ListgroupItem>
                             {/each}
-                        </div>
+                        </Listgroup>
                     {:else}
                         <P
                             class="text-gray-500 dark:text-gray-400 text-center py-8"
@@ -590,7 +689,7 @@
                 </Card>
 
                 <!-- Recent Interactions -->
-                <Card class="p-6 border-0 shadow-lg">
+                <Card class="p-2 border-1 shadow-lg">
                     <Heading
                         tag="h4"
                         class="text-xl font-semibold text-gray-900 dark:text-white mb-6 flex items-center"
@@ -599,13 +698,13 @@
                         Recent Interactions
                     </Heading>
                     {#if analytics.interactions.recent.length > 0}
-                        <div class="space-y-3">
+                        <Listgroup class="space-y-3">
                             {#each analytics.interactions.recent.slice(0, 5) as interaction}
-                                <div
-                                    class="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg"
+                                <ListgroupItem
+                                    class="p-4 bg-gray-50 dark:bg-gray-800"
                                 >
                                     <div
-                                        class="flex items-center justify-between mb-2"
+                                        class="flex items-center justify-between mb-2 gap-2"
                                     >
                                         <Badge color="blue" class="capitalize"
                                             >{interaction.type}</Badge
@@ -634,9 +733,9 @@
                                             )})
                                         </P>
                                     {/if}
-                                </div>
+                                </ListgroupItem>
                             {/each}
-                        </div>
+                        </Listgroup>
                     {:else}
                         <P
                             class="text-gray-500 dark:text-gray-400 text-center py-8"
@@ -644,44 +743,43 @@
                         >
                     {/if}
                 </Card>
+                <!-- Interaction Types -->
+                {#if analytics.interactions.byType.length > 0}
+                    <Card class="p-2 border-1 shadow-lg">
+                        <Heading
+                            tag="h4"
+                            class="text-xl font-semibold text-gray-900 dark:text-white mb-6"
+                        >
+                            Interaction Types Distribution
+                        </Heading>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            {#each analytics.interactions.byType as type}
+                                <div
+                                    class="text-center p-4 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 rounded-lg"
+                                >
+                                    <Heading
+                                        tag="h4"
+                                        class="text-2xl font-bold text-gray-900 dark:text-white"
+                                    >
+                                        {type.count}
+                                    </Heading>
+                                    <P
+                                        class="text-sm text-gray-600 dark:text-gray-400 capitalize"
+                                        >{type.type}</P
+                                    >
+                                </div>
+                            {/each}
+                        </div>
+                    </Card>
+                {/if}
             </div>
-
-            <!-- Interaction Types -->
-            {#if analytics.interactions.byType.length > 0}
-                <Card class="p-6 border-0 shadow-lg">
-                    <Heading
-                        tag="h4"
-                        class="text-xl font-semibold text-gray-900 dark:text-white mb-6"
-                    >
-                        Interaction Types Distribution
-                    </Heading>
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        {#each analytics.interactions.byType as type}
-                            <div
-                                class="text-center p-4 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 rounded-lg"
-                            >
-                                <Heading
-                                    tag="h4"
-                                    class="text-2xl font-bold text-gray-900 dark:text-white"
-                                >
-                                    {type.count}
-                                </Heading>
-                                <P
-                                    class="text-sm text-gray-600 dark:text-gray-400 capitalize"
-                                    >{type.type}</P
-                                >
-                            </div>
-                        {/each}
-                    </div>
-                </Card>
-            {/if}
         </TabItem>
 
         <!-- Team Performance -->
-        <TabItem title="Team Performance" >
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <TabItem title="Team Performance">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
                 <!-- Top Performers -->
-                <Card class="p-6 border-0 shadow-lg">
+                <Card class="p-2 border-1 shadow-lg">
                     <Heading
                         tag="h4"
                         class="text-xl font-semibold text-gray-900 dark:text-white mb-6 flex items-center"
@@ -692,10 +790,10 @@
                         Top Performers
                     </Heading>
                     {#if analytics.team.topPerformers.length > 0}
-                        <div class="space-y-4">
+                        <Listgroup>
                             {#each analytics.team.topPerformers as performer, index}
-                                <div
-                                    class="flex items-center space-x-4 p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-lg"
+                                <ListgroupItem
+                                    class="flex items-center space-x-4 p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20"
                                 >
                                     <div class="flex-shrink-0">
                                         <div
@@ -726,9 +824,9 @@
                                             >{performer.dealsCount} deals</P
                                         >
                                     </div>
-                                </div>
+                                </ListgroupItem>
                             {/each}
-                        </div>
+                        </Listgroup>
                     {:else}
                         <P
                             class="text-gray-500 dark:text-gray-400 text-center py-8"
@@ -738,7 +836,7 @@
                 </Card>
 
                 <!-- Team Overview -->
-                <Card class="p-6 border-0 shadow-lg">
+                <Card class="p-2 border-1 shadow-lg">
                     <Heading
                         tag="h4"
                         class="text-xl font-semibold text-gray-900 dark:text-white mb-6 flex items-center"
@@ -747,10 +845,10 @@
                         Team Overview
                     </Heading>
                     {#if analytics.team.members.length > 0}
-                        <div class="space-y-3">
+                        <Listgroup>
                             {#each analytics.team.members.slice(0, 8) as member}
-                                <div
-                                    class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"
+                                <ListgroupItem
+                                    class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800"
                                 >
                                     <div class="flex items-center space-x-3">
                                         <Avatar
@@ -762,7 +860,7 @@
                                             >
                                                 {member.fullname
                                                     .split(" ")
-                                                    .map((n:string) => n[0])
+                                                    .map((n: string) => n[0])
                                                     .join("")}
                                             </div>
                                         </Avatar>
@@ -789,9 +887,9 @@
                                             {formatCurrency(member.dealsValue)}
                                         </P>
                                     </div>
-                                </div>
+                                </ListgroupItem>
                             {/each}
-                        </div>
+                        </Listgroup>
                     {:else}
                         <P
                             class="text-gray-500 dark:text-gray-400 text-center py-8"
@@ -803,10 +901,10 @@
         </TabItem>
 
         <!-- Task Management -->
-        <TabItem title="Task Management" >
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <TabItem title="Task Management">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
                 <!-- Task Status Overview -->
-                <Card class="p-6 border-0 shadow-lg">
+                <Card class="p-2 border-1 shadow-lg">
                     <Heading
                         tag="h4"
                         class="text-xl font-semibold text-gray-900 dark:text-white mb-6 flex items-center"
@@ -817,10 +915,10 @@
                         Task Status Overview
                     </Heading>
                     {#if analytics.tasks.byStatus.length > 0}
-                        <div class="space-y-4">
+                        <Listgroup>
                             {#each analytics.tasks.byStatus as status}
-                                <div
-                                    class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg"
+                                <ListgroupItem
+                                    class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800"
                                 >
                                     <div class="flex items-center space-x-3">
                                         <Badge
@@ -845,9 +943,9 @@
                                         class="w-24"
                                         color={getStatusColor(status.status)}
                                     />
-                                </div>
+                                </ListgroupItem>
                             {/each}
-                        </div>
+                        </Listgroup>
                     {:else}
                         <P
                             class="text-gray-500 dark:text-gray-400 text-center py-8"
@@ -857,7 +955,7 @@
                 </Card>
 
                 <!-- Upcoming Tasks -->
-                <Card class="p-6 border-0 shadow-lg">
+                <Card class="p-2 border-1 shadow-lg">
                     <Heading
                         tag="h4"
                         class="text-xl font-semibold text-gray-900 dark:text-white mb-6 flex items-center"
@@ -868,9 +966,9 @@
                         Upcoming Tasks
                     </Heading>
                     {#if analytics.tasks.upcoming.length > 0}
-                        <div class="space-y-3">
+                        <Listgroup>
                             {#each analytics.tasks.upcoming.slice(0, 6) as task}
-                                <div
+                                <ListgroupItem
                                     class="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg"
                                 >
                                     <div
@@ -912,9 +1010,9 @@
                                             </P>
                                         {/if}
                                     </div>
-                                </div>
+                                </ListgroupItem>
                             {/each}
-                        </div>
+                        </Listgroup>
                     {:else}
                         <P
                             class="text-gray-500 dark:text-gray-400 text-center py-8"
@@ -922,67 +1020,68 @@
                         >
                     {/if}
                 </Card>
-            </div>
-
-            <!-- Overdue Tasks Alert -->
-            {#if analytics.tasks.overdue.length > 0}
-                <Card
-                    class="p-6 border-l-4 border-red-500 bg-red-50 dark:bg-red-900/20"
-                >
-                    <div class="flex items-center space-x-3 mb-4">
-                        <ExclamationCircleSolid class="w-6 h-6 text-red-500" />
-                        <Heading
-                            tag="h4"
-                            class="text-xl font-semibold text-red-900 dark:text-red-100"
-                        >
-                            Overdue Tasks ({analytics.tasks.overdue.length})
-                        </Heading>
-                    </div>
-                    <div class="space-y-3">
-                        {#each analytics.tasks.overdue.slice(0, 5) as task}
-                            <div
-                                class="p-3 bg-white dark:bg-red-900/30 rounded-lg border border-red-200 dark:border-red-800"
+                <!-- Overdue Tasks Alert -->
+                {#if analytics.tasks.overdue.length > 0}
+                    <Card
+                        class="p-2 border-1 border-red-500 bg-red-50 dark:bg-red-900/20"
+                    >
+                        <div class="flex items-center space-x-3 mb-4">
+                            <ExclamationCircleSolid
+                                class="w-6 h-6 text-red-500"
+                            />
+                            <Heading
+                                tag="h4"
+                                class="text-xl font-semibold text-red-900 dark:text-red-100"
                             >
-                                <div
-                                    class="flex items-center justify-between mb-1"
+                                Overdue Tasks ({analytics.tasks.overdue.length})
+                            </Heading>
+                        </div>
+                        <Listgroup>
+                            {#each analytics.tasks.overdue.slice(0, 5) as task}
+                                <ListgroupItem
+                                    class="p-3 bg-white dark:bg-red-900/30 border border-red-200 dark:border-red-800 flex gap-2"
                                 >
+                                    <div
+                                        class="flex items-center justify-between mb-1 grow-1"
+                                    >
+                                        <P
+                                            class="font-medium text-red-900 dark:text-red-100"
+                                            >{task.title}</P
+                                        >
+                                        <Badge color="red" class="capitalize"
+                                            >{task.priority}</Badge
+                                        >
+                                    </div>
                                     <P
-                                        class="font-medium text-red-900 dark:text-red-100"
-                                        >{task.title}</P
+                                        class="text-sm text-red-700 dark:text-red-300"
                                     >
-                                    <Badge color="red" class="capitalize"
-                                        >{task.priority}</Badge
-                                    >
-                                </div>
-                                <P
-                                    class="text-sm text-red-700 dark:text-red-300"
-                                >
-                                    Due: {formatDate(task.due_date)} ({formatDateRelative(
-                                        task.due_date,
-                                    )})
-                                </P>
-                            </div>
-                        {/each}
+                                        Due: {formatDate(task.due_date)} ({formatDateRelative(
+                                            task.due_date,
+                                        )})
+                                    </P>
+                                </ListgroupItem>
+                            {/each}
+                        </Listgroup>
                         {#if analytics.tasks.overdue.length > 5}
                             <Button
                                 href="/dashboard/tasks"
                                 color="red"
-                                class="w-full"
+                                class="w-full mt-2"
                             >
                                 View All {analytics.tasks.overdue.length} Overdue
                                 Tasks
                             </Button>
                         {/if}
-                    </div>
-                </Card>
-            {/if}
+                    </Card>
+                {/if}
+            </div>
         </TabItem>
 
         <!-- Products Analytics -->
-        <TabItem title="Products" >
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <TabItem title="Products">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
                 <!-- Product Overview -->
-                <Card class="p-6 border-0 shadow-lg">
+                <Card class="p-2 border-1 shadow-lg">
                     <Heading
                         tag="h4"
                         class="text-xl font-semibold text-gray-900 dark:text-white mb-6 flex items-center"
@@ -1022,11 +1121,11 @@
                         </div>
                     </div>
 
-                    {#if analytics.products.list.length > 0}
-                        <div class="space-y-3">
+                    {#if analytics.products.list && analytics.products.list.length > 0}
+                        <Listgroup>
                             {#each analytics.products.list.slice(0, 5) as product}
-                                <div
-                                    class="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"
+                                <ListgroupItem
+                                    class="p-2 bg-gray-50 dark:bg-gray-800"
                                 >
                                     <div
                                         class="flex items-center justify-between"
@@ -1051,14 +1150,14 @@
                                             {formatCurrency(product.unit_price)}
                                         </P>
                                     </div>
-                                </div>
+                                </ListgroupItem>
                             {/each}
-                        </div>
+                        </Listgroup>
                     {/if}
                 </Card>
 
                 <!-- Top Performing Products -->
-                <Card class="p-6 border-0 shadow-lg">
+                <Card class="p-2 border-1 shadow-lg">
                     <Heading
                         tag="h4"
                         class="text-xl font-semibold text-gray-900 dark:text-white mb-6 flex items-center"
@@ -1069,10 +1168,10 @@
                         Top Performing Products
                     </Heading>
                     {#if analytics.products.topPerforming.length > 0}
-                        <div class="space-y-4">
+                        <Listgroup>
                             {#each analytics.products.topPerforming as product, index}
-                                <div
-                                    class="flex items-center space-x-4 p-4 bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 rounded-lg"
+                                <ListgroupItem
+                                    class="flex items-center space-x-4 p-4 bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20"
                                 >
                                     <div class="flex-shrink-0">
                                         <div
@@ -1099,9 +1198,9 @@
                                             {formatCurrency(product.revenue)}
                                         </P>
                                     </div>
-                                </div>
+                                </ListgroupItem>
                             {/each}
-                        </div>
+                        </Listgroup>
                     {:else}
                         <P
                             class="text-gray-500 dark:text-gray-400 text-center py-8"

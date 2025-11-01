@@ -1,30 +1,24 @@
-import { gql } from "$lib/graphql";
+import { discussionsService } from '$lib/services';
+import { getProfile } from "$lib/supabase";
 import { redirect, type Actions } from "@sveltejs/kit";
-
 
 export const actions = {
     create: async ({ request, cookies }) => {
-        console.log('Creating new discussion...');
+        const user = await getProfile();
+        if (!user) {
+            throw redirect(300, '/auth');
+        }
 
-        let user = JSON.parse(cookies.get('user') || 'null');
+        try {
+            const discussion = await discussionsService.create({
+                profile_id: user.profile_id,
+                name: "New Discussion"
+            });
 
-        let query = `
-            mutation {
-                insertIntodiscussionsCollection(
-                    objects: [{
-                        profile_id: "${user?.profile_id}",
-                        name: "New Discussion"
-                    }]
-                ) {
-                    records {
-                        discussion_id
-                    }
-                }
-            }
-        `
-
-        let data = await gql(query);
-        let discussion_id = data.insertIntodiscussionsCollection.records[0].discussion_id;
-        throw redirect(300, `/dashboard/assistant/${discussion_id}`);
+            throw redirect(300, `/dashboard/assistant/${discussion.discussion_id}`);
+        } catch (error) {
+            console.error('Failed to create discussion:', error);
+            throw redirect(300, '/dashboard/assistant');
+        }
     }
 } satisfies Actions;

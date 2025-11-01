@@ -43,7 +43,12 @@ async function getTasks(user: { profile_id: string }) {
     let query = `
         query($profile_id: uuid!) {
             tasksCollection(
-                filter: { assigned_to: { eq: $profile_id } }
+                filter: {
+					or: [
+						{ created_by: { eq: "${user.profile_id}" } },
+						{ assigned_to: { eq: "${user.profile_id}" } }
+					]
+				}
             ) {
                 edges {
                     node {
@@ -54,6 +59,7 @@ async function getTasks(user: { profile_id: string }) {
                         type
                         status
                         due_date
+                        assigned_to
                     }
                 }
             }
@@ -158,12 +164,14 @@ export const actions = {
             assigned_to,
             created_by: user.profile_id
         });
+        
+        console.log(result);
 
-        if (result?.data?.createTask?.task) {
-            return { success: true, task: result.data.createTask.task };
-        } else {
+        if (!result?.insertIntotasksCollection?.records) {
             return fail(400, { error: 'Failed to create task' });
         }
+        return { success: true, message: 'Task created successfully', task: result.insertIntotasksCollection.records[0] };
+
     },
     next_stage: async ({ request }) => {
         const formData = await request.formData();
@@ -284,7 +292,7 @@ export const actions = {
             }
         `;
 
-        let result = await gql(mutation, { task_id });        
+        let result = await gql(mutation, { task_id });
 
         if (result?.updatetasksCollection?.records) {
             return { success: true, message: 'Task reopened successfully' };

@@ -1,7 +1,7 @@
-import { getProfile, supabase } from '$lib/supabase.js';
+import { supabase, getProfile } from '$lib/supabase.js';
 import { PUBLIC_GOOGLE_API_KEY } from '$env/static/public';
 import { GoogleGenAI } from "@google/genai";
-import { gql } from '$lib/graphql';
+import { discussionsService, contactsService, dealsService, interactionsService, profilesService } from '$lib/services';
 
 // Initialize Google AI for both generation and embeddings
 const genAI = new GoogleGenAI({ apiKey: PUBLIC_GOOGLE_API_KEY });
@@ -192,36 +192,45 @@ async function getUserBusinessContext(userProfile: any): Promise<string> {
             }
         `;
 
-        const businessData = await gql(businessContextQuery, {
-            profile_id: userProfile.profile_id,
-            company_id: userProfile.company_id
-        });
+        // Get business context using services
+        const [contacts, deals, interactions, tasks] = await Promise.all([
+            contactsService.getAll(userProfile.company_id).then(data => data?.slice(0, 5) || []),
+            dealsService.getAll(userProfile.company_id).then(data => data?.slice(0, 5) || []),
+            interactionsService.getAll(userProfile.company_id).then(data => data?.slice(0, 5) || []),
+            // Get user's tasks using their profile_id
+            supabase
+                .from('tasks')
+                .select('title, priority, due_date, status')
+                .or(`created_by.eq.${userProfile.profile_id},assigned_to.eq.${userProfile.profile_id}`)
+                .limit(5)
+                .then(({ data }) => data || [])
+        ]);
 
         let contextSummary = '\n\nYour Current Business Context:\n';
         
         // Recent contacts
-        if (businessData.contactsCollection?.edges?.length > 0) {
-            contextSummary += `📋 Recent Contacts: ${businessData.contactsCollection.edges.map((e: any) => e.node.fullname).join(', ')}\n`;
+        if (contacts.length > 0) {
+            contextSummary += `📋 Recent Contacts: ${contacts.map((contact: any) => contact.fullname).join(', ')}\n`;
         }
         
         // Active deals
-        if (businessData.dealsCollection?.edges?.length > 0) {
-            contextSummary += `Active Deals: ${businessData.dealsCollection.edges.map((e: any) => 
-                `${e.node.title} ($${e.node.value} - ${e.node.stage})`
+        if (deals.length > 0) {
+            contextSummary += `💼 Active Deals: ${deals.map((deal: any) => 
+                `${deal.title} ($${deal.value} - ${deal.stage})`
             ).join(', ')}\n`;
         }
         
         // Recent interactions
-        if (businessData.interactionsCollection?.edges?.length > 0) {
-            contextSummary += `Recent Interactions: ${businessData.interactionsCollection.edges.map((e: any) => 
-                `${e.node.type}`
+        if (interactions.length > 0) {
+            contextSummary += `🤝 Recent Interactions: ${interactions.map((interaction: any) => 
+                `${interaction.type}`
             ).join(', ')}\n`;
         }
         
         // Pending tasks
-        if (businessData.tasksCollection?.edges?.length > 0) {
-            contextSummary += `Pending Tasks: ${businessData.tasksCollection.edges.map((e: any) => 
-                `${e.node.title} (${e.node.priority} priority)`
+        if (tasks.length > 0) {
+            contextSummary += `📋 Pending Tasks: ${tasks.map((task: any) => 
+                `${task.title} (${task.priority} priority)`
             ).join(', ')}\n`;
         }
 
@@ -276,15 +285,32 @@ export const POST = async (event) => {
             }
         `;
 
-        const contextData = await gql(contextQuery, { discussion_id: parseInt(discussion_id) });
+        // Get conversation context from database using REST API
+        const { data: chats, error: chatsError } = await supabase
+            .from('chats')
+            .select('role, content, created_at, is_ai')
+            .eq('discussion_id', discussion_id)
+            .order('created_at', { ascending: true });
+
+        if (chatsError) {
+            console.error('Error fetching chats:', chatsError);
+            return new Response(JSON.stringify({ error: 'Failed to fetch conversation context' }), { status: 500 });
+        }
 
         // Build conversation context for AI
-        const conversationHistory = contextData.chatsCollection.edges.map((edge: any) => ({
-            role: edge.node.is_ai ? 'model' : 'user',
-            parts: [{ text: edge.node.content }]
-        }));
+        const conversationHistory = chats?.map((chat: any) => ({
+            role: chat.is_ai ? 'model' : 'user',
+            parts: [{ text: chat.content }]
+        })) || [];
 
-        const discussionInfo = contextData.discussionsCollection.edges[0]?.node;
+        // Get discussion info
+        const { data: discussion } = await supabase
+            .from('discussions')
+            .select('name, description, created_at')
+            .eq('discussion_id', discussion_id)
+            .single();
+
+        const discussionInfo = discussion;
 
         // Get RAG context and user business context
         console.log('🔍 Retrieving RAG context for:', message);
@@ -360,50 +386,34 @@ Please provide a helpful, data-driven response as their CRM assistant. If the co
                     }
                 `;
 
-                const updateResult = await gql(updateTitleMutation, {
-                    discussion_id: parseInt(discussion_id),
-                    title: generatedTitle
-                });
-
-                if (updateResult?.updateddiscussionsCollection?.records?.length > 0) {
+                // Update discussion title using discussionsService
+                try {
+                    await discussionsService.update(parseInt(discussion_id), { name: generatedTitle });
                     console.log('✅ Discussion title updated successfully:', generatedTitle);
-                } else {
-                    console.warn('⚠️ Failed to update discussion title');
+                } catch (titleError) {
+                    console.error('❌ Error updating discussion title:', titleError);
+                    // Continue with the response even if title update fails
                 }
-            } catch (titleError) {
-                console.error('❌ Error updating discussion title:', titleError);
-                // Continue with the response even if title update fails
+            } catch (error) {
+                console.error('❌ Error generating or updating discussion title:', error);
+                // Continue without updating title
             }
         }
         
-        // Insert AI response to database using GraphQL
-        const insertMutation = `
-            mutation InsertAIResponse($discussion_id: BigInt!, $content: String!) {
-                insertIntochatsCollection(
-                    objects: [{
-                        discussion_id: $discussion_id,
-                        content: $content,
-                        is_ai: true
-                    }]
-                ) {
-                    records {
-                        chat_id
-                        discussion_id
-                        content
-                        is_ai
-                        created_at
-                    }
-                }
-            }
-        `;
+        // Insert AI response to database using Supabase REST API
+        const { data: insertData, error: insertError } = await supabase
+            .from('chats')
+            .insert({
+                discussion_id: parseInt(discussion_id),
+                content: aiMessage,
+                is_ai: true,
+                role: 'assistant'
+            })
+            .select()
+            .single();
 
-        const insertResult = await gql(insertMutation, {
-            discussion_id: parseInt(discussion_id),
-            content: aiMessage
-        });
-
-        if (!insertResult || !insertResult.insertIntochatsCollection.records.length) {
-            console.error('Failed to insert AI response to database');
+        if (insertError || !insertData) {
+            console.error('Failed to insert AI response to database:', insertError);
             return new Response(JSON.stringify({
                 error: 'Failed to insert AI response to database'
             }), {
@@ -419,7 +429,7 @@ Please provide a helpful, data-driven response as their CRM assistant. If the co
             success: true,
             message: 'AI response generated and saved successfully',
             ai_response: aiMessage,
-            chat_id: insertResult.insertIntochatsCollection.records[0].chat_id,
+            chat_id: insertData.chat_id,
             title_generated: isFirstAIResponse,
             new_title: generatedTitle
         }), {

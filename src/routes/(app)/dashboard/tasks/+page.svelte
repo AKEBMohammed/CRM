@@ -54,7 +54,7 @@
         </div>
 
         <div class="flex items-center space-x-2">
-            <Button color="primary" size="sm">
+            <Button color="primary" size="sm" onclick={() => (openCreateTaskModal = true)}>
                 <PlusOutline class="mr-2" />Add New Task
             </Button>
         </div>
