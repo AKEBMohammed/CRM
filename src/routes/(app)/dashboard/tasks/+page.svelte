@@ -59,7 +59,7 @@
             </Button>
         </div>
     </div>
-    <div class="h-full grid grid-cols-4 gap-4">
+    <div class="grid grid-cols-4 gap-4">
         {#if data.tasks.length === 0}
             <P class="text-gray-600"
                 >No tasks available. Please add a new task.</P

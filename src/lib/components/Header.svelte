@@ -140,11 +140,9 @@
                         Settings
                     </DropdownItem>
                     <DropdownItem
+                        formaction="?/signout"
                         class="flex items-center"
-                        onclick={async () => {
-                            await supabase.auth.signOut();
-                            goto("/auth");
-                        }}
+                        type="submit"
                     >
                         <ExclamationCircleOutline class="w-5 h-5 me-2" />
                         Sign out

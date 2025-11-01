@@ -1,5 +1,4 @@
-import { gql } from '$lib/graphql';
-import { getProfile, supabase } from '$lib/supabase';
+import { supabase, getProfile } from '$lib/supabase';
 import { redirect } from '@sveltejs/kit';
 import type { LayoutServerLoad } from './$types';
 
@@ -9,99 +8,108 @@ export const load: LayoutServerLoad = async ({ cookies }) => {
         redirect(303, '/auth');
     }
 
+    console.log('Loading dashboard layout for user:', user.profile_id);
 
-    let query = `
-        query {
-            profiles_roomsCollection(
-                filter: {
-                    profile_id: {
-                        eq: "${user.profile_id}"
-                    }
-                }
-            ) {
-                edges {
-                    node {
-                        rooms {
-                            room_id
-                            name
-                            messagesCollection(
-                                orderBy: [{ send_at: DescNullsLast }]
-                                first: 1
-                            ){
-                                edges {
-                                    node {
-                                        content
-                                        profiles {
-                                            fullname
-                                        }
-                                    }
-                                }
-                            }
-                            allMessages: messagesCollection {
-                                edges {
-                                    node {
-                                        message_id
-                                        sender_id
-                                        viewsCollection(
-                                            filter: {
-                                                profile_id: {
-                                                    eq: "${user.profile_id}"
-                                                }
-                                            }
-                                        ) {
-                                            edges {
-                                                node {
-                                                    view_id
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+    try {
+        // Get user's rooms through profiles_rooms junction table
+        const { data: userRooms, error: roomsError } = await supabase
+            .from('profiles_rooms')
+            .select(`
+                rooms!inner(
+                    room_id,
+                    name
+                )
+            `)
+            .eq('profile_id', user.profile_id);
+
+        if (roomsError) {
+            console.error('Error fetching user rooms:', roomsError);
+            return { user, rooms: [] };
         }
-    `
-    let data = await gql(query);
 
-    let rooms = data
-        .profiles_roomsCollection
-        .edges
-        .map((edge: any) => edge.node.rooms)
-        .map((room: any) => {
-            // Calculate unread messages count
-            const unreadCount = room.allMessages.edges.filter((messageEdge: any) => {
-                const message = messageEdge.node;
-                // Only count messages sent by OTHER users (not current user)
-                if (message.sender_id === user.profile_id) return false;
-                // Check if current user has NOT viewed this message
-                const hasViewed = message.viewsCollection.edges.length > 0;
-                const isUnread = !hasViewed;
-                
-                // Debug logging
-                if (isUnread) {
-                    console.log(`Unread message ${message.message_id} from user ${message.sender_id} in room ${room.room_id}`);
-                }
-                
-                return isUnread;
-            }).length;
+        console.log('User rooms found:', userRooms?.length || 0);
+
+        // Get room details with latest messages and unread counts
+        const roomsData = await Promise.all((userRooms || []).map(async (userRoom: any) => {
+            const room = userRoom.rooms;
+
+            // Get latest message for this room
+            const { data: latestMessage } = await supabase
+                .from('messages')
+                .select(`
+                        message_id,
+                        content,
+                        send_at,
+                        profile_id
+                    `)
+                .eq('room_id', room.room_id)
+                .order('send_at', { ascending: false })
+                .limit(1)
+                .single();
+
+            // Get sender's profile info if message exists
+            let senderName = null;
+            if (latestMessage?.profile_id) {
+                const { data: senderProfile } = await supabase
+                    .from('profiles')
+                    .select('fullname')
+                    .eq('profile_id', latestMessage.profile_id)
+                    .single();
+                senderName = senderProfile?.fullname || null;
+            }
+
+            // Get all messages in this room
+            const { data: allMessages } = await supabase
+                .from('messages')
+                .select('message_id, profile_id')
+                .eq('room_id', room.room_id);
+
+            // Get viewed messages by current user
+            const { data: viewedMessages } = await supabase
+                .from('views')
+                .select('message_id')
+                .eq('profile_id', user.profile_id);
+
+            // Calculate unread count
+            const viewedMessageIds = new Set(viewedMessages?.map(v => v.message_id) || []);
+            const unreadCount = (allMessages || []).filter(message =>
+                message.profile_id !== user.profile_id && // Not sent by current user
+                !viewedMessageIds.has(message.message_id) // Not viewed by current user
+            ).length;
+
+            // Debug logging for unread messages
+            if (unreadCount > 0) {
+                const unreadMessages = (allMessages || []).filter(message =>
+                    message.profile_id !== user.profile_id &&
+                    !viewedMessageIds.has(message.message_id)
+                );
+                unreadMessages.forEach(msg => {
+                    console.log(`Unread message ${msg.message_id} from user ${msg.profile_id} in room ${room.room_id}`);
+                });
+            }
 
             return {
                 room_id: room.room_id,
                 name: room.name,
-                fullname: room.messagesCollection.edges[0]?.node.profiles.fullname || null,
-                message: room.messagesCollection.edges[0]?.node.content || null,
+                fullname: senderName,
+                message: latestMessage?.content || null,
                 unreadCount
             };
-        });
+        }))
 
-        console.log('Rooms with unread counts:', rooms);
-        
 
-    return {
-        user,
-        rooms
-    };
+        console.log('Rooms with unread counts:', roomsData);
+
+        return {
+            user,
+            rooms: roomsData
+        };
+
+    } catch (error) {
+        console.error('Layout data fetch error:', error);
+        return {
+            user,
+            rooms: []
+        };
+    }
 };

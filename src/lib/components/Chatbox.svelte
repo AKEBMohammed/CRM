@@ -70,7 +70,6 @@
     let selectedFile: File | null = $state(null);
     let replyTo: Message | null = $state(null);
     let isTyping = $state(false);
-    let showEmojiPicker = $state(false);
 
     // Debounced function to check and mark viewed messages
     function scheduleViewCheck() {

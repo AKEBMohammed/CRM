@@ -22,7 +22,6 @@
         LightbulbOutline,
     } from "flowbite-svelte-icons";
     import type { PageProps } from "./$types";
-    import Header from "$lib/components/Header.svelte";
 
     let { data }: PageProps = $props();
 

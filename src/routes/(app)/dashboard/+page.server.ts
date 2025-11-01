@@ -1,4 +1,4 @@
-import type { PageServerLoad } from './$types';
+import type { Action, Actions, PageServerLoad } from './$types';
 import { supabase } from '$lib/supabase';
 import { redirect } from '@sveltejs/kit';
 import { getProfile } from '$lib/supabase';
@@ -183,3 +183,10 @@ export const load: PageServerLoad = async ({ cookies }) => {
 		};
 	}
 };
+
+export const actions = {
+	signout: async () => {
+		await supabase.auth.signOut();
+		redirect(304, '/auth')
+	}
+} satisfies Actions;

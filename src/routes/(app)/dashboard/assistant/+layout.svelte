@@ -14,7 +14,7 @@
     let { children, data } = $props();
 </script>
 
-<main class="w-full h-full row-start-2 col-start-2 overflow-y-auto flex">
+<main class="w-full h-full row-start-2 col-start-2 flex flex-row ">
     <aside
         class="w-1/3 h-full p-2 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700"
     >
@@ -24,16 +24,15 @@
             >AI Discussions</Heading
         >
         <Search placeholder="Search discussions..." size="md" class="mb-2" />
-        <form use:enhance action="?/create" method="post">
+        <form use:enhance action="./?/create" method="POST">
             <Button type="submit" color="primary" size="sm" class="mb-4 w-full">
                 <PlusOutline class="w-5 h-5 mr-2" />
                 New Discussion
             </Button>
         </form>
 
-        <Listgroup>
+        <Listgroup class="w-full h-fit overflow-y-scroll">
             {#each data.discussions as discussion}
-                
                 <ListgroupItem
                     href={`/dashboard/assistant/${discussion.discussion_id}`}
                     class="flex flex-col justify-start items-start"

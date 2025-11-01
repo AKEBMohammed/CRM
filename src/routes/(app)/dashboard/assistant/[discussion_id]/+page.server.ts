@@ -1,12 +1,12 @@
 import { redirect } from "@sveltejs/kit";
 import type { Actions, PageServerLoad } from "./$types";
 import { gql } from "$lib/graphql";
-import { supabase } from "$lib/supabase";
+import { getProfile, supabase } from "$lib/supabase";
 
 
 
 export const load: PageServerLoad = async ({ params, cookies }) => {
-    const user = JSON.parse(cookies.get('user') || 'null');
+    const user = await getProfile();
     if (!user) {
         redirect(300, '/auth');
     }

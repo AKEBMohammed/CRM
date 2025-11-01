@@ -77,6 +77,45 @@ async function getRelevantContext(userMessage: string, userProfile: any): Promis
     }
 }
 
+// Enhanced function to generate a discussion title based on conversation content
+async function generateDiscussionTitle(userMessage: string, aiResponse: string): Promise<string> {
+    try {
+        const titlePrompt = `Based on this conversation between a user and their CRM assistant, generate a concise, professional title (max 5-7 words) that captures the main topic or purpose.
+
+User's message: "${userMessage}"
+AI's response: "${aiResponse}"
+
+Generate only the title, nothing else. Make it business-focused and descriptive.
+
+Examples:
+- "Sales Pipeline Review"
+- "Customer Onboarding Strategy"
+- "Q4 Revenue Forecast"
+- "Lead Follow-up Plan"
+- "Product Pricing Analysis"`;
+
+        const titleResponse = await genAI.models.generateContent({
+            model: "gemini-2.0-flash-exp",
+            contents: titlePrompt,
+        });
+
+        const generatedTitle = titleResponse.text?.trim() || 'Business Discussion';
+        
+        // Clean up the title (remove quotes, limit length)
+        const cleanTitle = generatedTitle
+            .replace(/['"]/g, '')
+            .substring(0, 50)
+            .trim();
+
+        console.log('🏷️ Generated discussion title:', cleanTitle);
+        return cleanTitle;
+
+    } catch (error) {
+        console.error('Error generating discussion title:', error);
+        return 'Business Discussion'; // Fallback title
+    }
+}
+
 // Enhanced function to get user's recent business context
 async function getUserBusinessContext(userProfile: any): Promise<string> {
     try {
@@ -86,7 +125,7 @@ async function getUserBusinessContext(userProfile: any): Promise<string> {
                 contactsCollection(
                     filter: { created_by: { eq: $profile_id } }
                     orderBy: [{ created_at: DescNullsLast }]
-                    first: 3
+                    first: 5
                 ) {
                     edges {
                         node {
@@ -105,7 +144,7 @@ async function getUserBusinessContext(userProfile: any): Promise<string> {
                         stage: { neq: "closed_lost" }
                     }
                     orderBy: [{ updated_at: DescNullsLast }]
-                    first: 3
+                    first: 5
                 ) {
                     edges {
                         node {
@@ -119,9 +158,9 @@ async function getUserBusinessContext(userProfile: any): Promise<string> {
                 
                 # Recent interactions
                 interactionsCollection(
-                    filter: { profile_id: { eq: $profile_id } }
+                    filter: { created_by: { eq: $profile_id } }
                     orderBy: [{ created_at: DescNullsLast }]
-                    first: 3
+                    first: 5
                 ) {
                     edges {
                         node {
@@ -167,21 +206,21 @@ async function getUserBusinessContext(userProfile: any): Promise<string> {
         
         // Active deals
         if (businessData.dealsCollection?.edges?.length > 0) {
-            contextSummary += `💰 Active Deals: ${businessData.dealsCollection.edges.map((e: any) => 
+            contextSummary += `Active Deals: ${businessData.dealsCollection.edges.map((e: any) => 
                 `${e.node.title} ($${e.node.value} - ${e.node.stage})`
             ).join(', ')}\n`;
         }
         
         // Recent interactions
         if (businessData.interactionsCollection?.edges?.length > 0) {
-            contextSummary += `📞 Recent Interactions: ${businessData.interactionsCollection.edges.map((e: any) => 
+            contextSummary += `Recent Interactions: ${businessData.interactionsCollection.edges.map((e: any) => 
                 `${e.node.type}`
             ).join(', ')}\n`;
         }
         
         // Pending tasks
         if (businessData.tasksCollection?.edges?.length > 0) {
-            contextSummary += `✅ Pending Tasks: ${businessData.tasksCollection.edges.map((e: any) => 
+            contextSummary += `Pending Tasks: ${businessData.tasksCollection.edges.map((e: any) => 
                 `${e.node.title} (${e.node.priority} priority)`
             ).join(', ')}\n`;
         }
@@ -250,16 +289,20 @@ export const POST = async (event) => {
         // Get RAG context and user business context
         console.log('🔍 Retrieving RAG context for:', message);
         const ragContext = await getRelevantContext(message, user);
+        console.log('Relevent Context:', ragContext);
         const businessContext = await getUserBusinessContext(user);
+        console.log('Business Context:', businessContext);
 
         // Prepare enhanced AI request with RAG context
-        const systemPrompt = `You are an intelligent CRM assistant with access to the user's business data. 
+        const systemPrompt = `You are an intelligent CRM assistant with access to the user's business data. Remember to leverage this data to provide accurate and relevant responses.
 
 **Your Role:**
 - Help with CRM tasks, customer management, sales insights, and business analytics
 - Provide actionable advice based on the user's actual data
 - Be concise but thorough in your responses
 - Use the provided context to give personalized recommendations
+
+**Current CRM:** DZ Sales is a mini CRM build to help small bussnisses to manage theire work.
 
 **Current Discussion:** "${discussionInfo?.name || 'General Discussion'}"
 ${discussionInfo?.description ? `Context: ${discussionInfo.description}` : ''}
@@ -278,6 +321,8 @@ ${conversationHistory.slice(-5).map((msg: any) =>
 
 Please provide a helpful, data-driven response as their CRM assistant. If the context contains relevant information, reference it specifically. If you need more information to give a complete answer, ask clarifying questions.`;
 
+        console.log('System Prompt:', systemPrompt);
+        
         // Send request to Google AI with enhanced context
         const aiResponse = await genAI.models.generateContent({
             model: "gemini-2.0-flash-exp",
@@ -287,6 +332,50 @@ Please provide a helpful, data-driven response as their CRM assistant. If the co
 
         const aiMessage = aiResponse.text || 'Sorry, I could not generate a response.';
 
+        console.log('Responce: ',aiMessage);
+
+        // Check if this is the first AI response in the discussion
+        const isFirstAIResponse = conversationHistory.filter((msg: any) => msg.role === 'model').length === 0;
+        console.log('🔍 Is first AI response:', isFirstAIResponse);
+
+        // Generate and update discussion title if this is the first response
+        let generatedTitle = null;
+        if (isFirstAIResponse) {
+            console.log('🏷️ Generating discussion title...');
+            generatedTitle = await generateDiscussionTitle(message, aiMessage);
+            
+            // Update discussion title in database
+            try {
+                const updateTitleMutation = `
+                    mutation UpdateDiscussionTitle($discussion_id: BigInt!, $title: String!) {
+                        updatediscussionsCollection(
+                            filter: { discussion_id: { eq: $discussion_id } }
+                            set: { name: $title }
+                        ) {
+                            records {
+                                discussion_id
+                                name
+                            }
+                        }
+                    }
+                `;
+
+                const updateResult = await gql(updateTitleMutation, {
+                    discussion_id: parseInt(discussion_id),
+                    title: generatedTitle
+                });
+
+                if (updateResult?.updateddiscussionsCollection?.records?.length > 0) {
+                    console.log('✅ Discussion title updated successfully:', generatedTitle);
+                } else {
+                    console.warn('⚠️ Failed to update discussion title');
+                }
+            } catch (titleError) {
+                console.error('❌ Error updating discussion title:', titleError);
+                // Continue with the response even if title update fails
+            }
+        }
+        
         // Insert AI response to database using GraphQL
         const insertMutation = `
             mutation InsertAIResponse($discussion_id: BigInt!, $content: String!) {
@@ -314,7 +403,15 @@ Please provide a helpful, data-driven response as their CRM assistant. If the co
         });
 
         if (!insertResult || !insertResult.insertIntochatsCollection.records.length) {
-            throw new Error('Failed to insert AI response to database');
+            console.error('Failed to insert AI response to database');
+            return new Response(JSON.stringify({
+                error: 'Failed to insert AI response to database'
+            }), {
+                status: 500,
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
         }
 
         // Return success response
@@ -322,7 +419,9 @@ Please provide a helpful, data-driven response as their CRM assistant. If the co
             success: true,
             message: 'AI response generated and saved successfully',
             ai_response: aiMessage,
-            chat_id: insertResult.insertIntochatsCollection.records[0].chat_id
+            chat_id: insertResult.insertIntochatsCollection.records[0].chat_id,
+            title_generated: isFirstAIResponse,
+            new_title: generatedTitle
         }), {
             status: 200,
             headers: {
