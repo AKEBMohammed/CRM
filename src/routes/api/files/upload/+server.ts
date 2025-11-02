@@ -7,10 +7,29 @@ const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
 // Allowed file types
 const ALLOWED_TYPES = [
+    // Images
     'image/jpeg',
     'image/png', 
     'image/gif',
     'image/webp',
+    'image/bmp',
+    'image/svg+xml',
+    // Videos
+    'video/mp4',
+    'video/mpeg',
+    'video/quicktime',
+    'video/x-msvideo',
+    'video/webm',
+    'video/ogg',
+    // Audio
+    'audio/mpeg',
+    'audio/mp3',
+    'audio/wav',
+    'audio/ogg',
+    'audio/aac',
+    'audio/mp4',
+    'audio/x-m4a',
+    // Documents
     'application/pdf',
     'text/plain',
     'application/msword',
@@ -20,11 +39,6 @@ const ALLOWED_TYPES = [
     'application/json',
     'application/zip',
     'application/x-rar-compressed',
-    'video/mp4',
-    'video/mpeg',
-    'audio/mpeg',
-    'audio/wav',
-    'audio/ogg',
     'text/csv',
     'application/xml'
 ];

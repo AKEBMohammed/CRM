@@ -556,26 +556,39 @@
                 return;
             }
             
-            // Optional: File type validation (you can customize this)
+            // Enhanced file type validation
             const allowedTypes = [
-                'image/', 'text/', 'application/pdf', 'application/msword', 
-                'application/vnd.openxmlformats-officedocument', 'application/zip',
-                'application/x-zip-compressed', 'application/json'
+                // Images
+                'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp',
+                // Videos
+                'video/mp4', 'video/mpeg', 'video/quicktime', 'video/x-msvideo',
+                // Audio
+                'audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/ogg', 'audio/aac',
+                // Documents
+                'text/plain', 'application/pdf', 'application/msword', 
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                'application/zip', 'application/x-zip-compressed', 'application/json', 'text/csv'
             ];
             
-            const isAllowedType = allowedTypes.some(type => file.type.startsWith(type));
+            const isAllowedType = allowedTypes.includes(file.type) || 
+                allowedTypes.some(type => file.type.startsWith(type.split('/')[0] + '/'));
+            
             if (!isAllowedType && file.type !== '') {
-                const confirmed = confirm(
-                    `File type "${file.type}" might not be supported. Continue anyway?`
+                alert(
+                    `File type "${file.type}" is not supported.\n\n` +
+                    'Supported types:\n' +
+                    '• Images: JPEG, PNG, GIF, WebP\n' +
+                    '• Videos: MP4, MPEG, QuickTime, AVI\n' +
+                    '• Audio: MP3, WAV, OGG, AAC\n' +
+                    '• Documents: PDF, DOC, DOCX, XLS, XLSX, TXT, CSV, JSON, ZIP'
                 );
-                if (!confirmed) {
-                    input.value = ''; // Clear the input
-                    return;
-                }
+                input.value = ''; // Clear the input
+                return;
             }
             
             selectedFile = file;
-            console.log(`File selected: ${file.name} (${formatFileSize(file.size)})`);
+            console.log(`File selected: ${file.name} (${formatFileSize(file.size)}) - Type: ${file.type}`);
         }
     }
 
@@ -615,6 +628,30 @@
         const i = Math.floor(Math.log(bytes) / Math.log(k));
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
     }
+
+    // Helper functions to detect file types
+    function isImageFile(file: any): boolean {
+        if (!file?.file_type) return false;
+        return file.file_type.startsWith('image/');
+    }
+
+    function isVideoFile(file: any): boolean {
+        if (!file?.file_type) return false;
+        return file.file_type.startsWith('video/');
+    }
+
+    function isAudioFile(file: any): boolean {
+        if (!file?.file_type) return false;
+        return file.file_type.startsWith('audio/');
+    }
+
+    function getMediaTypeLabel(file: any): string {
+        if (isImageFile(file)) return 'Image';
+        if (isVideoFile(file)) return 'Video';
+        if (isAudioFile(file)) return 'Audio';
+        return 'Document';
+    }
+
     async function getFileDownloadUrl(
         fileName: string,
     ): Promise<string | null> {
@@ -767,6 +804,114 @@
                                         ? 'bg-primary-600'
                                         : 'bg-gray-50 dark:bg-gray-700'} border border-opacity-20"
                                 >
+                                    <!-- Media Preview for Images, Videos, and Audio -->
+                                    {#if isImageFile(message.files)}
+                                        <!-- Image Preview -->
+                                        <div class="mb-3">
+                                            {#await getFileDownloadUrl(message.files.p_name)}
+                                                <div class="w-full h-48 bg-gray-200 dark:bg-gray-600 rounded-lg flex items-center justify-center">
+                                                    <Spinner size="6" />
+                                                </div>
+                                            {:then downloadUrl}
+                                                {#if downloadUrl}
+                                                    <button
+                                                        type="button"
+                                                        class="w-full bg-transparent border-none p-0 cursor-pointer"
+                                                        onclick={() => {
+                                                            window.open(downloadUrl, '_blank');
+                                                        }}
+                                                        onkeydown={(e) => {
+                                                            if (e.key === 'Enter' || e.key === ' ') {
+                                                                e.preventDefault();
+                                                                window.open(downloadUrl, '_blank');
+                                                            }
+                                                        }}
+                                                        title="Click to view full image"
+                                                    >
+                                                        <img 
+                                                            src={downloadUrl} 
+                                                            alt={message.files.v_name || 'Image'}
+                                                            class="max-w-full h-auto max-h-64 rounded-lg hover:opacity-90 transition-opacity"
+                                                            onerror={(e) => {
+                                                                console.error('Failed to load image:', e);
+                                                                const target = e.target as HTMLImageElement;
+                                                                if (target) {
+                                                                    target.style.display = 'none';
+                                                                }
+                                                            }}
+                                                        />
+                                                    </button>
+                                                {:else}
+                                                    <div class="w-full h-48 bg-gray-200 dark:bg-gray-600 rounded-lg flex items-center justify-center">
+                                                        <P class="text-gray-500">Failed to load image</P>
+                                                    </div>
+                                                {/if}
+                                            {:catch error}
+                                                <div class="w-full h-48 bg-gray-200 dark:bg-gray-600 rounded-lg flex items-center justify-center">
+                                                    <P class="text-gray-500">Failed to load image</P>
+                                                </div>
+                                            {/await}
+                                        </div>
+                                    {:else if isVideoFile(message.files)}
+                                        <!-- Video Preview -->
+                                        <div class="mb-3">
+                                            {#await getFileDownloadUrl(message.files.p_name)}
+                                                <div class="w-full h-48 bg-gray-200 dark:bg-gray-600 rounded-lg flex items-center justify-center">
+                                                    <Spinner size="6" />
+                                                </div>
+                                            {:then downloadUrl}
+                                                {#if downloadUrl}
+                                                    <video 
+                                                        controls 
+                                                        class="max-w-full h-auto max-h-64 rounded-lg"
+                                                        preload="metadata"
+                                                    >
+                                                        <source src={downloadUrl} type={message.files.file_type} />
+                                                        <track kind="captions" />
+                                                        Your browser does not support the video tag.
+                                                    </video>
+                                                {:else}
+                                                    <div class="w-full h-48 bg-gray-200 dark:bg-gray-600 rounded-lg flex items-center justify-center">
+                                                        <P class="text-gray-500">Failed to load video</P>
+                                                    </div>
+                                                {/if}
+                                            {:catch error}
+                                                <div class="w-full h-48 bg-gray-200 dark:bg-gray-600 rounded-lg flex items-center justify-center">
+                                                    <P class="text-gray-500">Failed to load video</P>
+                                                </div>
+                                            {/await}
+                                        </div>
+                                    {:else if isAudioFile(message.files)}
+                                        <!-- Audio Preview -->
+                                        <div class="mb-3">
+                                            {#await getFileDownloadUrl(message.files.p_name)}
+                                                <div class="w-full h-16 bg-gray-200 dark:bg-gray-600 rounded-lg flex items-center justify-center">
+                                                    <Spinner size="4" />
+                                                </div>
+                                            {:then downloadUrl}
+                                                {#if downloadUrl}
+                                                    <audio 
+                                                        controls 
+                                                        class="w-full rounded-lg"
+                                                        preload="metadata"
+                                                    >
+                                                        <source src={downloadUrl} type={message.files.file_type} />
+                                                        Your browser does not support the audio tag.
+                                                    </audio>
+                                                {:else}
+                                                    <div class="w-full h-16 bg-gray-200 dark:bg-gray-600 rounded-lg flex items-center justify-center">
+                                                        <P class="text-gray-500">Failed to load audio</P>
+                                                    </div>
+                                                {/if}
+                                            {:catch error}
+                                                <div class="w-full h-16 bg-gray-200 dark:bg-gray-600 rounded-lg flex items-center justify-center">
+                                                    <P class="text-gray-500">Failed to load audio</P>
+                                                </div>
+                                            {/await}
+                                        </div>
+                                    {/if}
+
+                                    <!-- File Info and Download Section -->
                                     <div
                                         class="flex items-center justify-between"
                                     >
@@ -803,7 +948,10 @@
                                                         ? 'text-primary-200'
                                                         : 'text-gray-500 dark:text-gray-400'}"
                                                 >
-                                                    Document
+                                                    {getMediaTypeLabel(message.files)}
+                                                    {#if message.files.file_size}
+                                                        • {formatFileSize(message.files.file_size)}
+                                                    {/if}
                                                 </P>
                                             </div>
                                         </div>
@@ -1017,7 +1165,17 @@
                     <P class="text-xs {isUploadingFile 
                         ? 'text-blue-600 dark:text-blue-400' 
                         : 'text-green-600 dark:text-green-400'}">
-                        {formatFileSize(selectedFile.size)} • {isUploadingFile ? 'Uploading...' : 'Ready to send'}
+                        {formatFileSize(selectedFile.size)} • 
+                        {#if selectedFile.type.startsWith('image/')}
+                            Image
+                        {:else if selectedFile.type.startsWith('video/')}
+                            Video
+                        {:else if selectedFile.type.startsWith('audio/')}
+                            Audio
+                        {:else}
+                            Document
+                        {/if}
+                        • {isUploadingFile ? 'Uploading...' : 'Ready to send'}
                     </P>
                 </div>
                 {#if !isUploadingFile}
