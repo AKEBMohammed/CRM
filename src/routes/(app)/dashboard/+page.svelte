@@ -20,6 +20,9 @@
         CartOutline,
         FireSolid,
         LightbulbOutline,
+        BellSolid,
+        BedOutline,
+        BellOutline,
     } from "flowbite-svelte-icons";
     import type { PageProps } from "./$types";
 
@@ -100,10 +103,10 @@
 </script>
 
 <div
-    class="h-full w-full p-2 grid grid-rows-[auto,1fr] grid-cols-[1fr,2fr,1fr] gap-2 bg-gradient-to-br from-gray-50 via-blue-50/30 to-purple-50/20 dark:from-gray-900 dark:via-blue-900/10 dark:to-purple-900/10"
+    class="h-full w-full p-2 grid grid-rows-[auto,auto,1fr] grid-cols-[1fr,1fr,1fr,1fr] gap-2 bg-gradient-to-br from-gray-50 via-blue-50/30 to-purple-50/20 dark:from-gray-900 dark:via-blue-900/10 dark:to-purple-900/10"
 >
     <div
-        class="h-fit col-start-1 col-span-3 row-start-1 flex items-center border-b border-gray-200 dark:border-gray-700 p-2 space-x-6"
+        class="h-fit col-start-1 col-span-4 row-start-1 flex items-center border-b border-gray-200 dark:border-gray-700 p-2 space-x-6"
     >
         <Avatar
             size="md"
@@ -195,7 +198,7 @@
     </div>
 
     <!-- CRM Performance Cards -->
-    <div class="h-fit col-start-2 col-span-2 row-start-2 flex gap-4 p-2">
+    <div class="h-fit col-start-2 col-span-3 row-start-2 flex gap-4 p-2">
         <!-- Contacts Card -->
         <Card
             class="p-4 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border-0 shadow-lg bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 grid grid-rows-3 grid-cols-[2fr,1fr]"
@@ -349,7 +352,7 @@
             {/each}
         </Listgroup>
     </div>
-    <div class="col-start-2 h-fit">
+    <div class="col-start-2 h-full">
         <Card
             class="p-2 border-0 shadow-lg bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900/20 dark:to-slate-800/20"
         >
@@ -432,7 +435,7 @@
             </Listgroup>
         </Card>
     </div>
-    <div class="col-start-3 h-fit">
+    <div class="col-start-3 h-full">
         <Card class="p-4 border-0 shadow-lg ">
             <div class="flex items-center justify-between mb-6">
                 <Heading
@@ -564,6 +567,66 @@
                         >
                             Create Deal
                         </button>
+                    </div>
+                {/each}
+            </Listgroup>
+        </Card>
+    </div>
+    <div class="col-start-4 h-full">
+        <Card class="p-4 border-0 shadow-lg ">
+            <div class="flex items-center justify-between mb-6">
+                <Heading
+                    tag="h4"
+                    class="text-xl font-semibold text-emerald-900 dark:text-white flex items-center"
+                >
+                    <BellOutline class="w-5 h-5 mr-2 text-emerald-600" />
+                    Notifications
+                </Heading>
+                <Badge color="green" class="px-3 py-1 text-sm font-medium">
+                    {data.notifications?.length || 0} notifications
+                </Badge>
+            </div>
+
+            <Listgroup class="max-h-80 overflow-y-auto">
+                {#each data.notifications || [] as notification, index}
+                    <ListgroupItem
+                        class="border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:shadow-lg transition-all duration-300 p-2 hover:border-emerald-300 dark:hover:border-emerald-600 hover:-translate-y-0.5"
+                    >
+                        <div class="flex items-start space-x-4 w-full">
+                            <Badge
+                                color={notification.type === "info"
+                                    ? "blue"
+                                    : notification.type === "warning"
+                                      ? "yellow"
+                                      : notification.type === "error"
+                                        ? "red"
+                                        : "green"}
+                                class="flex-shrink-0 text-xs px-2 py-1 font-medium"
+                            >
+                                {notification.type || "info"}
+                            </Badge>
+                            <P class="text-sm text-gray-500 dark:text-gray-400">{notification.content}</P>
+                        </div>
+                    </ListgroupItem>
+                {:else}
+                    <div
+                        class="w-full min-w-70 flex flex-col items-center text-center py-12"
+                    >
+                        <div
+                            class="w-16 h-16 bg-gradient-to-br from-emerald-100 to-teal-200 dark:from-emerald-900/40 dark:to-teal-800/40 rounded-full flex items-center justify-center mb-4"
+                        >
+                            <BellSolid
+                                class="w-8 h-8 text-emerald-500 dark:text-emerald-400"
+                            />
+                        </div>
+                        <P
+                            class="text-gray-500 dark:text-gray-400 font-medium mb-1"
+                        >
+                            No new notifications
+                        </P>
+                        <P class="text-sm text-gray-400 dark:text-gray-500">
+                            You're all caught up!
+                        </P>
                     </div>
                 {/each}
             </Listgroup>

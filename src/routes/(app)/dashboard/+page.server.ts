@@ -1,6 +1,6 @@
 import type { Action, Actions, PageServerLoad } from './$types';
 import { fail, redirect } from '@sveltejs/kit';
-import { contactsService, dealsService, tasksService, profilesService } from '$lib/services';
+import { contactsService, dealsService, tasksService, profilesService, notificationsService } from '$lib/services';
 import { getProfile, supabase } from '$lib/supabase';
 
 export const load: PageServerLoad = async ({ cookies }) => {
@@ -31,6 +31,11 @@ export const load: PageServerLoad = async ({ cookies }) => {
 		// Get tasks for the user
 		const tasks = (await tasksService.getAll(user.profile_id, user.company_id))
 			.filter(t => t.status !== 'completed' && t.status !== 'canceled')
+			.filter(t => {
+				const dueDate = new Date(t.due_date);
+				const now = new Date();
+				return dueDate.toDateString() === now.toDateString();
+			})
 			.sort((a, b) => {
 				const priorityOrder: { [key: string]: number } = { high: 3, medium: 2, low: 1 };
 				return (priorityOrder[b.priority] || 0) - (priorityOrder[a.priority] || 0);
@@ -40,7 +45,7 @@ export const load: PageServerLoad = async ({ cookies }) => {
 		//Get open Deals
 		const deals = (await dealsService.getAll(user.company_id))
 			.filter(d => d.status !== 'closed_won' && d.status !== 'closed_lost');
-			
+
 		console.log('Deals:', deals);
 
 		// Get rooms data (simplified mock for now)
@@ -52,19 +57,24 @@ export const load: PageServerLoad = async ({ cookies }) => {
 			unreadCount: 0
 		}));
 
+		// Get Notifications data (simplified mock for now)
+		const notifications = (await notificationsService.getAll(user.profile_id))
+			.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
 		return {
 			users,
 			contacts,
 			tasks,
 			deals,
 			rooms,
+			notifications,
 			user, // Add user to return data
 			stats: {
 				contactsThisMonth: contacts?.filter(c => {
 					const contactDate = new Date(c.created_at);
 					const thisMonth = new Date();
-					return contactDate.getMonth() === thisMonth.getMonth() && 
-						   contactDate.getFullYear() === thisMonth.getFullYear();
+					return contactDate.getMonth() === thisMonth.getMonth() &&
+						contactDate.getFullYear() === thisMonth.getFullYear();
 				}).length || 0,
 				totalInteractions: 0, // This could be enhanced later with interactions service
 				interactionsThisWeek: 0, // This could be enhanced later with interactions service
