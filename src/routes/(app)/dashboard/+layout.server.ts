@@ -54,14 +54,15 @@ export const load: LayoutServerLoad = async ({ cookies }) => {
         return {
             user,
             rooms: roomsData,
-            notifications
+            notifications: notifications || []
         };
 
     } catch (error) {
         console.error('Layout data fetch error:', error);
         return {
             user,
-            rooms: []
+            rooms: [],
+            notifications: []
         };
     }
 };
