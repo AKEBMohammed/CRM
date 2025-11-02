@@ -20,16 +20,7 @@
         <span>General Settings</span>
       </a>
 
-      <a
-        href="/dashboard/settings/notifications"
-        class={`flex items-center gap-2 px-3 py-2 rounded-lg transition ${
-          currentPath === '/dashboard/settings/notifications' ? 'bg-[#334155]' : 'hover:bg-[#475569]'
-          }`
-        }
-    >
-      <BellOutline/>
-      <span>Notifications</span>
-    </a>
+     
 
     </nav>
   </aside>
