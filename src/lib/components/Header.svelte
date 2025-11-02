@@ -44,11 +44,11 @@
         {#if currentRoute === "/"}
             <Button href="/auth" color="primary">Get started!</Button>
         {:else if user}
-            <Button color="dark" href="/dashboard/assistant">
+            <Button color="light" href="/dashboard/assistant" class="border-0">
                 <BrainSolid />
             </Button>
             <Tooltip>AI Assistant</Tooltip>
-            <Button color="dark" id="chats-drop" class="relative"
+            <Button color="light" id="chats-drop" class="relative border-0"
                 ><MessagesSolid />
                 {#if rooms[0].unreadCount > 0}
                     <Indicator
@@ -100,7 +100,7 @@
                     {/if}
                 </DropdownGroup>
             </Dropdown>
-            <Button color="dark"><BellSolid /></Button>
+            <Button color="light" class="border-0"><BellSolid /></Button>
             <Tooltip>Notifications</Tooltip>
 
             {#if user?.avatar_url}
