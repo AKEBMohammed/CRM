@@ -1,7 +1,7 @@
 import { supabase, getProfile } from '$lib/supabase.js';
 import { PUBLIC_GOOGLE_API_KEY } from '$env/static/public';
 import { GoogleGenAI } from "@google/genai";
-import { discussionsService, contactsService, dealsService, interactionsService, profilesService } from '$lib/services';
+import { discussionsService, chatsService, contactsService, dealsService, interactionsService, profilesService, tasksService, companiesService, productsService } from '$lib/services';
 
 // Initialize Google AI for both generation and embeddings
 const genAI = new GoogleGenAI({ apiKey: PUBLIC_GOOGLE_API_KEY });
@@ -119,91 +119,13 @@ Examples:
 // Enhanced function to get user's recent business context
 async function getUserBusinessContext(userProfile: any): Promise<string> {
     try {
-        const businessContextQuery = `
-            query GetBusinessContext($profile_id: BigInt!, $company_id: BigInt!) {
-                # Recent contacts
-                contactsCollection(
-                    filter: { created_by: { eq: $profile_id } }
-                    orderBy: [{ created_at: DescNullsLast }]
-                    first: 5
-                ) {
-                    edges {
-                        node {
-                            fullname
-                            email
-                            created_at
-                        }
-                    }
-                }
-                
-                # Active deals
-                dealsCollection(
-                    filter: { 
-                        profile_id: { eq: $profile_id }
-                        stage: { neq: "closed_won" }
-                        stage: { neq: "closed_lost" }
-                    }
-                    orderBy: [{ updated_at: DescNullsLast }]
-                    first: 5
-                ) {
-                    edges {
-                        node {
-                            title
-                            value
-                            stage
-                            probability
-                        }
-                    }
-                }
-                
-                # Recent interactions
-                interactionsCollection(
-                    filter: { created_by: { eq: $profile_id } }
-                    orderBy: [{ created_at: DescNullsLast }]
-                    first: 5
-                ) {
-                    edges {
-                        node {
-                            type
-                            note
-                            created_at
-                        }
-                    }
-                }
-                
-                # Pending tasks
-                tasksCollection(
-                    filter: { 
-                        assigned_to: { eq: $profile_id }
-                        status: { neq: "completed" }
-                    }
-                    orderBy: [{ due_date: AscNullsLast }]
-                    first: 5
-                ) {
-                    edges {
-                        node {
-                            title
-                            priority
-                            due_date
-                            status
-                        }
-                    }
-                }
-            }
-        `;
-
         // Get business context using services
-        const [contacts, deals, interactions, tasks] = await Promise.all([
+        const [contacts, deals, interactions, tasks, products] = await Promise.all([
             contactsService.getAll(userProfile.company_id).then(data => data?.slice(0, 5) || []),
             dealsService.getAll(userProfile.company_id).then(data => data?.slice(0, 5) || []),
             interactionsService.getAll(userProfile.company_id).then(data => data?.slice(0, 5) || []),
-            // Get user's tasks using their profile_id
-            supabase
-                .from('tasks')
-                .select('title, priority, due_date, status')
-                .or(`created_by.eq.${userProfile.profile_id},assigned_to.eq.${userProfile.profile_id}`)
-                .limit(5)
-                .then(({ data }) => data || [])
+            tasksService.getAll(userProfile.profile_id, userProfile.company_id).then(data => data?.slice(0, 5) || []),
+            productsService.getAll(userProfile.company_id).then(data => data?.slice(0, 5) || [])
         ]);
 
         let contextSummary = '\n\nYour Current Business Context:\n';
@@ -234,6 +156,13 @@ async function getUserBusinessContext(userProfile: any): Promise<string> {
             ).join(', ')}\n`;
         }
 
+        // Available products
+        if (products.length > 0) {
+            contextSummary += `🛒 Available Products: ${products.map((product: any) => 
+                `${product.name} ($${product.unit_price})`
+            ).join(', ')}\n`;
+        }
+
         return contextSummary;
 
     } catch (error) {
@@ -250,6 +179,8 @@ export const POST = async (event) => {
         return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
     }
 
+    const company = await companiesService.getById(user.company_id);
+
     const { discussion_id, message } = await event.request.json();
 
     if (!discussion_id || !message) {
@@ -257,58 +188,22 @@ export const POST = async (event) => {
     }
 
     try {
-        // Get conversation context from database
-        const contextQuery = `
-            query GetConversationContext($discussion_id: BigInt!) {
-                chatsCollection(
-                    filter: { discussion_id: { eq: $discussion_id } }
-                    orderBy: [{ created_at: AscNullsLast }]
-                    last: 10
-                ) {
-                    edges {
-                        node {
-                            content
-                            is_ai
-                            created_at
-                        }
-                    }
-                }
-                discussionsCollection(
-                    filter: { discussion_id: { eq: $discussion_id } }
-                ) {
-                    edges {
-                        node {
-                            name
-                        }
-                    }
-                }
-            }
-        `;
+        // Get conversation context from database using chatsService
+        const chats = await chatsService.getAll(parseInt(discussion_id));
 
-        // Get conversation context from database using REST API
-        const { data: chats, error: chatsError } = await supabase
-            .from('chats')
-            .select('role, content, created_at, is_ai')
-            .eq('discussion_id', discussion_id)
-            .order('created_at', { ascending: true });
-
-        if (chatsError) {
-            console.error('Error fetching chats:', chatsError);
+        if (!chats) {
+            console.error('Error fetching chats: No chats found');
             return new Response(JSON.stringify({ error: 'Failed to fetch conversation context' }), { status: 500 });
         }
 
         // Build conversation context for AI
-        const conversationHistory = chats?.map((chat: any) => ({
+        const conversationHistory = chats.map((chat: any) => ({
             role: chat.is_ai ? 'model' : 'user',
             parts: [{ text: chat.content }]
-        })) || [];
+        }));
 
-        // Get discussion info
-        const { data: discussion } = await supabase
-            .from('discussions')
-            .select('name, description, created_at')
-            .eq('discussion_id', discussion_id)
-            .single();
+        // Get discussion info using discussionsService
+        const discussion = await discussionsService.getById(parseInt(discussion_id));
 
         const discussionInfo = discussion;
 
@@ -333,7 +228,7 @@ export const POST = async (event) => {
 **Current Discussion:** "${discussionInfo?.name || 'General Discussion'}"
 ${discussionInfo?.description ? `Context: ${discussionInfo.description}` : ''}
 
-**User Profile:** ${user.fullname} (${user.role}) at Company ID: ${user.company_id}
+**User Profile:** ${user.fullname} (${user.role}) at Company: ${ company?.name } which is in ${ company?.industry } industry.
 
 ${businessContext}
 ${ragContext}
@@ -372,20 +267,6 @@ Please provide a helpful, data-driven response as their CRM assistant. If the co
             
             // Update discussion title in database
             try {
-                const updateTitleMutation = `
-                    mutation UpdateDiscussionTitle($discussion_id: BigInt!, $title: String!) {
-                        updatediscussionsCollection(
-                            filter: { discussion_id: { eq: $discussion_id } }
-                            set: { name: $title }
-                        ) {
-                            records {
-                                discussion_id
-                                name
-                            }
-                        }
-                    }
-                `;
-
                 // Update discussion title using discussionsService
                 try {
                     await discussionsService.update(parseInt(discussion_id), { name: generatedTitle });
@@ -400,20 +281,11 @@ Please provide a helpful, data-driven response as their CRM assistant. If the co
             }
         }
         
-        // Insert AI response to database using Supabase REST API
-        const { data: insertData, error: insertError } = await supabase
-            .from('chats')
-            .insert({
-                discussion_id: parseInt(discussion_id),
-                content: aiMessage,
-                is_ai: true,
-                role: 'assistant'
-            })
-            .select()
-            .single();
+        // Insert AI response to database using chatsService
+        const insertedChat = await chatsService.sendAIMessage(parseInt(discussion_id), aiMessage);
 
-        if (insertError || !insertData) {
-            console.error('Failed to insert AI response to database:', insertError);
+        if (!insertedChat) {
+            console.error('Failed to insert AI response to database');
             return new Response(JSON.stringify({
                 error: 'Failed to insert AI response to database'
             }), {
@@ -429,7 +301,7 @@ Please provide a helpful, data-driven response as their CRM assistant. If the co
             success: true,
             message: 'AI response generated and saved successfully',
             ai_response: aiMessage,
-            chat_id: insertData.chat_id,
+            chat_id: insertedChat.chat_id,
             title_generated: isFirstAIResponse,
             new_title: generatedTitle
         }), {
