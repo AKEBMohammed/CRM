@@ -1,5 +1,6 @@
 <script lang="ts">
     import { supabase } from "$lib/supabase";
+    import { messagesService, profilesService, filesService } from '$lib/services';
     import {
         Avatar,
         Button,
@@ -70,6 +71,8 @@
     let selectedFile: File | null = $state(null);
     let replyTo: Message | null = $state(null);
     let isTyping = $state(false);
+    let isMarkingViewed = $state(false); // Prevent duplicate view marking
+    let isUploadingFile = $state(false); // Track file upload status
 
     // Debounced function to check and mark viewed messages
     function scheduleViewCheck() {
@@ -77,7 +80,9 @@
             clearTimeout(viewCheckTimeout);
         }
         viewCheckTimeout = setTimeout(() => {
-            markMessagesAsViewed();
+            if (!isMarkingViewed) {
+                markMessagesAsViewed();
+            }
         }, 1000); // Wait 1 second of inactivity before marking as viewed
     }
 
@@ -85,8 +90,8 @@
     function scrollToBottom() {
         if (messagesContainer) {
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
-            // Mark messages as viewed when scrolling to bottom
-            setTimeout(() => markMessagesAsViewed(), 500);
+            // Mark messages as viewed when scrolling to bottom (with debouncing)
+            scheduleViewCheck();
         }
     }
 
@@ -126,75 +131,61 @@
                         );
 
                         if (!messageExists) {
-                            // Fetch the complete message with views and sender info
-                            const { data: completeMessage, error } =
-                                await supabase
-                                    .from("messages")
-                                    .select(
-                                        `
-                                    *,
-                                    profiles!messages_sender_id_fkey (
-                                        fullname,
-                                        email
-                                    ),
-                                    files (
-                                        file_id,
-                                        v_name,
-                                        p_name
-                                    ),
-                                    views (
-                                        profile_id,
-                                        seen_at,
-                                        profiles (
-                                            fullname,
-                                            email
-                                        )
-                                    )
-                                `,
-                                    )
-                                    .eq("message_id", payload.new.message_id)
-                                    .single();
+                            try {
+                                // Fetch the complete message with views and sender info using service
+                                const completeMessage = await messagesService.getByIdWithDetails(payload.new.message_id);
 
-                            if (!error && completeMessage) {
-                                // Transform the data to match our expected format
-                                const formattedMessage: Message = {
-                                    message_id: completeMessage.message_id,
-                                    content: completeMessage.content,
-                                    send_at: completeMessage.send_at,
-                                    sender_id: completeMessage.sender_id,
-                                    fullname:
-                                        completeMessage.profiles?.fullname ||
-                                        "Unknown",
-                                    email:
-                                        completeMessage.profiles?.email || "",
-                                    files: completeMessage.files || null,
-                                    reply_to: completeMessage.reply_to || null,
+                                if (completeMessage) {
+                                    // Transform the data to match our expected format
+                                    const formattedMessage: Message = {
+                                        message_id: completeMessage.message_id,
+                                        content: completeMessage.content,
+                                        send_at: completeMessage.send_at,
+                                        sender_id: completeMessage.sender_id,
+                                        fullname:
+                                            completeMessage.profiles?.fullname ||
+                                            "Unknown",
+                                        email:
+                                            completeMessage.profiles?.email || "",
+                                        files: completeMessage.files || null,
+                                        reply_to: completeMessage.reply_to || null,
 
-                                    views:
-                                        completeMessage.views?.map(
-                                            (view: any): MessageView => ({
-                                                profile_id: view.profile_id,
-                                                fullname:
-                                                    view.profiles?.fullname ||
-                                                    "Unknown",
-                                                email:
-                                                    view.profiles?.email || "",
-                                                seen_at: view.seen_at,
-                                            }),
-                                        ) || [],
-                                };
+                                        views:
+                                            completeMessage.views?.map(
+                                                (view: any): MessageView => ({
+                                                    profile_id: view.profile_id,
+                                                    fullname:
+                                                        view.profiles?.fullname ||
+                                                        "Unknown",
+                                                    email:
+                                                        view.profiles?.email || "",
+                                                    seen_at: view.seen_at,
+                                                }),
+                                            ) || [],
+                                    };
 
-                                messages = [...messages, formattedMessage];
-                                console.log(
-                                    "Message added. New count:",
-                                    messages.length,
-                                );
-                                setTimeout(scrollToBottom, 100);
-                            } else {
-                                console.error(
-                                    "Error fetching complete message:",
-                                    error,
-                                );
+                                    messages = [...messages, formattedMessage];
+                                    console.log("Message added. New count:", messages.length);
+                                    setTimeout(scrollToBottom, 100);
+                                } else {
+                                    console.error("Failed to fetch complete message via service");
+                                    // Fallback to basic message data
+                                    const fallbackMessage: Message = {
+                                        message_id: payload.new.message_id,
+                                        content: payload.new.content,
+                                        send_at: payload.new.send_at,
+                                        sender_id: payload.new.sender_id,
+                                        fullname: "Unknown",
+                                        email: "",
+                                        files: null,
+                                        reply_to: payload.new.reply_to || null,
+                                        views: [],
+                                    };
+                                    messages = [...messages, fallbackMessage];
+                                    setTimeout(scrollToBottom, 100);
+                                }
+                            } catch (error) {
+                                console.error("Error fetching complete message via service:", error);
                                 // Fallback to basic message data
                                 const fallbackMessage: Message = {
                                     message_id: payload.new.message_id,
@@ -225,70 +216,48 @@
                         );
 
                         if (messageIndex !== -1) {
-                            // Fetch the updated complete message
-                            const { data: updatedMessage, error } =
-                                await supabase
-                                    .from("messages")
-                                    .select(
-                                        `
-                                    *,
-                                    profiles!messages_sender_id_fkey (
-                                        fullname,
-                                        email
-                                    ),
-                                    files (
-                                        file_id,
-                                        v_name,
-                                        p_name
-                                    ),
-                                    views (
-                                        profile_id,
-                                        seen_at,
-                                        profiles (
-                                            fullname,
-                                            email
-                                        )
-                                    )
-                                `,
-                                    )
-                                    .eq("message_id", payload.new.message_id)
-                                    .single();
+                            try {
+                                // Fetch the updated complete message using service
+                                const updatedMessage = await messagesService.getByIdWithDetails(payload.new.message_id);
 
-                            if (!error && updatedMessage) {
-                                const formattedUpdatedMessage: Message = {
-                                    message_id: updatedMessage.message_id,
-                                    sender_id: updatedMessage.sender_id,
-                                    content: updatedMessage.content,
-                                    send_at: updatedMessage.send_at,
-                                    reply_to: updatedMessage.reply_to,
-                                    fullname:
-                                        updatedMessage.profiles?.fullname ||
-                                        "Unknown",
-                                    email: updatedMessage.profiles?.email || "",
-                                    files: updatedMessage.files || [],
-                                    views:
-                                        updatedMessage.views?.map(
-                                            (view: any): MessageView => ({
-                                                profile_id: view.profile_id,
-                                                fullname:
-                                                    view.profiles?.fullname ||
-                                                    "Unknown",
-                                                email:
-                                                    view.profiles?.email || "",
+                                if (updatedMessage) {
+                                    const formattedUpdatedMessage: Message = {
+                                        message_id: updatedMessage.message_id,
+                                        sender_id: updatedMessage.sender_id,
+                                        content: updatedMessage.content,
+                                        send_at: updatedMessage.send_at,
+                                        reply_to: updatedMessage.reply_to,
+                                        fullname:
+                                            updatedMessage.profiles?.fullname ||
+                                            "Unknown",
+                                        email: updatedMessage.profiles?.email || "",
+                                        files: updatedMessage.files || [],
+                                        views:
+                                            updatedMessage.views?.map(
+                                                (view: any): MessageView => ({
+                                                    profile_id: view.profile_id,
+                                                    fullname:
+                                                        view.profiles?.fullname ||
+                                                        "Unknown",
+                                                    email:
+                                                        view.profiles?.email || "",
 
-                                                seen_at: view.seen_at,
-                                            }),
-                                        ) || [],
-                                };
+                                                    seen_at: view.seen_at,
+                                                }),
+                                            ) || [],
+                                    };
 
-                                // Update the message in the array
-                                messages = messages.map((msg, index) =>
-                                    index === messageIndex
-                                        ? formattedUpdatedMessage
-                                        : msg,
-                                );
+                                    // Update the message in the array
+                                    messages = messages.map((msg, index) =>
+                                        index === messageIndex
+                                            ? formattedUpdatedMessage
+                                            : msg,
+                                    );
 
-                                console.log("Message updated successfully");
+                                    console.log("Message updated successfully");
+                                }
+                            } catch (error) {
+                                console.error("Error fetching updated message via service:", error);
                             }
                         }
                     } else if (payload.eventType === "DELETE") {
@@ -321,48 +290,52 @@
                     );
 
                     if (relevantMessage) {
-                        // Fetch the viewer's profile info
-                        const { data: profile, error } = await supabase
-                            .from("profiles")
-                            .select("fullname, email")
-                            .eq("profile_id", payload.new.profile_id)
-                            .single();
+                        try {
+                            // Fetch the viewer's profile info using service
+                            const profile = await profilesService.getById(payload.new.profile_id);
 
-                        if (!error && profile) {
-                            const newView: MessageView = {
-                                profile_id: payload.new.profile_id,
-                                fullname: profile.fullname,
-                                email: profile.email,
-                                seen_at: payload.new.seen_at,
-                            };
+                            if (profile) {
+                                const newView: MessageView = {
+                                    profile_id: payload.new.profile_id,
+                                    fullname: profile.fullname,
+                                    email: profile.email,
+                                    seen_at: payload.new.seen_at,
+                                };
 
-                            // Update the message's views array
-                            messages = messages.map((msg: Message) => {
-                                if (msg.message_id === payload.new.message_id) {
-                                    const existingViewIndex =
-                                        msg.views.findIndex(
-                                            (v: MessageView) =>
-                                                v.profile_id ===
-                                                payload.new.profile_id,
-                                        );
+                                // Update the message's views array
+                                messages = messages.map((msg: Message) => {
+                                    if (msg.message_id === payload.new.message_id) {
+                                        const existingViewIndex =
+                                            msg.views.findIndex(
+                                                (v: MessageView) =>
+                                                    v.profile_id === payload.new.profile_id,
+                                            );
 
-                                    if (existingViewIndex === -1) {
-                                        // Add new view
-                                        return {
-                                            ...msg,
-                                            views: [...msg.views, newView],
-                                        };
-                                    } else {
-                                        // Update existing view
-                                        const updatedViews = [...msg.views];
-                                        updatedViews[existingViewIndex] =
-                                            newView;
-                                        return { ...msg, views: updatedViews };
+                                        if (existingViewIndex === -1) {
+                                            // Add new view
+                                            return {
+                                                ...msg,
+                                                views: [...msg.views, newView],
+                                            };
+                                        } else {
+                                            // Update existing view (in case seen_at changed)
+                                            const updatedViews = [...msg.views];
+                                            updatedViews[existingViewIndex] = newView;
+                                            return { ...msg, views: updatedViews };
+                                        }
                                     }
-                                }
-                                return msg;
-                            });
+                                    return msg;
+                                });
+                                
+                                console.log(`Updated views for message ${payload.new.message_id}, viewer: ${profile.fullname}`);
+                            } else {
+                                console.warn(`Failed to fetch profile for viewer ${payload.new.profile_id}`);
+                            }
+                        } catch (error) {
+                            console.error("Error fetching profile via service:", error);
                         }
+                    } else {
+                        console.log(`View received for message not in current room: ${payload.new.message_id}`);
                     }
                 },
             )
@@ -371,8 +344,8 @@
                 if (status === "SUBSCRIBED") {
                     console.log("Successfully subscribed to real-time updates");
 
-                    // Mark messages as viewed when component loads
-                    markMessagesAsViewed();
+                    // Mark messages as viewed when component loads (with slight delay)
+                    setTimeout(() => markMessagesAsViewed(), 1000);
                 } else if (status === "CHANNEL_ERROR") {
                     console.error("Channel subscription error");
                 } else if (status === "TIMED_OUT") {
@@ -398,68 +371,90 @@
         messageContent = ""; // Clear input immediately for better UX
 
         try {
-            const { data: insertedMessage, error } = await supabase
-                .from("messages")
-                .insert([
-                    {
-                        content: messageToSend,
-                        room_id: room.room_id,
-                        sender_id: user.profile_id,
-                        reply_to: replyTo ? replyTo.message_id : null,
-                    },
-                ])
-                .select("*");
+            const messageData = {
+                content: messageToSend,
+                room_id: room.room_id,
+                sender_id: user.profile_id,
+                reply_to: replyTo ? replyTo.message_id : undefined,
+            };
 
-            if (error) {
-                console.error("Error sending message:", error);
-                // Restore message content if there's an error
-                messageContent = messageToSend;
-                alert("Failed to send message. Please try again.");
-                return;
-            } else {
+            const insertedMessage = await messagesService.send(messageData);
+
+            if (insertedMessage) {
                 console.log("Message sent successfully:", insertedMessage);
                 replyTo = null; // Clear reply after successful message send
-            }
 
-            if (selectedFile && insertedMessage && insertedMessage[0]) {
-                let pname = `chat-${room.room_id}-${user.user_id}-${Date.now().toString().replace(/:/g, "").replace(/-/g, "")}`;
-                let { error: fileError } = await supabase.storage
-                    .from("shared")
-                    .upload(pname, selectedFile);
-
-                if (fileError) {
-                    console.error("Error uploading file:", fileError);
-                }
-
-                let { data: insertedFile, error: insertedFileError } =
-                    await supabase
-                        .from("files")
-                        .insert([
-                            {
-                                v_name: selectedFile.name,
-                                p_name: pname,
-                            },
-                        ])
-                        .select("file_id")
-                        .single();
-
-                if (insertedFile) {
-                    let { data: updatedMessage, error: updatedMessageError } =
-                        await supabase
-                            .from("messages")
-                            .update({
-                                file_id: insertedFile.file_id,
-                            })
-                            .eq("message_id", insertedMessage[0].message_id);
-
-                    if (updatedMessageError) {
-                        console.error(
-                            "Error updating message with file_id:",
-                            updatedMessageError,
+                // Handle file attachment if present
+                if (selectedFile) {
+                    try {
+                        isUploadingFile = true;
+                        
+                        console.log(`Uploading file via backend: ${selectedFile.name}`);
+                        
+                        // Upload file using backend API (this also creates the file record)
+                        const uploadedFile = await filesService.upload(
+                            selectedFile, 
+                            selectedFile.name, // Use original filename as visible name
+                            'shared'
                         );
+
+                        if (uploadedFile && uploadedFile.file_id) {
+                            // Update message with file_id using messagesService
+                            await messagesService.updateFile(insertedMessage.message_id, uploadedFile.file_id);
+                            console.log(`File attached to message ${insertedMessage.message_id}`, uploadedFile);
+                        }
+                        
+                        selectedFile = null;
+                    } catch (fileError) {
+                        console.error("Error handling file attachment:", fileError);
+                        
+                        // Show user-friendly error message based on error type
+                        const errorMessage = fileError instanceof Error 
+                            ? fileError.message 
+                            : 'Unknown error occurred';
+                            
+                        // Handle specific backend upload errors
+                        if (errorMessage.includes('Authentication required') || errorMessage.includes('Invalid authentication')) {
+                            alert(
+                                '� Authentication Error\n\n' +
+                                'You need to be signed in to upload files. Please refresh the page and sign in again.\n\n' +
+                                'Your message was sent without the file attachment.'
+                            );
+                        } else if (errorMessage.includes('File size') && errorMessage.includes('exceeds')) {
+                            alert(
+                                '📏 File Size Error\n\n' +
+                                errorMessage + '\n\n' +
+                                'Please choose a smaller file or compress your file before uploading.\n\n' +
+                                'Your message was sent without the file attachment.'
+                            );
+                        } else if (errorMessage.includes('File type') && errorMessage.includes('not allowed')) {
+                            alert(
+                                '📎 File Type Error\n\n' +
+                                errorMessage + '\n\n' +
+                                'Please choose a supported file type.\n\n' +
+                                'Your message was sent without the file attachment.'
+                            );
+                        } else if (errorMessage.includes('network error') || errorMessage.includes('Failed to fetch')) {
+                            alert(
+                                '🌐 Network Error\n\n' +
+                                'Upload failed due to a network issue. Please check your internet connection and try again.\n\n' +
+                                'Your message was sent without the file attachment.'
+                            );
+                        } else if (errorMessage.includes('already exists')) {
+                            alert(
+                                '📁 File Exists\n\n' +
+                                'A file with this name already exists. The system should have automatically renamed your file, but this failed.\n\n' +
+                                'Please try renaming your file and upload again.\n\n' +
+                                'Your message was sent without the file attachment.'
+                            );
+                        } else {
+                            alert(`❌ File Upload Failed\n\n${errorMessage}\n\nYour message was sent without the file attachment.`);
+                        }
+                        
+                    } finally {
+                        isUploadingFile = false;
                     }
                 }
-                selectedFile = null;
             }
         } catch (error) {
             console.error("Error sending message:", error);
@@ -513,60 +508,94 @@
     }
 
     async function markMessagesAsViewed() {
+        if (isMarkingViewed) return; // Prevent concurrent executions
+        
         try {
+            isMarkingViewed = true;
+            
             // Get all message IDs that this user hasn't viewed yet
             const messageIds = messages
-                .filter(
-                    (msg: Message) =>
-                        msg.sender_id !== user.profile_id && // Don't mark own messages as viewed
-                        !msg.views?.some(
-                            (view: MessageView) =>
-                                view.profile_id === user.profile_id,
-                        ), // Haven't viewed yet
-                )
+                .filter((msg: Message) => {
+                    // Only mark messages from other users as viewed
+                    if (msg.sender_id === user.profile_id) return false;
+                    
+                    // Check if this user has already viewed this message
+                    const alreadyViewed = msg.views?.some(
+                        (view: MessageView) => view.profile_id === user.profile_id
+                    );
+                    
+                    return !alreadyViewed;
+                })
                 .map((msg: Message) => msg.message_id);
 
             if (messageIds.length > 0) {
-                // Mark messages as viewed
-                const viewRecords = messageIds.map((messageId: number) => ({
-                    message_id: messageId,
-                    profile_id: user.profile_id,
-                }));
-
-                const { error } = await supabase
-                    .from("views")
-                    .insert(viewRecords);
-
-                if (error) {
-                    console.log("Error marking messages as viewed:", error);
-                } else {
-                    console.log(
-                        `Marked ${viewRecords.length} messages as viewed`,
-                    );
-                }
+                console.log(`Attempting to mark ${messageIds.length} messages as viewed`);
+                
+                // Mark messages as viewed using bulk service method
+                await messagesService.markViewedBulk(messageIds, user.profile_id);
+                console.log(`Successfully marked ${messageIds.length} messages as viewed`);
             }
         } catch (error) {
             console.error("Error in markMessagesAsViewed:", error);
+            // Don't throw the error to prevent breaking the UI
+        } finally {
+            isMarkingViewed = false;
         }
     }
 
     function handleFileSelect(event: Event) {
         const input = event.target as HTMLInputElement;
         if (input.files && input.files.length > 0) {
-            selectedFile = input.files[0];
+            const file = input.files[0];
+            
+            // File size validation (10MB limit)
+            const maxSize = 10 * 1024 * 1024; // 10MB in bytes
+            if (file.size > maxSize) {
+                alert('File size must be less than 10MB. Please choose a smaller file.');
+                input.value = ''; // Clear the input
+                return;
+            }
+            
+            // Optional: File type validation (you can customize this)
+            const allowedTypes = [
+                'image/', 'text/', 'application/pdf', 'application/msword', 
+                'application/vnd.openxmlformats-officedocument', 'application/zip',
+                'application/x-zip-compressed', 'application/json'
+            ];
+            
+            const isAllowedType = allowedTypes.some(type => file.type.startsWith(type));
+            if (!isAllowedType && file.type !== '') {
+                const confirmed = confirm(
+                    `File type "${file.type}" might not be supported. Continue anyway?`
+                );
+                if (!confirmed) {
+                    input.value = ''; // Clear the input
+                    return;
+                }
+            }
+            
+            selectedFile = file;
+            console.log(`File selected: ${file.name} (${formatFileSize(file.size)})`);
         }
     }
 
     function getMessageStatus(message: Message) {
         if (!isMyMessage(message)) return null;
 
-        if (message.views.length > 0) {
+        // For sent messages, show read status based on views
+        const otherUserViews = message.views.filter(
+            (view: MessageView) => view.profile_id !== user.profile_id
+        );
+
+        if (otherUserViews.length > 0) {
             return {
                 type: "read",
-                count: message.views.length,
-                viewers: message.views,
+                count: otherUserViews.length,
+                viewers: otherUserViews,
             };
         }
+        
+        // Message was sent but not read by others yet
         return { type: "sent" };
     }
 
@@ -590,16 +619,7 @@
         fileName: string,
     ): Promise<string | null> {
         try {
-            const { data, error } = await supabase.storage
-                .from("shared")
-                .createSignedUrl(fileName, 3600); // URL expires in 1 hour
-
-            if (error) {
-                console.error("Error creating download URL:", error);
-                return null;
-            }
-
-            return data.signedUrl;
+            return await filesService.getDownloadUrl(fileName);
         } catch (error) {
             console.error("Error in getFileDownloadUrl:", error);
             return null;
@@ -664,7 +684,7 @@
             >
                 <!-- Sender Avatar (for received messages) -->
                 {#if !isMyMessage(message)}
-                    <div class="flex-shrink-0 mb-1">
+                    <div class="flex-shrink-0 mb-6">
                         <Avatar size="sm" class="shadow-sm">
                             <div
                                 class="w-8 h-8 bg-gradient-to-br from-primary-400 to-primary-600 rounded-full flex items-center justify-center text-white text-xs font-semibold"
@@ -714,7 +734,7 @@
                     <!-- Main Message Bubble -->
                     <div class="relative group">
                         <div
-                            class="px-4 py-3 rounded-2xl shadow-sm transition-all duration-200 hover:shadow-md {isMyMessage(
+                            class="px-2 py-2 rounded-xl shadow-sm transition-all duration-200 hover:shadow-md {isMyMessage(
                                 message,
                             )
                                 ? 'bg-primary-500 text-white rounded-br-md'
@@ -774,7 +794,7 @@
                                                         ? 'text-primary-100'
                                                         : 'text-gray-900 dark:text-white'}"
                                                 >
-                                                    {message.files.v_name}
+                                                    {message.files.v_name || 'Attached File'}
                                                 </P>
                                                 <P
                                                     class="text-xs {isMyMessage(
@@ -794,19 +814,25 @@
                                                 : "primary"}
                                             class="ml-2"
                                             onclick={async () => {
-                                                const downloadUrl =
-                                                    await getFileDownloadUrl(
+                                                try {
+                                                    const downloadUrl = await getFileDownloadUrl(
                                                         message.files.p_name,
                                                     );
-                                                if (downloadUrl) {
-                                                    window.open(
-                                                        downloadUrl,
-                                                        "_blank",
-                                                    );
-                                                } else {
-                                                    alert(
-                                                        "Failed to get download link. Please try again later.",
-                                                    );
+                                                    if (downloadUrl) {
+                                                        // Create a temporary link to trigger download
+                                                        const link = document.createElement('a');
+                                                        link.href = downloadUrl;
+                                                        link.download = message.files.v_name || 'download';
+                                                        link.target = '_blank';
+                                                        document.body.appendChild(link);
+                                                        link.click();
+                                                        document.body.removeChild(link);
+                                                    } else {
+                                                        alert("Failed to get download link. Please try again later.");
+                                                    }
+                                                } catch (error) {
+                                                    console.error('Download error:', error);
+                                                    alert("Error downloading file. Please try again later.");
                                                 }
                                             }}
                                         >
@@ -903,7 +929,7 @@
 
                 <!-- Sender Avatar (for sent messages) -->
                 {#if isMyMessage(message)}
-                    <div class="flex-shrink-0 mb-1">
+                    <div class="flex-shrink-0 mb-6">
                         <Avatar size="sm" class="shadow-sm">
                             <div
                                 class="w-8 h-8 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center text-white text-xs font-semibold"
@@ -963,33 +989,47 @@
     {#if selectedFile}
         <div class="px-4 {replyTo ? 'pt-2' : 'pt-3'}">
             <div
-                class="flex items-center space-x-3 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg"
+                class="flex items-center space-x-3 p-3 {isUploadingFile 
+                    ? 'bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800' 
+                    : 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800'} rounded-lg"
             >
                 <div class="flex-shrink-0">
-                    <div class="p-2 bg-green-100 dark:bg-green-800 rounded-lg">
-                        <FileSolid
-                            class="w-4 h-4 text-green-600 dark:text-green-400"
-                        />
+                    <div class="p-2 {isUploadingFile 
+                        ? 'bg-blue-100 dark:bg-blue-800' 
+                        : 'bg-green-100 dark:bg-green-800'} rounded-lg">
+                        {#if isUploadingFile}
+                            <Spinner size="4" class="text-blue-600 dark:text-blue-400" />
+                        {:else}
+                            <FileSolid
+                                class="w-4 h-4 text-green-600 dark:text-green-400"
+                            />
+                        {/if}
                     </div>
                 </div>
                 <div class="flex-1 min-w-0">
                     <P
-                        class="text-sm font-medium text-green-800 dark:text-green-200 truncate"
+                        class="text-sm font-medium {isUploadingFile 
+                            ? 'text-blue-800 dark:text-blue-200' 
+                            : 'text-green-800 dark:text-green-200'} truncate"
                     >
                         {selectedFile.name}
                     </P>
-                    <P class="text-xs text-green-600 dark:text-green-400">
-                        {formatFileSize(selectedFile.size)} • Ready to send
+                    <P class="text-xs {isUploadingFile 
+                        ? 'text-blue-600 dark:text-blue-400' 
+                        : 'text-green-600 dark:text-green-400'}">
+                        {formatFileSize(selectedFile.size)} • {isUploadingFile ? 'Uploading...' : 'Ready to send'}
                     </P>
                 </div>
-                <Button
-                    size="xs"
-                    color="light"
-                    class="p-1.5 flex-shrink-0"
-                    onclick={() => (selectedFile = null)}
-                >
-                    <CloseOutline class="w-3 h-3" />
-                </Button>
+                {#if !isUploadingFile}
+                    <Button
+                        size="xs"
+                        color="light"
+                        class="p-1.5 flex-shrink-0"
+                        onclick={() => (selectedFile = null)}
+                    >
+                        <CloseOutline class="w-3 h-3" />
+                    </Button>
+                {/if}
             </div>
         </div>
     {/if}
@@ -1029,11 +1069,15 @@
         <Button
             size="md"
             color="primary"
-            disabled={!messageContent.trim() && !selectedFile}
+            disabled={(!messageContent.trim() && !selectedFile) || isUploadingFile}
             onclick={sendMessage}
             class="p-3 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 hover:shadow-md"
         >
-            <PaperPlaneSolid class="w-5 h-5" />
+            {#if isUploadingFile}
+                <Spinner size="4" />
+            {:else}
+                <PaperPlaneSolid class="w-5 h-5" />
+            {/if}
         </Button>
     </ButtonGroup>
 

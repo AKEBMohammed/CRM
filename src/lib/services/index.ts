@@ -8,6 +8,7 @@ export { interactionsService } from './interactions.service';
 export { profilesService } from './profiles.service';
 export { roomsService, messagesService } from './rooms.service';
 export { discussionsService, chatsService, notificationsService } from './discussions.service';
+export { filesService } from './files.service';
 
 // Import services for the convenience object
 import { companiesService } from './companies.service';
@@ -19,6 +20,7 @@ import { interactionsService } from './interactions.service';
 import { profilesService } from './profiles.service';
 import { roomsService, messagesService } from './rooms.service';
 import { discussionsService, chatsService, notificationsService } from './discussions.service';
+import { filesService } from './files.service';
 
 // Re-export for convenience with namespace
 export * as CRM from './companies.service';
@@ -44,5 +46,6 @@ export const services = {
     messages: messagesService,
     discussions: discussionsService,
     chats: chatsService,
-    notifications: notificationsService
+    notifications: notificationsService,
+    files: filesService
 } as const;

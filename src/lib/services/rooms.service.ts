@@ -218,6 +218,98 @@ export const messagesService = {
         return data;
     },
 
+    // Get message by ID with complete details (profiles, files, views)
+    async getByIdWithDetails(message_id: number) {
+        const { data, error } = await supabase
+            .from('messages')
+            .select(`
+                *,
+                profiles!messages_sender_id_fkey (
+                    fullname,
+                    email
+                ),
+                files (
+                    file_id,
+                    v_name,
+                    p_name
+                ),
+                views (
+                    profile_id,
+                    seen_at,
+                    profiles (
+                        fullname,
+                        email
+                    )
+                )
+            `)
+            .eq('message_id', message_id)
+            .single();
+
+        if (error) throw error;
+        return data;
+    },
+
+    // Update message with file_id
+    async updateFile(message_id: number, file_id: number) {
+        const { data, error } = await supabase
+            .from('messages')
+            .update({ file_id })
+            .eq('message_id', message_id)
+            .select()
+            .single();
+
+        if (error) throw error;
+        return data;
+    },
+
+    // Mark multiple messages as viewed (bulk operation)
+    async markViewedBulk(message_ids: number[], profile_id: number) {
+        if (!message_ids || message_ids.length === 0) {
+            return []; // Return empty array if no messages to mark
+        }
+
+        // Remove duplicates from message_ids
+        const uniqueMessageIds = [...new Set(message_ids)];
+
+        // Check which messages are already viewed to avoid duplicates
+        const { data: existingViews, error: checkError } = await supabase
+            .from('views')
+            .select('message_id')
+            .eq('profile_id', profile_id)
+            .in('message_id', uniqueMessageIds);
+
+        if (checkError) throw checkError;
+
+        // Filter out already viewed messages
+        const existingViewedIds = new Set(existingViews?.map(v => v.message_id) || []);
+        const newMessageIds = uniqueMessageIds.filter(id => !existingViewedIds.has(id));
+
+        if (newMessageIds.length === 0) {
+            console.log('All messages already marked as viewed');
+            return [];
+        }
+
+        // Create view records for unviewed messages only
+        const viewRecords = newMessageIds.map(message_id => ({
+            message_id,
+            profile_id
+        }));
+
+        const { data, error } = await supabase
+            .from('views')
+            .insert(viewRecords)
+            .select();
+
+        if (error) {
+            // Even if there's an error, log it but don't throw to prevent UI breaking
+            console.error('Error inserting view records:', error);
+            throw error;
+        }
+
+        console.log(`Successfully marked ${newMessageIds.length} new messages as viewed`);
+        return data;
+    },
+
     // Get unread count for user in room
     async getUnreadCount(room_id: number, profile_id: number) {
         // Get all messages in room
