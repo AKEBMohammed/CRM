@@ -19,7 +19,7 @@ export const actions = {
     try {
       const user = await getProfile();
       if(!user) {
-        return fail(401, { success: false, message: "Unauthorized" });
+        return fail(401, { error: 'Unauthorized access. Please log in again.'});
       }
 
       const formData = await request.formData();
@@ -28,8 +28,8 @@ export const actions = {
       const phone = formData.get("phone")?.toString().trim() || "";
       
 
-      if (!fullname || !email) {
-        return fail(400, { success: false, message: "Full name and email are required." });
+      if (!fullname || !email || !phone) {
+        return fail(400, {error: 'All fields are required.'});
       }
 
       const updatedProfile = await profilesService.update(user.profile_id, {
@@ -39,13 +39,13 @@ export const actions = {
       });
 
       if (!updatedProfile) {
-        return fail(500, { success: false, message: "Failed to update profile." });
+        return fail(500, { error: "Failed to update profile." });
       }
 
-      return { success: true, message: "Profile updated successfully." };
+      return { success: "Profile updated successfully." };
     } catch (err) {
       console.error("Error updating profile:", err);
-      return fail(500, { success: false, message: "Internal error updating profile." });
+      return fail(500, { error: "Internal error updating profile." });
     }
   }
 };

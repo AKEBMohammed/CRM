@@ -1,9 +1,8 @@
 <script lang="ts">
-  import { Button, Input, Label, Banner } from "flowbite-svelte";
+  import { Button, Input, Label, Banner, P } from "flowbite-svelte";
   import { enhance } from "$app/forms";
 
-  let { data } = $props();
-  let message = "";
+  let { data, form } = $props();
   
 </script>
 
@@ -119,11 +118,20 @@
           </Button>
         </div>
 
-        {#if message}
-          <p class="text-sm text-center mt-4">{message}</p>
+         {#if form?.error}
+            <Banner color="red" class="mb-4">
+                <P class="font-medium text-red-800">{form.error}</P>
+            </Banner>
         {/if}
+
+        {#if form?.success}
+            <Banner color="green" class="mb-4">
+                <P class="font-medium text-green-800">{form.success}</P>
+            </Banner>
+        {/if}
+
       </form>
-      <!-- FORM END -->
+      
     </section>
   </div>
 </main>
