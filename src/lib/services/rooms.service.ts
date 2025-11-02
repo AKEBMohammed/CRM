@@ -148,7 +148,7 @@ export const messagesService = {
                 *,
                 sender:profiles!sender_id(fullname, email, avatar),
                 reply_to_message:messages!reply_to(content, sender:profiles!sender_id(fullname)),
-                file:files(v_name, p_name)
+                file:files(v_name, p_name, file_type, file_size)
             `)
             .eq('room_id', room_id)
             .order('send_at', { ascending: false })
@@ -231,7 +231,9 @@ export const messagesService = {
                 files (
                     file_id,
                     v_name,
-                    p_name
+                    p_name,
+                    file_type,
+                    file_size
                 ),
                 views (
                     profile_id,

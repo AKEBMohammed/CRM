@@ -631,18 +631,48 @@
 
     // Helper functions to detect file types
     function isImageFile(file: any): boolean {
-        if (!file?.file_type) return false;
-        return file.file_type.startsWith('image/');
+        if (!file) return false;
+        
+        // Primary check: use file_type if available
+        if (file.file_type) {
+            return file.file_type.startsWith('image/');
+        }
+        
+        // Fallback: check file extension from v_name or p_name
+        const fileName = file.v_name || file.p_name || '';
+        const extension = fileName.toLowerCase().split('.').pop();
+        const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'];
+        return imageExtensions.includes(extension || '');
     }
 
     function isVideoFile(file: any): boolean {
-        if (!file?.file_type) return false;
-        return file.file_type.startsWith('video/');
+        if (!file) return false;
+        
+        // Primary check: use file_type if available
+        if (file.file_type) {
+            return file.file_type.startsWith('video/');
+        }
+        
+        // Fallback: check file extension from v_name or p_name
+        const fileName = file.v_name || file.p_name || '';
+        const extension = fileName.toLowerCase().split('.').pop();
+        const videoExtensions = ['mp4', 'avi', 'mov', 'wmv', 'flv', 'webm', 'mkv', 'mpg', 'mpeg'];
+        return videoExtensions.includes(extension || '');
     }
 
     function isAudioFile(file: any): boolean {
-        if (!file?.file_type) return false;
-        return file.file_type.startsWith('audio/');
+        if (!file) return false;
+        
+        // Primary check: use file_type if available
+        if (file.file_type) {
+            return file.file_type.startsWith('audio/');
+        }
+        
+        // Fallback: check file extension from v_name or p_name
+        const fileName = file.v_name || file.p_name || '';
+        const extension = fileName.toLowerCase().split('.').pop();
+        const audioExtensions = ['mp3', 'wav', 'ogg', 'aac', 'm4a', 'wma', 'flac'];
+        return audioExtensions.includes(extension || '');
     }
 
     function getMediaTypeLabel(file: any): string {
@@ -866,7 +896,7 @@
                                                         class="max-w-full h-auto max-h-64 rounded-lg"
                                                         preload="metadata"
                                                     >
-                                                        <source src={downloadUrl} type={message.files.file_type} />
+                                                        <source src={downloadUrl} type={message.files.file_type || 'video/mp4'} />
                                                         <track kind="captions" />
                                                         Your browser does not support the video tag.
                                                     </video>
@@ -895,7 +925,7 @@
                                                         class="w-full rounded-lg"
                                                         preload="metadata"
                                                     >
-                                                        <source src={downloadUrl} type={message.files.file_type} />
+                                                        <source src={downloadUrl} type={message.files.file_type || 'audio/mpeg'} />
                                                         Your browser does not support the audio tag.
                                                     </audio>
                                                 {:else}
