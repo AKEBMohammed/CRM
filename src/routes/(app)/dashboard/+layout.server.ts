@@ -1,7 +1,7 @@
 import { getProfile } from '$lib/supabase';
 import { redirect } from '@sveltejs/kit';
 import type { LayoutServerLoad } from './$types';
-import { roomsService, messagesService } from '$lib/services';
+import { roomsService, messagesService, notificationsService } from '$lib/services';
 
 export const load: LayoutServerLoad = async ({ cookies }) => {
     const user = await getProfile();
@@ -48,9 +48,13 @@ export const load: LayoutServerLoad = async ({ cookies }) => {
 
         console.log('Rooms with unread counts:', roomsData);
 
+        // Get user's notifications using notificationsService
+        const notifications = await notificationsService.getAll(user.profile_id);
+
         return {
             user,
-            rooms: roomsData
+            rooms: roomsData,
+            notifications
         };
 
     } catch (error) {

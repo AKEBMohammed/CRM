@@ -14,6 +14,7 @@
         Indicator,
         DropdownDivider,
         Badge,
+        P,
     } from "flowbite-svelte";
     import favicon from "$lib/assets/favicon.png";
     import { page } from "$app/stores";
@@ -29,7 +30,7 @@
     import { goto } from "$app/navigation";
     let currentRoute = $page.url.pathname;
 
-    let { user, rooms } = $props();
+    let { user, rooms, notifications } = $props();
 </script>
 
 <Navbar class="dark:bg-gray-800 shadow-sm col-start-1 col-span-2 absolute">
@@ -100,9 +101,37 @@
                     {/if}
                 </DropdownGroup>
             </Dropdown>
-            <Button color="light" class="border-0"><BellSolid /></Button>
+            <Button color="light" class="border-0" id="notifications-drop"
+                ><BellSolid /></Button
+            >
             <Tooltip>Notifications</Tooltip>
+            <Dropdown class="w-100" triggeredBy="#notifications-drop">
+                <DropdownHeader class="flex gap-4">
+                    <Heading tag="h6">Notifications</Heading>
+                </DropdownHeader>
+                {#if notifications.length === 0}
+                    <span class="text-md text-gray-500 px-4 py-2 block">
+                        No notifications
+                    </span>
+                {:else}
+                    <DropdownGroup>
+                        {#each notifications as notification}
+                            <DropdownItem class="flex items-center">
+                                {#if notification.unread}
+                                    <Badge color="red" class="ml-auto"
+                                        >New</Badge
+                                    >
+                                {/if}
 
+                                <Badge class="h-fit">{notification.type}</Badge>
+                                <P class="ml-2 text-sm flex-1"
+                                    >{notification.content}</P
+                                >
+                            </DropdownItem>
+                        {/each}
+                    </DropdownGroup>
+                {/if}
+            </Dropdown>
             {#if user?.avatar_url}
                 <Avatar
                     size="sm"
