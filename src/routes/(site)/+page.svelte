@@ -87,138 +87,118 @@
     ];
 </script>
 
-<div
-    class="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50 dark:from-gray-900 dark:via-gray-900 dark:to-blue-900"
+<article
+    class="min-h-screen-50 mt-15 bg-gradient-to-br from-gray-50 via-white to-blue-50 dark:from-gray-900 dark:via-gray-900 dark:to-blue-900"
 >
-    <!-- Navigation would go here -->
-
     <!-- Hero Section -->
-    <section class="relative overflow-hidden">
-        <div
-            class="absolute inset-0 bg-gradient-to-br from-primary-500/10 via-transparent to-blue-500/10"
-        ></div>
-        <div
-            class="relative max-w-7xl mx-auto px-2 sm:px-4 lg:px-6 pt-20 pb-16"
-        >
-            <div class="grid lg:grid-cols-2 gap-12 items-center">
-                <!-- Hero Content -->
-                <div class="space-y-8">
-                    <div class="space-y-4">
-                        <Badge color="primary" class="w-fit">
-                            <span class="flex items-center gap-2">
-                                <span
-                                    class="w-2 h-2 bg-green-400 rounded-full animate-pulse"
-                                ></span>
-                                AI-Powered CRM Platform
-                            </span>
-                        </Badge>
+    <section
+        class="w-full flex flex-row items-center justify-between max-w-7xl mx-auto p-2 gap-2"
+    >
+        <!-- Hero Content -->
+        <div class=" w-1/2 flex flex-col gap-8 max-w-lg">
+            <Badge color="primary" class="w-fit">
+                <span class="flex items-center gap-2">
+                    <span
+                        class="w-2 h-2 bg-green-400 rounded-full animate-pulse"
+                    ></span>
+                    AI-Powered CRM Platform
+                </span>
+            </Badge>
 
-                        <Heading
-                            tag="h1"
-                            class="text-5xl lg:text-6xl font-bold bg-gradient-to-r from-gray-900 via-primary-600 to-blue-600 bg-clip-text text-transparent dark:from-white dark:via-primary-400 dark:to-blue-400"
-                        >
-                            The Future of Customer Relationship Management
-                        </Heading>
+            <Heading
+                tag="h1"
+                class="text-3xl lg:text-4xl font-bold bg-gradient-to-r from-gray-900 via-primary-600 to-blue-600 bg-clip-text text-transparent dark:from-white dark:via-primary-400 dark:to-blue-400"
+            >
+                The Future of Customer Relationship Management
+            </Heading>
 
-                        <P
-                            class="text-xl text-gray-600 dark:text-gray-300 leading-relaxed max-w-lg"
-                        >
-                            Streamline your sales process with intelligent
-                            automation, real-time collaboration, and
-                            comprehensive customer insights. Built for modern
-                            teams who demand excellence.
-                        </P>
-                    </div>
+            <P
+                class="text-xl text-gray-600 dark:text-gray-300 leading-relaxed max-w-lg"
+            >
+                Streamline your sales process with intelligent automation,
+                real-time collaboration, and comprehensive customer insights.
+                Built for modern teams who demand excellence.
+            </P>
 
-                    <!-- CTA Buttons -->
-                    <div class="flex flex-col sm:flex-row gap-4">
-                        <Button
-                            size="xl"
-                            color="primary"
-                            href="/auth"
-                            class="px-8 py-4 text-lg font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200"
-                        >
-                            Start Free Trial
-                            <ArrowRightOutline class="w-5 h-5 ml-2" />
-                        </Button>
-                        <Button
-                            size="xl"
-                            color="light"
-                            class="px-8 py-4 text-lg font-semibold border-2 hover:bg-gray-50 dark:hover:bg-gray-800"
-                        >
-                            <PlaySolid class="w-5 h-5 mr-2" />
-                            Watch Demo
-                        </Button>
-                    </div>
+            <!-- CTA Buttons -->
+            <div class="flex flex-col sm:flex-row gap-4">
+                <Button
+                    size="xl"
+                    color="primary"
+                    href="/auth"
+                    class="p-2 text-lg font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200"
+                >
+                    Start Free Trial
+                    <ArrowRightOutline class="w-5 h-5 ml-2" />
+                </Button>
+                <Button
+                    size="xl"
+                    color="light"
+                    class="p-2 text-lg font-semibold border-2 hover:bg-gray-50 dark:hover:bg-gray-800"
+                >
+                    <PlaySolid class="w-5 h-5 mr-2" />
+                    Watch Demo
+                </Button>
+            </div>
 
-                    <!-- Trust Indicators -->
-                    <div class="flex items-center gap-6 pt-4">
-                        <div class="flex items-center gap-2">
-                            <div class="flex -space-x-2">
-                                {#each Array(5) as _, i}
-                                    <Avatar
-                                        size="sm"
-                                        class="border-2 border-white dark:border-gray-800"
-                                    >
-                                        <div
-                                            class="w-8 h-8 bg-gradient-to-br from-primary-400 to-primary-600 rounded-full flex items-center justify-center text-white text-xs font-semibold"
-                                        >
-                                            {String.fromCharCode(65 + i)}
-                                        </div>
-                                    </Avatar>
-                                {/each}
-                            </div>
-                            <P
-                                class="text-sm text-gray-600 dark:text-gray-400 ml-2"
+            <!-- Trust Indicators -->
+            <div class="flex items-center gap-6 pt-4">
+                <div class="flex items-center gap-2">
+                    <div class="flex -space-x-2">
+                        {#each Array(5) as _, i}
+                            <Avatar
+                                size="sm"
+                                class="border-2 border-white dark:border-gray-800"
                             >
-                                Trusted by 500+ companies
-                            </P>
-                        </div>
+                                <div
+                                    class="w-8 h-8 bg-gradient-to-br from-primary-400 to-primary-600 rounded-full flex items-center justify-center text-white text-xs font-semibold"
+                                >
+                                    {String.fromCharCode(
+                                        65 + i + Math.random() * 10,
+                                    ) +
+                                        String.fromCharCode(
+                                            65 + i + Math.random() * 10,
+                                        )}
+                                </div>
+                            </Avatar>
+                        {/each}
                     </div>
-                </div>
-
-                <!-- Hero Image -->
-                <div class="relative">
-                    <div
-                        class="absolute inset-0 bg-gradient-to-br from-primary-500/20 to-blue-500/20 rounded-3xl blur-3xl"
-                    ></div>
-                    <div
-                        class="relative bg-white dark:bg-gray-800 rounded-3xl shadow-2xl p-8 border border-gray-200 dark:border-gray-700"
-                    >
-                        <img
-                            alt="CRM Dashboard Preview"
-                            src={previewImg}
-                            class="w-full rounded-2xl shadow-lg"
-                        />
-                    </div>
+                    <P class="text-sm text-gray-600 dark:text-gray-400 ml-2">
+                        Trusted by 500+ companies
+                    </P>
                 </div>
             </div>
+        </div>
+
+        <!-- Hero Image -->
+        <div
+            class="h-fit bg-white dark:bg-gray-800 p-2 rounded-2xl shadow-xl flex-1 grid place-items-center"
+        >
+            <img
+                alt="CRM Dashboard Preview"
+                src={previewImg}
+                class="w-150 h-full object-cover rounded-2xl"
+            />
         </div>
     </section>
 
     <!-- Stats Section -->
     <section
-        class="py-16 bg-white dark:bg-gray-800 border-y border-gray-200 dark:border-gray-700"
+        class="py-16 bg-white dark:bg-gray-800 border-y border-gray-200 dark:border-gray-700 flex justify-center items-center"
     >
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="grid grid-cols-2 lg:grid-cols-4 gap-8">
-                {#each stats as stat}
-                    <div class="text-center">
-                        <Heading
-                            tag="h3"
-                            class="text-4xl font-bold text-primary-600 dark:text-primary-400"
-                        >
-                            {stat.value}
-                        </Heading>
-                        <P
-                            class="text-gray-600 dark:text-gray-400 mt-2 font-medium"
-                        >
-                            {stat.label}
-                        </P>
-                    </div>
-                {/each}
+        {#each stats as stat}
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col">
+                <Heading
+                    tag="h3"
+                    class="text-4xl font-bold text-primary-600 dark:text-primary-400"
+                >
+                    {stat.value}
+                </Heading>
+                <P class="text-gray-600 dark:text-gray-400 mt-2 font-medium">
+                    {stat.label}
+                </P>
             </div>
-        </div>
+        {/each}
     </section>
 
     <!-- Features Section -->
@@ -303,7 +283,7 @@
             <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {#each testimonials as testimonial}
                     <Card
-                        class="p-8 hover:shadow-xl transition-all duration-300 border-0 shadow-lg"
+                        class="p-8 hover:shadow-xl transition-all duration-300 border-1 shadow-lg"
                     >
                         <div class="space-y-6">
                             <div class="flex gap-1">
@@ -385,21 +365,12 @@
                         href="/auth"
                         class="px-8 py-4 text-lg font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200"
                     >
-                        Start Your Free Trial
+                        Start Your Journey
                         <ArrowRightOutline class="w-5 h-5 ml-2" />
                     </Button>
-                    <Button
-                        size="xl"
-                        outline
-                        color="light"
-                        class="px-8 py-4 text-lg font-semibold border-2 border-white text-white hover:bg-white hover:text-primary-600"
-                    >
-                        Contact Sales
-                    </Button>
+                    
                 </div>
             </div>
         </div>
     </section>
-
-    <!-- Footer would go here -->
-</div>
+</article>
