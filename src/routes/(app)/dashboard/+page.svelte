@@ -201,7 +201,7 @@
     <div class="h-fit col-start-2 col-span-3 row-start-2 flex gap-4 p-2">
         <!-- Contacts Card -->
         <Card
-            class="p-4 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border-0 shadow-lg bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 grid grid-rows-3 grid-cols-[2fr,1fr]"
+            class="p-2 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border-0 shadow-lg bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 grid grid-rows-3 grid-cols-[2fr,1fr]"
         >
             <P
                 class="col-span-2 text-md font-medium text-blue-600 dark:text-blue-400 uppercase tracking-wide"
@@ -230,7 +230,7 @@
 
         <!-- Interactions Card -->
         <Card
-            class="p-6 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border-0 shadow-lg bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 grid grid-rows-3 grid-cols-[2fr,1fr]"
+            class="p-2 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border-0 shadow-lg bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 grid grid-rows-3 grid-cols-[2fr,1fr]"
         >
             <P
                 class="col-span-2 text-sm font-medium text-green-600 dark:text-green-400 uppercase tracking-wide"
@@ -259,7 +259,7 @@
 
         <!-- Team Collaboration Card -->
         <Card
-            class="p-6 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border-0 shadow-lg bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-800/20 grid grid-rows-3 grid-cols-[2fr,1fr]"
+            class="p-2 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border-0 shadow-lg bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-800/20 grid grid-rows-3 grid-cols-[2fr,1fr]"
         >
             <P
                 class="col-span-2 text-md font-medium text-orange-600 dark:text-orange-400 uppercase tracking-wide"
@@ -288,7 +288,7 @@
 
         <!-- Deals Card -->
         <Card
-            class="p-6 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border-0 shadow-lg bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 grid grid-rows-3 grid-cols-[2fr,1fr]"
+            class="p-2 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border-0 shadow-lg bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 grid grid-rows-3 grid-cols-[2fr,1fr]"
         >
             <P
                 class="col-span-2 text-md font-medium text-purple-600 dark:text-purple-400 uppercase tracking-wide"
@@ -440,9 +440,9 @@
             <div class="flex items-center justify-between mb-6">
                 <Heading
                     tag="h4"
-                    class="text-xl font-semibold text-emerald-900 dark:text-white flex items-center"
+                    class="text-xl font-semibold text-primary-900 dark:text-white flex items-center"
                 >
-                    <CartOutline class="w-5 h-5 mr-2 text-emerald-600" />
+                    <CartOutline class="w-5 h-5 mr-2 text-primary-600" />
                     Open Deals
                 </Heading>
                 <Badge color="green" class="px-3 py-1 text-sm font-medium">
@@ -453,13 +453,13 @@
             <Listgroup class="max-h-80 overflow-y-auto">
                 {#each data.deals || [] as deal, index}
                     <ListgroupItem
-                        class="border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:shadow-lg transition-all duration-300 p-2 hover:border-emerald-300 dark:hover:border-emerald-600 hover:-translate-y-0.5"
+                        class="border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:shadow-lg transition-all duration-300 p-2 dark:hover:border-primary-600"
                     >
                         <div class="flex items-start space-x-4 w-full">
                             <!-- Deal Value Circle -->
                             <div class="flex-shrink-0">
                                 <div
-                                    class="w-12 h-12 bg-gradient-to-br from-emerald-400 to-teal-600 rounded-full flex items-center justify-center shadow-lg"
+                                    class="w-12 h-12 bg-gradient-to-br from-primary-400 to-primary-600 rounded-full flex items-center justify-center shadow-lg"
                                 >
                                     <span class="text-white font-bold text-sm">
                                         ${(deal.value / 1000).toFixed(1)}K
@@ -488,7 +488,7 @@
                                     >
                                         Probability:
                                         <span
-                                            class="text-xs font-medium text-emerald-600 dark:text-emerald-400"
+                                            class="text-xs font-medium text-primary-600 dark:text-primary-400"
                                         >
                                             {deal.probability || 25}%
                                         </span>
@@ -497,7 +497,7 @@
                                         class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2"
                                     >
                                         <div
-                                            class="bg-gradient-to-r from-emerald-400 to-teal-500 h-2 rounded-full transition-all duration-300"
+                                            class="bg-gradient-to-r from-primary-400 to-teal-500 h-2 rounded-full transition-all duration-300"
                                             style="width: {deal.probability ||
                                                 25}%"
                                         ></div>
@@ -535,7 +535,7 @@
                                 <!-- Deal Value -->
                                 <div class="text-right">
                                     <P
-                                        class="text-sm font-bold text-emerald-600 dark:text-emerald-400"
+                                        class="text-sm font-bold text-primary-600 dark:text-primary-400"
                                     >
                                         ${(deal.value || 0).toLocaleString()}
                                     </P>
@@ -548,10 +548,10 @@
                         class="w-full min-w-70 flex flex-col items-center text-center py-12"
                     >
                         <div
-                            class="w-16 h-16 bg-gradient-to-br from-emerald-100 to-teal-200 dark:from-emerald-900/40 dark:to-teal-800/40 rounded-full flex items-center justify-center mb-4"
+                            class="w-16 h-16 bg-gradient-to-br from-primary-100 to-teal-200 dark:from-primary-900/40 dark:to-teal-800/40 rounded-full flex items-center justify-center mb-4"
                         >
                             <CartOutline
-                                class="w-8 h-8 text-emerald-500 dark:text-emerald-400"
+                                class="w-8 h-8 text-primary-500 dark:text-primary-400"
                             />
                         </div>
                         <P
@@ -563,7 +563,7 @@
                             Start building your sales pipeline!
                         </P>
                         <button
-                            class="mt-4 px-4 py-2 bg-emerald-500 text-white rounded-lg text-sm hover:bg-emerald-600 transition-colors"
+                            class="mt-4 px-4 py-2 bg-primary-500 text-white rounded-lg text-sm hover:bg-primary-600 transition-colors"
                         >
                             Create Deal
                         </button>
@@ -577,9 +577,9 @@
             <div class="flex items-center justify-between mb-6">
                 <Heading
                     tag="h4"
-                    class="text-xl font-semibold text-emerald-900 dark:text-white flex items-center"
+                    class="text-xl font-semibold text-primary-900 dark:text-white flex items-center"
                 >
-                    <BellOutline class="w-5 h-5 mr-2 text-emerald-600" />
+                    <BellOutline class="w-5 h-5 mr-2 text-primary-600" />
                     Notifications
                 </Heading>
                 <Badge color="green" class="px-3 py-1 text-sm font-medium">
@@ -590,7 +590,7 @@
             <Listgroup class="max-h-80 overflow-y-auto">
                 {#each data.notifications || [] as notification, index}
                     <ListgroupItem
-                        class="border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:shadow-lg transition-all duration-300 p-2 hover:border-emerald-300 dark:hover:border-emerald-600 hover:-translate-y-0.5"
+                        class="border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:shadow-lg transition-all duration-300 p-2 hover:border-primary-300 dark:hover:border-primary-600"
                     >
                         <div class="flex items-start space-x-4 w-full">
                             <Badge
@@ -613,10 +613,10 @@
                         class="w-full min-w-70 flex flex-col items-center text-center py-12"
                     >
                         <div
-                            class="w-16 h-16 bg-gradient-to-br from-emerald-100 to-teal-200 dark:from-emerald-900/40 dark:to-teal-800/40 rounded-full flex items-center justify-center mb-4"
+                            class="w-16 h-16 bg-gradient-to-br from-primary-100 to-teal-200 dark:from-primary-900/40 dark:to-teal-800/40 rounded-full flex items-center justify-center mb-4"
                         >
                             <BellSolid
-                                class="w-8 h-8 text-emerald-500 dark:text-emerald-400"
+                                class="w-8 h-8 text-primary-500 dark:text-primary-400"
                             />
                         </div>
                         <P
