@@ -1,0 +1,23 @@
+name: Notify Due Tasks (Daily)
+
+on:
+  schedule:
+    - cron: "0 6 * * *"  # Runs every day at 06:00 UTC
+  workflow_dispatch:      # Allows manual triggering from GitHub UI
+
+jobs:
+  invoke-notify-due-tasks:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Invoke Supabase Edge Function
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          echo "Invoking notify-due-tasks-function..."
+          curl -X POST \
+            "${SUPABASE_URL}/functions/v1/notify-due-tasks-function" \
+            -H "Authorization: Bearer ${SUPABASE_ANON_KEY}" \
+            -H "Content-Type: application/json" \
+            -d '{}'
