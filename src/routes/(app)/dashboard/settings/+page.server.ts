@@ -76,4 +76,41 @@ export const actions: Actions = {
             return fail(500, { error: "Internal error updating profile." });
         }
     }
+
+
+    // change_company: async ({ request }) => {
+    //     try {
+    //         const currentUser = await getProfile();
+    //         if (!currentUser || !currentUser.profile_id) {
+    //             return fail(401, { error: 'Unauthorized access. Please log in again.' });
+    //         }
+
+    //         const formData = await request.formData();
+    //         const company = formData.get("company")?.toString().trim() || "";
+
+    //         if (!company) {
+    //             return fail(400, { error: 'Company name is required.' });
+    //         }
+
+    //         // Skip update if company hasn't changed
+    //         if (currentUser.company?.trim() === company) {
+    //             console.log(`Company unchanged for user ${currentUser.profile_id}. Skipping DB update.`);
+    //             return { success: "Company is already set to this value." };
+    //         }
+
+    //         const updatedProfile = await profilesService.update(currentUser.profile_id, {
+    //             company
+    //         });
+
+    //         if (!updatedProfile) {
+    //             return fail(500, { error: "Failed to update company." });
+    //         }
+
+    //         return { success: "Company changed successfully." };
+
+    //     } catch (err) {
+    //         console.error("Error changing company:", err);
+    //         return fail(500, { error: "Internal error changing company." });
+    //     }
+    // }
 };
