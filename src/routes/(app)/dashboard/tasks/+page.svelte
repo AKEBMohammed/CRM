@@ -61,9 +61,15 @@
     </div>
     <div class="grid grid-cols-4 gap-4">
         {#if data.tasks.length === 0}
-            <P class="text-gray-600"
-                >No tasks available. Please add a new task.</P
-            >
+            <div class="col-span-4 flex flex-col items-center justify-center p-6 border-2 border-dashed border-gray-300 rounded-lg">
+                <Heading tag="h4" class="text-lg font-semibold text-center"
+                    >No Tasks Found</Heading
+                >
+                <P class="text-gray-600"
+                >No tasks available. Please add a new task.
+                </P>
+            </div>
+            
         {:else}
             {#each ["pending", "in_progress", "completed", "canceled"] as status}
                 <Card class="h-auto overflow-y-scroll p-2 flex flex-col gap-2">
