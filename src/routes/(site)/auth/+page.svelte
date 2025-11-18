@@ -51,12 +51,6 @@
                 <Label for="password">Password</Label>
                 <Input type="password" id="password" name="password" required />
 
-                <div class="w-full flex items-center gap-2">
-                    <Label for="remember" class="flex items-center gap-2">
-                        Remember me
-                    </Label>
-                    <Toggle class="ml-auto" id="remember" name="remember" />
-                </div>
                 <a
                     onclick={() => (showForgetPasswordModal = true)}
                     href="#"
