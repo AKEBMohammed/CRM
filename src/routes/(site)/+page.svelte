@@ -140,34 +140,6 @@
                     Watch Demo
                 </Button>
             </div>
-
-            <!-- Trust Indicators -->
-            <div class="flex items-center gap-6 pt-4">
-                <div class="flex items-center gap-2">
-                    <div class="flex -space-x-2">
-                        {#each Array(5) as _, i}
-                            <Avatar
-                                size="sm"
-                                class="border-2 border-white dark:border-gray-800"
-                            >
-                                <div
-                                    class="w-8 h-8 bg-gradient-to-br from-primary-400 to-primary-600 rounded-full flex items-center justify-center text-white text-xs font-semibold"
-                                >
-                                    {String.fromCharCode(
-                                        65 + i + Math.random() * 10,
-                                    ) +
-                                        String.fromCharCode(
-                                            65 + i + Math.random() * 10,
-                                        )}
-                                </div>
-                            </Avatar>
-                        {/each}
-                    </div>
-                    <P class="text-sm text-gray-600 dark:text-gray-400 ml-2">
-                        Trusted by 500+ companies
-                    </P>
-                </div>
-            </div>
         </div>
 
         <!-- Hero Image -->
