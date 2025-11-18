@@ -40,7 +40,7 @@ export const load: PageServerLoad = async ({ cookies }) => {
             contactsService.getAll(user.company_id),
 
             // Deals data
-            dealsService.getAll(user.company_id),
+            dealsService.getAll(user.profile_id,user.company_id),
 
             // Interactions data
             interactionsService.getAll(user.company_id),

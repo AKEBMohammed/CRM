@@ -122,7 +122,7 @@ async function getUserBusinessContext(userProfile: any): Promise<string> {
         // Get business context using services
         const [contacts, deals, interactions, tasks, products] = await Promise.all([
             contactsService.getAll(userProfile.company_id).then(data => data?.slice(0, 5) || []),
-            dealsService.getAll(userProfile.company_id).then(data => data?.slice(0, 5) || []),
+            dealsService.getAll(userProfile.profile_id, userProfile.company_id).then(data => data?.slice(0, 5) || []),
             interactionsService.getAll(userProfile.company_id).then(data => data?.slice(0, 5) || []),
             tasksService.getAll(userProfile.profile_id, userProfile.company_id).then(data => data?.slice(0, 5) || []),
             productsService.getAll(userProfile.company_id).then(data => data?.slice(0, 5) || [])

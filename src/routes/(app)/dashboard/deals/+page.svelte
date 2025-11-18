@@ -55,9 +55,16 @@
     </div>
     <div class="grid grid-cols-4 gap-2">
         {#if data.deals.length === 0}
-            <P class="text-gray-500 dark:text-gray-400">
-                No deals found. Click "Add New Deal" to create one.
-            </P>
+            <div
+                class="col-span-4 flex flex-col items-center justify-center p-6 border-2 border-dashed border-gray-300 rounded-lg"
+            >
+                <Heading tag="h4" class="text-lg font-semibold text-center">
+                    No Deals Found
+                </Heading>
+                <P class="text-gray-500 dark:text-gray-400">
+                    No deals found. Click "Add New Deal" to create one.
+                </P>
+            </div>
         {:else}
             {#each data.deals as deal}
                 <Card

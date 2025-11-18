@@ -154,7 +154,7 @@ All services respect company-based multi-tenancy:
 ```typescript
 // All queries are automatically scoped to company
 const contacts = await contactsService.getAll(company_id);
-const deals = await dealsService.getAll(company_id);
+const deals = await dealsService.getAll(profile_id, company_id);
 ```
 
 ## 🚀 Performance Features

@@ -15,7 +15,7 @@ export const load: PageServerLoad = async ({ cookies }) => {
 
     try {
         const [deals, contacts, products] = await Promise.all([
-            dealsService.getAll(user.company_id),
+            dealsService.getAll(user.profile_id,user.company_id),
             contactsService.getAll(user.company_id),
             productsService.getAll(user.company_id)
         ]);

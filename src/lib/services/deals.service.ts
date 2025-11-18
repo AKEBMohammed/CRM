@@ -2,34 +2,58 @@ import { supabase } from '$lib/supabase';
 
 export const dealsService = {
     // Get all deals managed by users from a specific company
-    async getAll(user_company_id: number) {
+    async getAll(profile_id?: number, company_id?: number) {
         // First get all profile_ids from the user's company
-        const { data: companyProfiles, error: profilesError } = await supabase
+        const { data: profiles, error: profilesError } = await supabase
             .from('profiles')
-            .select('profile_id')
-            .eq('company_id', user_company_id);
+            .select('profile_id,role')
+            .eq('company_id', company_id);
 
         if (profilesError) throw profilesError;
 
-        const profileIds = companyProfiles?.map(p => p.profile_id) || [];
-        
-        if (profileIds.length === 0) {
+        if (profiles.length === 0) {
             return []; // No profiles in company, so no deals
         }
 
-        // Now get deals managed by any of these profiles
-        const { data, error } = await supabase
-            .from('deals')
-            .select(`
-                *,
-                contact:contacts(fullname, email, phone),
-                product:products(name, unit_price)
-            `)
-            .in('profile_id', profileIds)
-            .order('updated_at', { ascending: false });
+        const profileIds = profiles?.map(p => p.profile_id) || [];
 
-        if (error) throw error;
-        return data;
+        if (!profileIds.includes(profile_id)) {
+            return []; // Specified profile_id not in company
+        }
+
+        // get role by profile_id
+        const userProfile = profiles.find(p => p.profile_id === profile_id);
+        const userRole = userProfile ? userProfile.role : null;
+
+        if (userRole !== 'admin') {
+            // Now get deals managed by any of these profiles
+            const { data, error } = await supabase
+                .from('deals')
+                .select(`
+                    *,
+                    contact:contacts(fullname, email, phone),
+                    product:products(name, unit_price)
+                `)
+                .in('profile_id', profileIds)
+                .order('updated_at', { ascending: false });
+
+            if (error) throw error;
+            return data;
+
+        } else {
+            const { data, error } = await supabase
+                .from('deals')
+                .select(`
+                    *,
+                    contact:contacts(fullname, email, phone),
+                    product:products(name, unit_price)
+                `)
+                .eq('profile_id', userProfile?.profile_id)
+                .order('updated_at', { ascending: false });
+
+            if (error) throw error;
+            return data;
+        }
     },
 
     // Get deal by ID
@@ -152,7 +176,7 @@ export const dealsService = {
         if (profilesError) throw profilesError;
 
         const profileIds = companyProfiles?.map(p => p.profile_id) || [];
-        
+
         if (profileIds.length === 0) {
             return {
                 pipeline: [],
@@ -206,11 +230,11 @@ export const dealsService = {
 
     // Update deal stage
     async updateStage(deal_id: number, stage: string, probability?: number) {
-        const updates: any = { 
-            stage, 
-            updated_at: new Date().toISOString() 
+        const updates: any = {
+            stage,
+            updated_at: new Date().toISOString()
         };
-        
+
         if (probability !== undefined) {
             updates.probability = probability;
         }
@@ -237,7 +261,7 @@ export const dealsService = {
         if (profilesError) throw profilesError;
 
         const profileIds = companyProfiles?.map(p => p.profile_id) || [];
-        
+
         if (profileIds.length === 0) {
             return {
                 total: 0,

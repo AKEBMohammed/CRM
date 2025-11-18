@@ -43,7 +43,7 @@ export const load: PageServerLoad = async ({ cookies }) => {
 		console.log('Tasks:', tasks);
 
 		//Get open Deals
-		const deals = (await dealsService.getAll(user.company_id))
+		const deals = (await dealsService.getAll(user.profile_id,user.company_id))
 			.filter(d => d.status !== 'closed_won' && d.status !== 'closed_lost');
 
 		console.log('Deals:', deals);
