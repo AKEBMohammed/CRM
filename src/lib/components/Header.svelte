@@ -194,7 +194,7 @@
     });
 </script>
 
-<Navbar class="dark:bg-gray-800 shadow-sm col-start-1 col-span-2 absolute">
+<Navbar class="h-[80px] dark:bg-gray-800 shadow-sm col-start-1 col-span-2 absolute">
     <NavBrand href="/">
         <img src={favicon} class="me-3 h-6 sm:h-9" alt="DZ Sales Logo" />
         <span
