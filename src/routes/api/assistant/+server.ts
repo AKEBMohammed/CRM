@@ -1,10 +1,29 @@
+/**
+ * CRM AI Assistant API Endpoint
+ * 
+ * Uses Gemini 2.0 Flash with RAG (Retrieval-Augmented Generation)
+ * 
+ * Key Features:
+ * - Gemini 2.0 Flash for fast, efficient responses with free tier support
+ * - Vector similarity search using embeddings for context retrieval
+ * - Multi-source business context (contacts, deals, tasks, products, interactions)
+ * - Automatic discussion title generation
+ * 
+ * Models:
+ * - gemini-2.0-flash-exp: Main conversation model (free tier available)
+ * - text-embedding-004: Embedding generation for semantic search
+ * 
+ * Note: Gemini 3 Pro requires a paid plan. Using Gemini 2.0 Flash for free tier compatibility.
+ * @see https://ai.google.dev/gemini-api/docs/models/gemini
+ */
+
 import { supabase, getProfile } from '$lib/supabase.js';
 import { PUBLIC_GOOGLE_API_KEY } from '$env/static/public';
 import { GoogleGenAI } from "@google/genai";
 import { discussionsService, chatsService, contactsService, dealsService, interactionsService, profilesService, tasksService, companiesService, productsService } from '$lib/services';
 
-// Initialize Google AI for both generation and embeddings
-const genAI = new GoogleGenAI({ apiKey: PUBLIC_GOOGLE_API_KEY });
+// Initialize Google AI client
+const client = new GoogleGenAI({ apiKey: PUBLIC_GOOGLE_API_KEY });
 
 // Helper function to generate embeddings for user queries
 async function embedText(text: string): Promise<number[]> {
@@ -58,7 +77,7 @@ async function getRelevantContext(userMessage: string, userProfile: any): Promis
                 .in('source_table', ['companies', 'contacts', 'products', 'deals', 'interactions', 'tasks'])
                 .order('created_at', { ascending: false })
                 .limit(5);
-            
+
             contextData = fallbackData;
         }
 
@@ -67,7 +86,7 @@ async function getRelevantContext(userMessage: string, userProfile: any): Promis
             (item: any) => `[${item.source_table}]: ${item.content}`
         ) || [];
 
-        return relevantChunks.length > 0 
+        return relevantChunks.length > 0
             ? `\n\nRelevant CRM Data:\n${relevantChunks.slice(0, 5).join('\n')}\n`
             : '';
 
@@ -94,13 +113,18 @@ Examples:
 - "Lead Follow-up Plan"
 - "Product Pricing Analysis"`;
 
-        const titleResponse = await genAI.models.generateContent({
+        const titleResponse = await client.models.generateContent({
             model: "gemini-2.0-flash-exp",
-            contents: titlePrompt,
+            contents: [
+                {
+                    role: 'user',
+                    parts: [{ text: titlePrompt }]
+                }
+            ],
         });
 
         const generatedTitle = titleResponse.text?.trim() || 'Business Discussion';
-        
+
         // Clean up the title (remove quotes, limit length)
         const cleanTitle = generatedTitle
             .replace(/['"]/g, '')
@@ -129,36 +153,36 @@ async function getUserBusinessContext(userProfile: any): Promise<string> {
         ]);
 
         let contextSummary = '\n\nYour Current Business Context:\n';
-        
+
         // Recent contacts
         if (contacts.length > 0) {
             contextSummary += `📋 Recent Contacts: ${contacts.map((contact: any) => contact.fullname).join(', ')}\n`;
         }
-        
+
         // Active deals
         if (deals.length > 0) {
-            contextSummary += `💼 Active Deals: ${deals.map((deal: any) => 
+            contextSummary += `💼 Active Deals: ${deals.map((deal: any) =>
                 `${deal.title} ($${deal.value} - ${deal.stage})`
             ).join(', ')}\n`;
         }
-        
+
         // Recent interactions
         if (interactions.length > 0) {
-            contextSummary += `🤝 Recent Interactions: ${interactions.map((interaction: any) => 
+            contextSummary += `🤝 Recent Interactions: ${interactions.map((interaction: any) =>
                 `${interaction.type}`
             ).join(', ')}\n`;
         }
-        
+
         // Pending tasks
         if (tasks.length > 0) {
-            contextSummary += `📋 Pending Tasks: ${tasks.map((task: any) => 
+            contextSummary += `📋 Pending Tasks: ${tasks.map((task: any) =>
                 `${task.title} (${task.priority} priority)`
             ).join(', ')}\n`;
         }
 
         // Available products
         if (products.length > 0) {
-            contextSummary += `🛒 Available Products: ${products.map((product: any) => 
+            contextSummary += `🛒 Available Products: ${products.map((product: any) =>
                 `${product.name} ($${product.unit_price})`
             ).join(', ')}\n`;
         }
@@ -170,8 +194,6 @@ async function getUserBusinessContext(userProfile: any): Promise<string> {
         return '';
     }
 }
-
-const ai = new GoogleGenAI({ apiKey: PUBLIC_GOOGLE_API_KEY });
 
 export const POST = async (event) => {
     const user = await getProfile();
@@ -215,45 +237,53 @@ export const POST = async (event) => {
         console.log('Business Context:', businessContext);
 
         // Prepare enhanced AI request with RAG context
-        const systemPrompt = `You are an intelligent CRM assistant with access to the user's business data. Remember to leverage this data to provide accurate and relevant responses.
+        const systemPrompt = `
+        You are an intelligent CRM assistant with access to the user's business data. Remember to leverage this data to provide accurate and relevant responses.
 
-**Your Role:**
-- Help with CRM tasks, customer management, sales insights, and business analytics
-- Provide actionable advice based on the user's actual data
-- Be concise but thorough in your responses
-- Use the provided context to give personalized recommendations
+            **Your Role:**
+            - Help with CRM tasks, customer management, sales insights, and business analytics
+            - Provide actionable advice based on the user's actual data
+            - Be concise but thorough in your responses
+            - Use the provided context to give personalized recommendations
 
-**Current CRM:** DZ Sales is a mini CRM build to help small bussnisses to manage theire work.
+            **Current CRM:** DZ Sales is a mini CRM build to help small bussnisses to manage theire work.
 
-**Current Discussion:** "${discussionInfo?.name || 'General Discussion'}"
-${discussionInfo?.description ? `Context: ${discussionInfo.description}` : ''}
+            **Current Discussion:** "${discussionInfo?.name || 'General Discussion'}"
+            ${discussionInfo?.description ? `Context: ${discussionInfo.description}` : ''}
 
-**User Profile:** ${user.fullname} (${user.role}) at Company: ${ company?.name } which is in ${ company?.industry } industry.
+            **User Profile:** ${user.fullname} (${user.role}) at Company: ${company?.name} which is in ${company?.industry} industry.
 
-${businessContext}
-${ragContext}
+            ${businessContext}
+            ${ragContext}
 
-**Recent Conversation:**
-${conversationHistory.slice(-5).map((msg: any) =>
-            `${msg.role === 'user' ? 'User' : 'Assistant'}: ${msg.parts[0].text}`
-        ).join('\n')}
+            **Recent Conversation:**
+            ${conversationHistory.slice(-5).map((msg: any) =>
+                        `${msg.role === 'user' ? 'User' : 'Assistant'}: ${msg.parts[0].text}`
+                    ).join('\n')}
 
-**Current Question:** ${message}
+            Please provide a helpful, data-driven response as their CRM assistant. If the context contains relevant information, reference it specifically. If you need more information to give a complete answer, ask clarifying questions.`;
 
-Please provide a helpful, data-driven response as their CRM assistant. If the context contains relevant information, reference it specifically. If you need more information to give a complete answer, ask clarifying questions.`;
-
+        const userMessage = message;
         console.log('System Prompt:', systemPrompt);
-        
+
         // Send request to Google AI with enhanced context
-        const aiResponse = await genAI.models.generateContent({
-            model: "gemini-2.0-flash-exp",
-            contents: systemPrompt,
+        const aiResponse = await client.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: [
+                {
+                    role: 'user',
+                    parts: [{ text: userMessage }]
+                }
+            ],
+            config: {
+                systemInstruction: systemPrompt,
+            },
         });
 
 
         const aiMessage = aiResponse.text || 'Sorry, I could not generate a response.';
 
-        console.log('Responce: ',aiMessage);
+        console.log('Responce: ', aiMessage);
 
         // Check if this is the first AI response in the discussion
         const isFirstAIResponse = conversationHistory.filter((msg: any) => msg.role === 'model').length === 0;
@@ -264,7 +294,7 @@ Please provide a helpful, data-driven response as their CRM assistant. If the co
         if (isFirstAIResponse) {
             console.log('🏷️ Generating discussion title...');
             generatedTitle = await generateDiscussionTitle(message, aiMessage);
-            
+
             // Update discussion title in database
             try {
                 // Update discussion title using discussionsService
@@ -280,7 +310,7 @@ Please provide a helpful, data-driven response as their CRM assistant. If the co
                 // Continue without updating title
             }
         }
-        
+
         // Insert AI response to database using chatsService
         const insertedChat = await chatsService.sendAIMessage(parseInt(discussion_id), aiMessage);
 
